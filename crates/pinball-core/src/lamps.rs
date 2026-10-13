@@ -69,6 +69,12 @@ impl Lamps {
         self.modes[id.index()] = mode;
     }
 
+    /// One lamp's current mode.
+    #[must_use]
+    pub const fn mode(&self, id: LampId) -> LampMode {
+        self.modes[id.index()]
+    }
+
     /// Turns every lamp off.
     pub fn all_off(&mut self) {
         self.modes = [LampMode::Off; LAMP_COUNT];
