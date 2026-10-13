@@ -1,8 +1,10 @@
 # Hardware
 
-Planned wiring for the controller. `crates/pinball-core/src/playfield.rs` is the
+Planned wiring for the controller. New to electronics? Start with the
+step-by-step [wiring guide](wiring-guide.md), which includes a
+[playfield map](playfield.svg). `crates/pinball-core/src/playfield.rs` is the
 source of truth for logical assignments and `firmware/src/main.rs` for pins. Keep
-all three in step.
+them all in step.
 
 ## Controller: Arduino Mega 2560
 

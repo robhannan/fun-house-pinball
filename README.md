@@ -5,8 +5,8 @@ The original electromechanical (EM) game is being rebuilt with new parts and
 driven by an Arduino Mega 2560 instead of relays and stepper units.
 
 > ⚠️ **Safety:** the playfield runs at coil voltage, and a coil left energised
-> will burn out within seconds. Read [docs/hardware.md](docs/hardware.md) before
-> wiring anything up.
+> will burn out within seconds. Read the [wiring guide](docs/wiring-guide.md)
+> before wiring anything up.
 
 ## Layout
 
@@ -14,7 +14,10 @@ driven by an Arduino Mega 2560 instead of relays and stepper units.
 .
 ├── crates/pinball-core   # no_std game logic: switches, coils, lamps, rules (host-testable)
 ├── firmware              # Arduino Mega 2560 binary: I/O + main loop (AVR, nightly)
-└── docs/hardware.md      # wiring, pin map, driver boards
+└── docs
+    ├── hardware.md       # design at a glance: pin map, driver boards
+    ├── wiring-guide.md   # step-by-step wiring for beginners
+    └── playfield.svg     # playfield map with switch/coil/lamp numbers
 ```
 
 The design is a **functional core with an imperative shell**. Every millisecond

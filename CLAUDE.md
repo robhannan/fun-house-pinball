@@ -17,7 +17,8 @@ Mega 2560. See `README.md` for setup and `docs/hardware.md` for wiring.
   (`playfield.rs`) without saying so in the PR, with the coil and its rating. Keep
   the watchdog, the OE pull-up and the panic handler that disables outputs.
 - **Keep the playfield map in step:** `playfield.rs` is the source of truth for
-  switch, coil and lamp assignments. Update `docs/hardware.md` and the pins in
+  switch, coil and lamp assignments. Update `docs/hardware.md`,
+  `docs/wiring-guide.md`, `docs/playfield.svg` and the pins in
   `firmware/src/main.rs` alongside it.
 - **Don't present guesses as facts:** feature counts and rules not confirmed on
   the real table or schematic are marked *verify* or "assumed". Keep them marked.
