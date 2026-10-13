@@ -47,7 +47,7 @@ jobs:
       - run: cargo build --release --locked
       - name: Firmware size
         run: avr-size --format=avr --mcu=atmega2560 target/avr-none/release/fun-house-firmware.elf
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: fun-house-firmware
           path: firmware/target/avr-none/release/fun-house-firmware.elf
