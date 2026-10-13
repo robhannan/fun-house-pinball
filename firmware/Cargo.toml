@@ -1,0 +1,39 @@
+[package]
+name = "fun-house-firmware"
+description = "Arduino Mega 2560 firmware for the 1956 Williams Fun House rebuild"
+version = "0.1.0"
+edition = "2024"
+# Matches the pinned nightly so the MSRV-aware resolver picks compatible deps.
+rust-version = "1.87"
+authors = ["Rob Hannan"]
+publish = false
+
+[[bin]]
+name = "fun-house-firmware"
+test = false
+bench = false
+
+[dependencies]
+pinball-core = { path = "../crates/pinball-core" }
+ufmt = "0.2.0"
+nb = "1.1.0"
+embedded-hal = "1.0"
+avr-device = { version = "0.8.1", features = ["rt"] }
+
+[dependencies.arduino-hal]
+git = "https://github.com/rahix/avr-hal"
+rev = "e0b0105b11a7c4209fb1704276a7921c3139d5cb"
+features = ["arduino-mega2560"]
+
+# AVRs have very little program memory, so optimise for size even in dev.
+[profile.dev]
+panic = "abort"
+lto = true
+opt-level = "s"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+debug = true
+lto = true
+opt-level = "s"
