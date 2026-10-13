@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  core:
+    name: Game logic (host)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # rustup reads rust-toolchain.toml and installs the right toolchain.
+      - run: rustup show active-toolchain || rustup toolchain install
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all --check
+      - run: cargo clippy --all-targets --locked -- -D warnings
+      - run: cargo test --locked
+
+  firmware:
+    name: Firmware (ATmega2560)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firmware
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install AVR toolchain
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-avr avr-libc binutils-avr
+      - run: rustup show active-toolchain || rustup toolchain install
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: firmware
+      - run: cargo fmt --check
+      - run: cargo clippy --locked -- -D warnings
+      - run: cargo build --release --locked
+      - name: Firmware size
+        run: avr-size --format=avr --mcu=atmega2560 target/avr-none/release/fun-house-firmware.elf
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fun-house-firmware
+          path: firmware/target/avr-none/release/fun-house-firmware.elf

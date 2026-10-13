@@ -1,0 +1,6 @@
+# avr-hal currently needs nightly (`build-std`, `abi_avr_interrupt`).
+# Keep this in step with https://github.com/Rahix/avr-hal/blob/main/rust-toolchain.toml
+[toolchain]
+channel = "nightly-2025-04-27"
+components = ["rust-src", "rustfmt", "clippy"]
+profile = "minimal"

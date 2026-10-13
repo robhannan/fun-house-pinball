@@ -1,0 +1,5 @@
+{
+  // The firmware is a separate cargo project (AVR target, pinned nightly).
+  "rust-analyzer.linkedProjects": ["Cargo.toml", "firmware/Cargo.toml"],
+  "rust-analyzer.check.allTargets": false
+}

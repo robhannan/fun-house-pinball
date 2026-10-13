@@ -1,0 +1,6 @@
+# Toolchain for the host workspace (game logic + tests).
+# The firmware has its own pinned nightly in firmware/rust-toolchain.toml.
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]
+profile = "minimal"
