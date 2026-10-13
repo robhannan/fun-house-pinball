@@ -1,0 +1,186 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1180" width="600" height="1180" font-family="Helvetica, Arial, sans-serif">
+  <title>Fun House (1956) playfield wiring reference</title>
+  <desc>Schematic, not to scale, drawn from a photo of the playfield. Labels give each part's switch matrix position (C = column, R = row), coil number and lamp number, matching crates/pinball-core/src/playfield.rs.</desc>
+
+  <style>
+    .label { font-size: 10px; fill: #1f2328; }
+    .tag { font-size: 9px; fill: #57606a; }
+    .title { font-size: 18px; font-weight: bold; fill: #1f2328; }
+    .sub { font-size: 11px; fill: #57606a; }
+    .wheel { font-size: 10px; font-weight: bold; fill: #1f2328; text-anchor: middle; }
+    .mid { text-anchor: middle; }
+    .end { text-anchor: end; }
+  </style>
+
+  <rect width="600" height="1180" fill="#ffffff"/>
+
+  <text x="280" y="28" class="title mid">Fun House (Williams, 1956): wiring reference</text>
+  <text x="280" y="46" class="sub mid">Schematic, not to scale. Parts marked * are guesses from a photo: verify on the table.</text>
+
+  <!-- Playfield outline -->
+  <path d="M 40 150 Q 40 70 120 70 L 480 70 Q 560 70 560 150 L 560 1040 L 40 1040 Z" fill="#fdf6e3" stroke="#8a6d3b" stroke-width="3"/>
+
+  <!-- Shooter lane (right edge) -->
+  <line x1="525" y1="130" x2="525" y2="1040" stroke="#8a6d3b" stroke-width="2"/>
+  <circle cx="542" cy="1010" r="7" fill="#c9d1d9" stroke="#57606a"/>
+  <text x="547" y="990" class="label" transform="rotate(-90 547 990)">Shooter lane: C0·R1 *</text>
+
+  <!-- Top lanes -->
+  <g stroke="#8a6d3b" stroke-width="3">
+    <line x1="80" y1="95" x2="80" y2="150"/>
+    <line x1="130" y1="95" x2="130" y2="150"/>
+    <line x1="175" y1="95" x2="175" y2="150"/>
+    <line x1="385" y1="95" x2="385" y2="150"/>
+    <line x1="430" y1="95" x2="430" y2="150"/>
+    <line x1="480" y1="95" x2="480" y2="150"/>
+  </g>
+  <g fill="#c9d1d9" stroke="#57606a">
+    <circle cx="105" cy="125" r="7"/>
+    <circle cx="152" cy="125" r="7"/>
+    <circle cx="407" cy="125" r="7"/>
+    <circle cx="455" cy="125" r="7"/>
+  </g>
+  <text x="105" y="168" class="tag mid">Lane 1</text>
+  <text x="152" y="168" class="tag mid">Lane 2</text>
+  <text x="407" y="168" class="tag mid">Lane 3</text>
+  <text x="455" y="168" class="tag mid">Lane 4</text>
+  <text x="128" y="182" class="label mid">Top lanes *: C3·R0–R3</text>
+
+  <!-- Top centre red bumper -->
+  <circle cx="280" cy="125" r="28" fill="#d73a49" stroke="#86181d" stroke-width="2"/>
+  <text x="280" y="129" class="label mid" fill="#ffffff" style="fill:#fff">Red *</text>
+  <text x="280" y="170" class="label mid">Top centre bumper: C3·R4</text>
+
+  <!-- Upper pop bumpers -->
+  <g fill="#7ee787" stroke="#1a7f37" stroke-width="2">
+    <circle cx="150" cy="240" r="30"/>
+    <circle cx="280" cy="230" r="30"/>
+    <circle cx="410" cy="240" r="30"/>
+  </g>
+  <text x="150" y="237" class="label mid">Pop 1</text>
+  <text x="150" y="250" class="tag mid">top left</text>
+  <text x="280" y="227" class="label mid">Pop 2</text>
+  <text x="280" y="240" class="tag mid">top centre</text>
+  <text x="410" y="237" class="label mid">Pop 3</text>
+  <text x="410" y="250" class="tag mid">top right</text>
+  <text x="150" y="285" class="tag mid">C2·R0 · coil 3 · L24</text>
+  <text x="280" y="275" class="tag mid">C2·R1 · coil 4 · L25</text>
+  <text x="410" y="285" class="tag mid">C2·R2 · coil 5 · L26</text>
+
+  <!-- Side "10 points" lanes -->
+  <g stroke="#8a6d3b" stroke-width="3">
+    <line x1="60" y1="320" x2="60" y2="380"/>
+    <line x1="90" y1="320" x2="90" y2="380"/>
+    <line x1="120" y1="320" x2="120" y2="380"/>
+    <line x1="410" y1="320" x2="410" y2="380"/>
+    <line x1="440" y1="320" x2="440" y2="380"/>
+    <line x1="470" y1="320" x2="470" y2="380"/>
+  </g>
+  <g fill="#c9d1d9" stroke="#57606a">
+    <circle cx="75" cy="350" r="6"/>
+    <circle cx="105" cy="350" r="6"/>
+    <circle cx="425" cy="350" r="6"/>
+    <circle cx="455" cy="350" r="6"/>
+  </g>
+  <text x="48" y="400" class="label">"10 points" lanes 1–2 *</text>
+  <text x="48" y="413" class="tag">C4·R0, C4·R1</text>
+  <text x="480" y="400" class="label end">"10 points" lanes 3–4 *</text>
+  <text x="480" y="413" class="tag end">C4·R2, C4·R3</text>
+
+  <!-- Scores Bonus gate -->
+  <rect x="190" y="320" width="180" height="46" rx="4" fill="#ffffff" stroke="#d73a49" stroke-width="3"/>
+  <text x="280" y="348" class="label mid">SCORES BONUS gate</text>
+  <text x="280" y="382" class="tag mid">C4·R4</text>
+
+  <!-- Special when lit -->
+  <polygon points="280,400 300,432 260,432" fill="#ffd33d" stroke="#9a6700" stroke-width="2"/>
+  <text x="310" y="425" class="label">Special when lit: L2</text>
+
+  <!-- "30 points when lit" rollovers -->
+  <circle cx="105" cy="455" r="10" fill="#ffd33d" stroke="#9a6700" stroke-width="2"/>
+  <circle cx="455" cy="455" r="10" fill="#ffd33d" stroke="#9a6700" stroke-width="2"/>
+  <text x="123" y="452" class="label">"30 pts" left</text>
+  <text x="123" y="465" class="tag">C5·R0 · L20</text>
+  <text x="437" y="452" class="label end">"30 pts" right</text>
+  <text x="437" y="465" class="tag end">C5·R1 · L21</text>
+
+  <!-- Lower pop bumpers -->
+  <g fill="#7ee787" stroke="#1a7f37" stroke-width="2">
+    <circle cx="105" cy="540" r="30"/>
+    <circle cx="455" cy="540" r="30"/>
+  </g>
+  <text x="105" y="537" class="label mid">Pop 4</text>
+  <text x="105" y="550" class="tag mid">lower left</text>
+  <text x="455" y="537" class="label mid">Pop 5</text>
+  <text x="455" y="550" class="tag mid">lower right</text>
+  <text x="105" y="585" class="tag mid">C2·R3 · coil 6 · L27</text>
+  <text x="455" y="585" class="tag mid">C2·R4 · coil 7 · L28</text>
+
+  <!-- Bonus wheel (lamps only) -->
+  <circle cx="280" cy="640" r="100" fill="#ffd8d3" stroke="#d73a49" stroke-width="2"/>
+  <g fill="#ffd33d" stroke="#9a6700" stroke-width="1.5">
+    <circle cx="280" cy="560" r="13"/>
+    <circle cx="327" cy="575" r="13"/>
+    <circle cx="356" cy="615" r="13"/>
+    <circle cx="356" cy="665" r="13"/>
+    <circle cx="327" cy="705" r="13"/>
+    <circle cx="280" cy="720" r="13"/>
+    <circle cx="233" cy="705" r="13"/>
+    <circle cx="204" cy="665" r="13"/>
+    <circle cx="204" cy="615" r="13"/>
+    <circle cx="233" cy="575" r="13"/>
+  </g>
+  <text x="280" y="564" class="wheel">10</text>
+  <text x="327" y="579" class="wheel">20</text>
+  <text x="356" y="619" class="wheel">30</text>
+  <text x="356" y="669" class="wheel">40</text>
+  <text x="327" y="709" class="wheel">50</text>
+  <text x="280" y="724" class="wheel">60</text>
+  <text x="233" y="709" class="wheel">70</text>
+  <text x="204" y="669" class="wheel">80</text>
+  <text x="204" y="619" class="wheel">90</text>
+  <text x="233" y="579" class="wheel">100</text>
+  <circle cx="280" cy="640" r="24" fill="#7ee787" stroke="#1a7f37" stroke-width="2"/>
+  <text x="280" y="637" class="tag mid">centre</text>
+  <text x="280" y="648" class="tag mid">L18</text>
+  <text x="280" y="762" class="label mid">Bonus wheel (lamps only): 10 → L8 … 100 → L17</text>
+
+  <!-- Kicking rubbers -->
+  <polygon points="80,800 80,900 160,920" fill="#ffffff" stroke="#1f2328" stroke-width="3"/>
+  <polygon points="480,800 480,900 400,920" fill="#ffffff" stroke="#1f2328" stroke-width="3"/>
+  <text x="60" y="790" class="label">Left kicker</text>
+  <text x="60" y="777" class="tag">C1·R0 · coil 1</text>
+  <text x="500" y="790" class="label end">Right kicker</text>
+  <text x="500" y="777" class="tag end">C1·R1 · coil 2</text>
+
+  <!-- Flippers (inward facing) -->
+  <g fill="#ffffff" stroke="#1f2328" stroke-width="3" stroke-linejoin="round">
+    <path d="M 175 935 L 248 968 L 244 978 L 170 952 Z"/>
+    <path d="M 385 935 L 312 968 L 316 978 L 390 952 Z"/>
+  </g>
+  <circle cx="174" cy="943" r="7" fill="#57606a"/>
+  <circle cx="386" cy="943" r="7" fill="#57606a"/>
+  <text x="150" y="1000" class="label mid">Left flipper</text>
+  <text x="150" y="1013" class="tag mid">coils 8 (power), 9 (hold)</text>
+  <text x="410" y="1000" class="label mid">Right flipper</text>
+  <text x="410" y="1013" class="tag mid">coils 10 (power), 11 (hold)</text>
+
+  <!-- Centre post and outhole -->
+  <circle cx="280" cy="955" r="7" fill="#ffffff" stroke="#1f2328" stroke-width="2"/>
+  <circle cx="280" cy="1015" r="16" fill="#1f2328"/>
+  <text x="280" y="1060" class="label mid">Outhole: C0·R0 · ball serve: coil 0</text>
+
+  <!-- Legend -->
+  <g transform="translate(40, 1080)">
+    <text x="0" y="0" class="label" font-weight="bold">Key</text>
+    <circle cx="8" cy="16" r="7" fill="#7ee787" stroke="#1a7f37"/>
+    <text x="22" y="20" class="label">Pop bumper (switch + coil + cap lamp)</text>
+    <circle cx="8" cy="36" r="7" fill="#ffd33d" stroke="#9a6700"/>
+    <text x="22" y="40" class="label">Lamp</text>
+    <circle cx="8" cy="56" r="6" fill="#c9d1d9" stroke="#57606a"/>
+    <text x="22" y="60" class="label">Rollover switch</text>
+    <text x="270" y="20" class="label">C2·R0 = switch matrix column 2, row 0</text>
+    <text x="270" y="40" class="label">coil 3 = coil output 3 · L24 = lamp output 24</text>
+    <text x="270" y="60" class="label">Cabinet buttons and tilts: see the wiring guide</text>
+  </g>
+</svg>
