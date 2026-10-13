@@ -63,8 +63,10 @@ avr-hal, bump the toolchain to match its `rust-toolchain.toml`.
 
 ## Next steps
 
-- [ ] Survey the playfield and replace the placeholder features in
-      `crates/pinball-core/src/playfield.rs` with the real ones
+- [ ] Check the features in `crates/pinball-core/src/playfield.rs` (taken from a
+      photo) against the real playfield; counts marked *verify* are guesses
+- [ ] Confirm the scoring and bonus-wheel rules against the original schematic
+- [ ] Multi-player support (the instruction card prices per player)
 - [ ] Choose driver boards and confirm coil voltages and pulse times
 - [ ] Decide on a score display (backglass lamps, reels or LED digits)
 - [ ] Add sound

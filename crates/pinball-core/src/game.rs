@@ -1,4 +1,8 @@
 //! The game rules: a state machine driven by switch events and time.
+//!
+//! Scores follow the original's 1950s scale (a replay at 400 points). Point
+//! values printed on the playfield are used where visible; the rest, and the
+//! bonus-wheel rules, are assumptions to check against the schematic.
 
 use crate::coils::{CoilId, Coils};
 use crate::lamps::{LampMode, Lamps};
@@ -15,6 +19,10 @@ pub const DEBOUNCE_SCANS: u8 = 2;
 /// Delay between a ball draining and the next one being served, giving the
 /// ball time to settle in the outhole.
 pub const SERVE_DELAY_MS: u32 = 1_000;
+
+/// From the instruction card: one replay for each score of 400, 600, 700,
+/// 800 and 900 points.
+pub const REPLAY_SCORES: [u32; 5] = [400, 600, 700, 800, 900];
 
 const FLIPPER_POWER_MS: u16 = 40;
 
@@ -48,6 +56,9 @@ pub struct Machine {
     phase: Phase,
     ball: u8,
     score: u32,
+    replays: u8,
+    /// Lit position on the bonus wheel: 0 = 10 points ... 9 = 100 points.
+    bonus_step: u8,
     tilt_warnings: u8,
     serve_at: Option<Instant>,
 }
@@ -69,6 +80,8 @@ impl Machine {
             phase: Phase::Attract,
             ball: 0,
             score: 0,
+            replays: 0,
+            bonus_step: 0,
             tilt_warnings: 0,
             serve_at: None,
         };
@@ -92,6 +105,18 @@ impl Machine {
     #[must_use]
     pub const fn score(&self) -> u32 {
         self.score
+    }
+
+    /// Replays earned this game.
+    #[must_use]
+    pub const fn replays(&self) -> u8 {
+        self.replays
+    }
+
+    /// Value of the lit bonus-wheel position.
+    #[must_use]
+    pub const fn bonus(&self) -> u32 {
+        10 * (self.bonus_step as u32 + 1)
     }
 
     /// Advances the machine by one scan. Call roughly every millisecond with
@@ -141,22 +166,67 @@ impl Machine {
             }
             sw::LEFT_KICKER => {
                 kick(&mut self.coils, coil::LEFT_KICKER);
-                self.score += 10;
+                self.add_score(1);
             }
             sw::RIGHT_KICKER => {
                 kick(&mut self.coils, coil::RIGHT_KICKER);
-                self.score += 10;
+                self.add_score(1);
             }
-            sw::LEFT_OUTLANE | sw::RIGHT_OUTLANE => self.score += 1_000,
+            sw::TOP_CENTRE_BUMPER => self.add_score(1),
+            sw::BONUS_GATE => self.collect_bonus(),
             _ => {
                 if let Some(n) = sw::POP_BUMPERS.iter().position(|&pop| pop == id) {
                     kick(&mut self.coils, coil::POP_BUMPERS[n]);
-                    self.score += 100;
-                } else if let Some(n) = sw::TOP_ROLLOVERS.iter().position(|&lane| lane == id) {
-                    self.lamps.set(lamp::TOP_ROLLOVERS[n], LampMode::On);
-                    self.score += 500;
+                    self.add_score(1);
+                } else if sw::SIDE_LANES.contains(&id) || sw::TOP_LANES.contains(&id) {
+                    self.add_score(10);
+                    self.advance_bonus();
+                } else if let Some(n) = sw::THIRTY_POINT_ROLLOVERS.iter().position(|&r| r == id) {
+                    // TODO: find out what lights these on the original.
+                    let lit = self.lamps.mode(lamp::THIRTY_POINTS[n]) != LampMode::Off;
+                    self.add_score(if lit { 30 } else { 1 });
                 }
             }
+        }
+    }
+
+    fn add_score(&mut self, points: u32) {
+        let before = self.score;
+        self.score += points;
+        let earned = REPLAY_SCORES
+            .iter()
+            .filter(|&&threshold| before < threshold && threshold <= self.score)
+            .count();
+        // TODO: fire a knocker and/or drive a credit unit.
+        self.replays += earned as u8;
+    }
+
+    /// Assumed rule: each lane advances the bonus wheel one step; reaching
+    /// 100 lights the special.
+    fn advance_bonus(&mut self) {
+        if self.bonus_step < 9 {
+            self.lamps.set(
+                lamp::BONUS_WHEEL[usize::from(self.bonus_step)],
+                LampMode::Off,
+            );
+            self.bonus_step += 1;
+            self.lamps.set(
+                lamp::BONUS_WHEEL[usize::from(self.bonus_step)],
+                LampMode::On,
+            );
+        }
+        if self.bonus_step == 9 {
+            self.lamps.set(lamp::SPECIAL, LampMode::On);
+        }
+    }
+
+    /// Assumed rule: the "Scores Bonus" gate scores the lit wheel value, plus
+    /// a replay (once) when the special is lit.
+    fn collect_bonus(&mut self) {
+        self.add_score(self.bonus());
+        if self.lamps.mode(lamp::SPECIAL) != LampMode::Off {
+            self.lamps.set(lamp::SPECIAL, LampMode::Off);
+            self.replays += 1;
         }
     }
 
@@ -176,8 +246,11 @@ impl Machine {
 
     fn start_game(&mut self, now: Instant) {
         self.score = 0;
+        self.replays = 0;
+        self.bonus_step = 0;
         self.ball = 1;
         self.enter(Phase::Playing);
+        self.lamps.set(lamp::BONUS_WHEEL[0], LampMode::On);
         self.serve_at = Some(now);
     }
 
@@ -207,6 +280,9 @@ impl Machine {
                 self.coils.set_enabled(true);
                 self.lamps.set(lamp::GAME_OVER, LampMode::Off);
                 self.lamps.set(lamp::TILT, LampMode::Off);
+                for pop in lamp::POP_BUMPERS {
+                    self.lamps.set(pop, LampMode::On);
+                }
             }
             Phase::Tilted => {
                 // Cut everything (including held flippers), then re-enable so
@@ -324,6 +400,53 @@ mod tests {
         sim.tap(sw::OUTHOLE);
         assert_eq!(sim.machine.phase(), Phase::Playing);
         assert_eq!(sim.machine.ball(), 2);
+    }
+
+    #[test]
+    fn lanes_advance_the_bonus_wheel_and_the_gate_collects_it() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        assert_eq!(sim.machine.bonus(), 10);
+
+        sim.tap(sw::SIDE_LANES[0]);
+        sim.tap(sw::TOP_LANES[1]);
+        assert_eq!(sim.machine.bonus(), 30);
+        assert_eq!(sim.machine.score(), 20);
+
+        sim.tap(sw::BONUS_GATE);
+        assert_eq!(sim.machine.score(), 50);
+    }
+
+    #[test]
+    fn full_bonus_wheel_lights_special_for_one_replay() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        for _ in 0..12 {
+            sim.tap(sw::SIDE_LANES[2]);
+        }
+        assert_eq!(sim.machine.bonus(), 100);
+        sim.tap(sw::BONUS_GATE);
+        sim.tap(sw::BONUS_GATE);
+        // 120 lane points + 2 × 100 bonus = 320: no score replay yet.
+        assert_eq!(sim.machine.score(), 320);
+        assert_eq!(sim.machine.replays(), 1);
+    }
+
+    #[test]
+    fn replays_are_awarded_at_card_thresholds() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        for _ in 0..40 {
+            sim.tap(sw::SIDE_LANES[0]);
+        }
+        // 400 lane points crosses the first threshold.
+        assert_eq!(sim.machine.replays(), 1);
+        for _ in 0..3 {
+            sim.tap(sw::BONUS_GATE);
+        }
+        // + 3 × 100 = 700: crosses 600 and 700.
+        assert_eq!(sim.machine.score(), 700);
+        assert_eq!(sim.machine.replays(), 4);
     }
 
     #[test]

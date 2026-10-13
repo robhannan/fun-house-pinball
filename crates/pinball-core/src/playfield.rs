@@ -5,9 +5,20 @@
 //! Keep this file the single source of truth and update `docs/hardware.md`
 //! alongside it.
 //!
-//! The feature list below is a generic 1950s EM starter set (flippers, pop
-//! bumpers, kickers, rollovers, outlanes, outhole). Replace and extend it to
-//! match what is actually on the playfield as each assembly is restored.
+//! The feature list comes from a photo of a restored table. Counts marked
+//! *verify* are best guesses from that photo; check them against the real
+//! playfield and schematic.
+//!
+//! Playfield, top to bottom:
+//!
+//! * top lanes either side of a red centre bumper
+//! * three pop bumpers across the top
+//! * "10 points" side lanes and the centre "Scores Bonus" gate
+//! * "30 points when lit" rollovers, left and right
+//! * two lower pop bumpers, one each side
+//! * the 10–100 bonus wheel (lamps only), with "Special when lit" above it
+//! * two kicking rubbers above two inward-facing flippers, no outlanes, and a
+//!   centre post above the outhole
 
 use crate::coils::{COIL_COUNT, CoilId, CoilKind};
 use crate::lamps::LampId;
@@ -36,28 +47,44 @@ pub mod sw {
     pub const SHOOTER_LANE: SwitchId = SwitchId::matrix(0, 1);
 
     // Lower playfield.
-    /// Left outlane.
-    pub const LEFT_OUTLANE: SwitchId = SwitchId::matrix(1, 0);
-    /// Right outlane.
-    pub const RIGHT_OUTLANE: SwitchId = SwitchId::matrix(1, 1);
-    /// Left kicker (slingshot-style kicking rubber) switch.
-    pub const LEFT_KICKER: SwitchId = SwitchId::matrix(1, 2);
-    /// Right kicker switch.
-    pub const RIGHT_KICKER: SwitchId = SwitchId::matrix(1, 3);
+    /// Left kicking rubber, above the left flipper.
+    pub const LEFT_KICKER: SwitchId = SwitchId::matrix(1, 0);
+    /// Right kicking rubber, above the right flipper.
+    pub const RIGHT_KICKER: SwitchId = SwitchId::matrix(1, 1);
 
-    // Upper playfield.
-    /// Pop bumper skirt switches (adjust the count to match the playfield).
-    pub const POP_BUMPERS: [SwitchId; 3] = [
+    /// Pop bumper skirt switches: three across the top (left, centre, right),
+    /// then the lower left and lower right.
+    pub const POP_BUMPERS: [SwitchId; 5] = [
         SwitchId::matrix(2, 0),
         SwitchId::matrix(2, 1),
         SwitchId::matrix(2, 2),
+        SwitchId::matrix(2, 3),
+        SwitchId::matrix(2, 4),
     ];
-    /// Top rollover lanes (adjust the count to match the playfield).
-    pub const TOP_ROLLOVERS: [SwitchId; 3] = [
+
+    /// Top lanes, left to right (*verify*: count and whether the outer corner
+    /// units are lanes).
+    pub const TOP_LANES: [SwitchId; 4] = [
         SwitchId::matrix(3, 0),
         SwitchId::matrix(3, 1),
         SwitchId::matrix(3, 2),
+        SwitchId::matrix(3, 3),
     ];
+    /// Red bumper at the top centre (*verify*: passive bumper or target).
+    pub const TOP_CENTRE_BUMPER: SwitchId = SwitchId::matrix(3, 4);
+
+    /// "10 points" side lanes, left to right (*verify* count).
+    pub const SIDE_LANES: [SwitchId; 4] = [
+        SwitchId::matrix(4, 0),
+        SwitchId::matrix(4, 1),
+        SwitchId::matrix(4, 2),
+        SwitchId::matrix(4, 3),
+    ];
+    /// "Scores Bonus" gate in the centre.
+    pub const BONUS_GATE: SwitchId = SwitchId::matrix(4, 4);
+    /// "30 points when lit" rollovers, left then right.
+    pub const THIRTY_POINT_ROLLOVERS: [SwitchId; 2] =
+        [SwitchId::matrix(5, 0), SwitchId::matrix(5, 1)];
 }
 
 /// Coil driver assignments.
@@ -67,12 +94,18 @@ pub mod coil {
     /// Kicks a drained ball from the outhole back to the shooter lane.
     /// Leave unused if keeping the original manual ball lift.
     pub const BALL_SERVE: CoilId = CoilId::new(0);
-    /// Left kicker.
+    /// Left kicking rubber.
     pub const LEFT_KICKER: CoilId = CoilId::new(1);
-    /// Right kicker.
+    /// Right kicking rubber.
     pub const RIGHT_KICKER: CoilId = CoilId::new(2);
     /// Pop bumpers, matching [`super::sw::POP_BUMPERS`].
-    pub const POP_BUMPERS: [CoilId; 3] = [CoilId::new(3), CoilId::new(4), CoilId::new(5)];
+    pub const POP_BUMPERS: [CoilId; 5] = [
+        CoilId::new(3),
+        CoilId::new(4),
+        CoilId::new(5),
+        CoilId::new(6),
+        CoilId::new(7),
+    ];
     /// Left flipper power (high-current) winding.
     pub const LEFT_FLIPPER_POWER: CoilId = CoilId::new(8);
     /// Left flipper hold (low-current) winding.
@@ -91,8 +124,33 @@ pub mod lamp {
     pub const GAME_OVER: LampId = LampId::new(0);
     /// "Tilt" backglass lamp.
     pub const TILT: LampId = LampId::new(1);
-    /// Top rollover lane lamps, matching [`super::sw::TOP_ROLLOVERS`].
-    pub const TOP_ROLLOVERS: [LampId; 3] = [LampId::new(8), LampId::new(9), LampId::new(10)];
+    /// "Special when lit", above the bonus wheel.
+    pub const SPECIAL: LampId = LampId::new(2);
+    /// The bonus wheel: 10, 20, ... 100 points.
+    pub const BONUS_WHEEL: [LampId; 10] = [
+        LampId::new(8),
+        LampId::new(9),
+        LampId::new(10),
+        LampId::new(11),
+        LampId::new(12),
+        LampId::new(13),
+        LampId::new(14),
+        LampId::new(15),
+        LampId::new(16),
+        LampId::new(17),
+    ];
+    /// "10 points when lit" in the centre of the bonus wheel.
+    pub const BONUS_WHEEL_CENTRE: LampId = LampId::new(18);
+    /// "30 points when lit", matching [`super::sw::THIRTY_POINT_ROLLOVERS`].
+    pub const THIRTY_POINTS: [LampId; 2] = [LampId::new(20), LampId::new(21)];
+    /// Pop bumper caps, matching [`super::sw::POP_BUMPERS`].
+    pub const POP_BUMPERS: [LampId; 5] = [
+        LampId::new(24),
+        LampId::new(25),
+        LampId::new(26),
+        LampId::new(27),
+        LampId::new(28),
+    ];
 }
 
 const fn pulse(max_ms: u16, recycle_ms: u16) -> CoilKind {
@@ -107,9 +165,11 @@ pub const COIL_KINDS: [CoilKind; COIL_COUNT] = {
     k[coil::BALL_SERVE.index()] = pulse(30, 500);
     k[coil::LEFT_KICKER.index()] = pulse(20, 100);
     k[coil::RIGHT_KICKER.index()] = pulse(20, 100);
-    k[coil::POP_BUMPERS[0].index()] = pulse(20, 60);
-    k[coil::POP_BUMPERS[1].index()] = pulse(20, 60);
-    k[coil::POP_BUMPERS[2].index()] = pulse(20, 60);
+    let mut i = 0;
+    while i < coil::POP_BUMPERS.len() {
+        k[coil::POP_BUMPERS[i].index()] = pulse(20, 60);
+        i += 1;
+    }
     k[coil::LEFT_FLIPPER_POWER.index()] = pulse(40, 0);
     k[coil::LEFT_FLIPPER_HOLD.index()] = CoilKind::Hold;
     k[coil::RIGHT_FLIPPER_POWER.index()] = pulse(40, 0);
