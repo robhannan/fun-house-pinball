@@ -31,7 +31,14 @@ fn main() -> ! {
         pins.d51.into_output(),
         pins.d50.into_pull_up_input(),
         pins.d53.into_output(),
-        spi::Settings::default(),
+        // The 74HC595 samples data on the rising clock edge, which needs SPI
+        // mode 0 (avr-hal defaults to mode 1). 1 MHz leaves margin for long
+        // wires to the playfield.
+        spi::Settings {
+            mode: embedded_hal::spi::MODE_0,
+            clock: spi::SerialClockRate::OscfOver16,
+            ..spi::Settings::default()
+        },
     );
     let mut outputs = OutputChain {
         spi,
