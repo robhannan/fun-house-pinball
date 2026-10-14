@@ -20,7 +20,7 @@ jobs:
     name: Game logic (host)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       # rustup reads rust-toolchain.toml and installs the right toolchain.
       - run: rustup show active-toolchain || rustup toolchain install
       - uses: Swatinem/rust-cache@v2
@@ -35,7 +35,7 @@ jobs:
       run:
         working-directory: firmware
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Install AVR toolchain
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-avr avr-libc binutils-avr
       - run: rustup show active-toolchain || rustup toolchain install
