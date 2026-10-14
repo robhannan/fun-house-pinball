@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1180" width="600" height="1180" font-family="Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1200" width="600" height="1200" font-family="Helvetica, Arial, sans-serif">
   <title>Fun House (1956) playfield wiring reference</title>
   <desc>Schematic, not to scale, drawn from a photo of the playfield. Labels give each part's switch matrix position (C = column, R = row), coil number and lamp number, matching crates/pinball-core/src/playfield.rs.</desc>
 
@@ -12,7 +12,7 @@
     .end { text-anchor: end; }
   </style>
 
-  <rect width="600" height="1180" fill="#ffffff"/>
+  <rect width="600" height="1200" fill="#ffffff"/>
 
   <text x="280" y="28" class="title mid">Fun House (Williams, 1956): wiring reference</text>
   <text x="280" y="46" class="sub mid">Schematic, not to scale. Parts marked * are guesses from a photo: verify on the table.</text>
@@ -89,8 +89,13 @@
 
   <!-- Scores Bonus gate -->
   <rect x="190" y="320" width="180" height="46" rx="4" fill="#ffffff" stroke="#d73a49" stroke-width="3"/>
-  <text x="280" y="348" class="label mid">SCORES BONUS gate</text>
-  <text x="280" y="382" class="tag mid">C4·R4</text>
+  <text x="280" y="338" class="label mid">SCORES BONUS gate</text>
+  <g fill="#1f2328">
+    <rect x="221" y="346" width="18" height="12" rx="2"/>
+    <rect x="271" y="346" width="18" height="12" rx="2"/>
+    <rect x="321" y="346" width="18" height="12" rx="2"/>
+  </g>
+  <text x="280" y="380" class="tag mid">Gate C4·R4 · trapdoors 1–3: C4·R5–R7, flap coils 12–14</text>
 
   <!-- Special when lit -->
   <polygon points="280,400 300,432 260,432" fill="#ffd33d" stroke="#9a6700" stroke-width="2"/>
@@ -179,6 +184,8 @@
     <text x="22" y="40" class="label">Lamp</text>
     <circle cx="8" cy="56" r="6" fill="#c9d1d9" stroke="#57606a"/>
     <text x="22" y="60" class="label">Rollover switch</text>
+    <rect x="1" y="70" width="14" height="10" rx="2" fill="#1f2328"/>
+    <text x="22" y="80" class="label">Trapdoor (switch + flap coil)</text>
     <text x="270" y="20" class="label">C2·R0 = switch matrix column 2, row 0</text>
     <text x="270" y="40" class="label">coil 3 = coil output 3 · L24 = lamp output 24</text>
     <text x="270" y="60" class="label">Cabinet buttons and tilts: see the wiring guide</text>

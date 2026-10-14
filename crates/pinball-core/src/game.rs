@@ -174,6 +174,9 @@ impl Machine {
             }
             sw::TOP_CENTRE_BUMPER => self.add_score(1),
             sw::BONUS_GATE => self.collect_bonus(),
+            // Assumed (*verify*): the ball drops under the playfield and rolls
+            // to the outhole, which ends the ball as usual.
+            id if sw::TRAPDOORS.contains(&id) => self.close_trapdoors(),
             _ => {
                 if let Some(n) = sw::POP_BUMPERS.iter().position(|&pop| pop == id) {
                     kick(&mut self.coils, coil::POP_BUMPERS[n]);
@@ -187,6 +190,27 @@ impl Machine {
                     self.add_score(if lit { 30 } else { 1 });
                 }
             }
+        }
+    }
+
+    /// Opens or closes trapdoor `n` (0–2, left to right) under the "Scores
+    /// Bonus" gate. Only works while a ball is in play.
+    ///
+    /// TODO: call this from the rules once we know what opens the flaps on
+    /// the original.
+    ///
+    /// # Panics
+    ///
+    /// If `n` is not 0, 1 or 2.
+    pub fn set_trapdoor(&mut self, n: usize, open: bool) {
+        if self.phase == Phase::Playing {
+            self.coils.hold(coil::TRAPDOOR_FLAPS[n], open);
+        }
+    }
+
+    fn close_trapdoors(&mut self) {
+        for flap in coil::TRAPDOOR_FLAPS {
+            self.coils.hold(flap, false);
         }
     }
 
@@ -278,6 +302,7 @@ impl Machine {
                 // TODO: decide which lamps (e.g. rollovers) reset per ball.
                 self.tilt_warnings = 0;
                 self.coils.set_enabled(true);
+                self.close_trapdoors();
                 self.lamps.set(lamp::GAME_OVER, LampMode::Off);
                 self.lamps.set(lamp::TILT, LampMode::Off);
                 for pop in lamp::POP_BUMPERS {
@@ -447,6 +472,43 @@ mod tests {
         // + 3 × 100 = 700: crosses 600 and 700.
         assert_eq!(sim.machine.score(), 700);
         assert_eq!(sim.machine.replays(), 4);
+    }
+
+    #[test]
+    fn trapdoor_flap_stays_open_until_a_ball_drops_through() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.machine.set_trapdoor(1, true);
+        sim.run(5_000);
+        assert!(sim.coil_on(coil::TRAPDOOR_FLAPS[1]));
+
+        sim.tap(sw::TRAPDOORS[1]);
+        assert!(!sim.coil_on(coil::TRAPDOOR_FLAPS[1]));
+        // The ball isn't over until it reaches the outhole.
+        assert_eq!(sim.machine.ball(), 1);
+        sim.tap(sw::OUTHOLE);
+        assert_eq!(sim.machine.ball(), 2);
+    }
+
+    #[test]
+    fn trapdoors_close_on_tilt_and_stay_shut() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.machine.set_trapdoor(0, true);
+        sim.tap(sw::TILT);
+        assert!(!sim.coil_on(coil::TRAPDOOR_FLAPS[0]));
+        sim.machine.set_trapdoor(0, true);
+        sim.run(5);
+        assert!(!sim.coil_on(coil::TRAPDOOR_FLAPS[0]));
+    }
+
+    #[test]
+    fn trapdoors_are_closed_for_each_new_ball() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.machine.set_trapdoor(2, true);
+        sim.tap(sw::OUTHOLE);
+        assert!(!sim.coil_on(coil::TRAPDOOR_FLAPS[2]));
     }
 
     #[test]
