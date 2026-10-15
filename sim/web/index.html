@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fun House Simulator</title>
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --panel: #ffffff;
+      --text: #1f2328;
+      --muted: #57606a;
+      --border: #d0d7de;
+      --accent: #d73a49;
+      --lamp: #ffd33d;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --panel: #161b22;
+        --text: #e6edf3;
+        --muted: #8d96a0;
+        --border: #30363d;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    main {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      justify-content: center;
+      padding: 16px;
+    }
+    #playfield { flex: 0 1 600px; min-width: 0; }
+    #playfield svg { width: 100%; height: auto; display: block; border-radius: 8px; }
+    aside { flex: 0 1 320px; display: flex; flex-direction: column; gap: 16px; }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    h2 { font-size: 14px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+    p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
+    .score { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-top: 12px; font-size: 14px; }
+    .stats dt { color: var(--muted); }
+    .stats dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .backglass-lamps { display: flex; gap: 8px; margin-top: 12px; }
+    .backglass-lamps span {
+      flex: 1;
+      text-align: center;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 13px;
+      opacity: .35;
+    }
+    .backglass-lamps span.lit { opacity: 1; background: var(--lamp); color: #1f2328; }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    button {
+      font: inherit;
+      font-size: 14px;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    button:active, button.pressed { background: var(--accent); color: #fff; }
+    kbd {
+      font-size: 12px;
+      padding: 1px 5px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--muted);
+    }
+    ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+    /* Playfield interaction */
+    #playfield text { pointer-events: none; }
+    #playfield [data-switch] { cursor: pointer; }
+    #playfield [data-switch]:hover { filter: brightness(1.15); stroke: var(--accent); stroke-width: 3px; }
+    #playfield [data-lamp] { transition: opacity 60ms; }
+    #playfield [data-lamp]:not(.lit) { opacity: .3; }
+    #playfield .firing { stroke: #ff6a00 !important; stroke-width: 6px !important; filter: drop-shadow(0 0 6px #ff6a00); }
+    #playfield [data-trapdoor].firing { fill: #fff8c5; }
+    #playfield .hit { filter: drop-shadow(0 0 8px var(--accent)); }
+    #playfield [data-flipper] { transform-box: view-box; transition: transform 40ms ease-out; }
+    #playfield [data-flipper="left"] { transform-origin: 174px 943px; }
+    #playfield [data-flipper="right"] { transform-origin: 386px 943px; }
+    #playfield [data-flipper="left"].up { transform: rotate(-50deg); }
+    #playfield [data-flipper="right"].up { transform: rotate(50deg); }
+  </style>
+</head>
+<body>
+  <main>
+    <div id="playfield" aria-label="Playfield">Loading…</div>
+    <aside>
+      <section>
+        <h1>Fun House (1956)</h1>
+        <p>Runs the real game logic from <code>pinball-core</code>. Click a part to roll a ball over its switch.</p>
+      </section>
+
+      <section aria-live="polite">
+        <h2>Backglass</h2>
+        <div class="score" id="score">0</div>
+        <dl class="stats">
+          <dt>Ball</dt><dd id="ball">–</dd>
+          <dt>Replays</dt><dd id="replays">0</dd>
+          <dt>Bonus lit</dt><dd id="bonus">10</dd>
+          <dt>Mode</dt><dd id="phase">Attract</dd>
+        </dl>
+        <div class="backglass-lamps">
+          <span data-lamp="0">GAME OVER</span>
+          <span data-lamp="1">TILT</span>
+        </div>
+      </section>
+
+      <section>
+        <h2>Cabinet</h2>
+        <div class="buttons">
+          <button data-switch="D0" data-hold>Left flipper <kbd>Z</kbd></button>
+          <button data-switch="D1" data-hold>Right flipper <kbd>M</kbd></button>
+          <button data-switch="D2">Start <kbd>Enter</kbd></button>
+          <button data-switch="D3">Tilt <kbd>T</kbd></button>
+          <button data-switch="D4">Slam tilt</button>
+          <button id="reset">Power cycle</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Trapdoors</h2>
+        <p>What opens the flaps on the original isn't known yet (#24), so open them by hand. Click an open trapdoor to drop a ball through.</p>
+        <div class="buttons" style="grid-template-columns: 1fr 1fr 1fr; margin-top: 12px;">
+          <button data-trapdoor-toggle="0">Flap 1</button>
+          <button data-trapdoor-toggle="1">Flap 2</button>
+          <button data-trapdoor-toggle="2">Flap 3</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>How to play</h2>
+        <ul>
+          <li>Press <kbd>Enter</kbd> to start a game.</li>
+          <li>Hold <kbd>Z</kbd> or <kbd>M</kbd> for the flippers.</li>
+          <li>Click lanes, bumpers and the gate to score.</li>
+          <li>Click the outhole (or press <kbd>D</kbd>) to drain the ball.</li>
+          <li>Orange glow = coil firing. Dim lamps are off. An open trapdoor glows.</li>
+        </ul>
+      </section>
+    </aside>
+  </main>
+  <script type="module" src="sim.js"></script>
+</body>
+</html>

@@ -3,4 +3,6 @@
 [toolchain]
 channel = "stable"
 components = ["rustfmt", "clippy"]
+# For the browser simulator in crates/pinball-sim.
+targets = ["wasm32-unknown-unknown"]
 profile = "minimal"

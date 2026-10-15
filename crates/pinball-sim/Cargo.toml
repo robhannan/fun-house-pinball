@@ -1,0 +1,29 @@
+[package]
+name = "pinball-sim"
+description = "Browser simulator for the Fun House game logic, compiled to WebAssembly"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lib]
+# cdylib for the browser, rlib so the tests can link it on the host.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pinball-core = { path = "../pinball-core" }
+
+# Same as the workspace lints, except `unsafe_code` is `deny` rather than
+# `forbid`: the WebAssembly exports need `#[unsafe(no_mangle)]`, which is allowed
+# in exactly one module. There are no `unsafe` blocks.
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+unused_must_use = "deny"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+cast_possible_truncation = "allow"
+module_name_repetitions = "allow"

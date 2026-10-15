@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1200" width="600" height="1200" font-family="Helvetica, Arial, sans-serif">
   <title>Fun House (1956) playfield wiring reference</title>
-  <desc>Schematic, not to scale, drawn from a photo of the playfield. Labels give each part's switch matrix position (C = column, R = row), coil number and lamp number, matching crates/pinball-core/src/playfield.rs.</desc>
+  <desc>Schematic, not to scale, drawn from a photo of the playfield. Labels give each part's switch matrix position (C = column, R = row), coil number and lamp number, matching crates/pinball-core/src/playfield.rs. The data-switch, data-coil and data-lamp attributes drive the simulator in sim/ and are checked against playfield.rs by its tests.</desc>
 
   <style>
     .label { font-size: 10px; fill: #1f2328; }
@@ -22,7 +22,7 @@
 
   <!-- Shooter lane (right edge) -->
   <line x1="525" y1="130" x2="525" y2="1040" stroke="#8a6d3b" stroke-width="2"/>
-  <circle cx="542" cy="1010" r="7" fill="#c9d1d9" stroke="#57606a"/>
+  <circle cx="542" cy="1010" r="7" fill="#c9d1d9" stroke="#57606a" data-switch="C0R1"/>
   <text x="547" y="990" class="label" transform="rotate(-90 547 990)">Shooter lane: C0·R1 *</text>
 
   <!-- Top lanes -->
@@ -35,10 +35,10 @@
     <line x1="480" y1="95" x2="480" y2="150"/>
   </g>
   <g fill="#c9d1d9" stroke="#57606a">
-    <circle cx="105" cy="125" r="7"/>
-    <circle cx="152" cy="125" r="7"/>
-    <circle cx="407" cy="125" r="7"/>
-    <circle cx="455" cy="125" r="7"/>
+    <circle cx="105" cy="125" r="7" data-switch="C3R0"/>
+    <circle cx="152" cy="125" r="7" data-switch="C3R1"/>
+    <circle cx="407" cy="125" r="7" data-switch="C3R2"/>
+    <circle cx="455" cy="125" r="7" data-switch="C3R3"/>
   </g>
   <text x="105" y="168" class="tag mid">Lane 1</text>
   <text x="152" y="168" class="tag mid">Lane 2</text>
@@ -47,15 +47,15 @@
   <text x="128" y="182" class="label mid">Top lanes *: C3·R0–R3</text>
 
   <!-- Top centre red bumper -->
-  <circle cx="280" cy="125" r="28" fill="#d73a49" stroke="#86181d" stroke-width="2"/>
+  <circle cx="280" cy="125" r="28" fill="#d73a49" stroke="#86181d" stroke-width="2" data-switch="C3R4"/>
   <text x="280" y="129" class="label mid" fill="#ffffff" style="fill:#fff">Red *</text>
   <text x="280" y="170" class="label mid">Top centre bumper: C3·R4</text>
 
   <!-- Upper pop bumpers -->
   <g fill="#7ee787" stroke="#1a7f37" stroke-width="2">
-    <circle cx="150" cy="240" r="30"/>
-    <circle cx="280" cy="230" r="30"/>
-    <circle cx="410" cy="240" r="30"/>
+    <circle cx="150" cy="240" r="30" data-switch="C2R0" data-coil="3" data-lamp="24"/>
+    <circle cx="280" cy="230" r="30" data-switch="C2R1" data-coil="4" data-lamp="25"/>
+    <circle cx="410" cy="240" r="30" data-switch="C2R2" data-coil="5" data-lamp="26"/>
   </g>
   <text x="150" y="237" class="label mid">Pop 1</text>
   <text x="150" y="250" class="tag mid">top left</text>
@@ -77,10 +77,10 @@
     <line x1="470" y1="320" x2="470" y2="380"/>
   </g>
   <g fill="#c9d1d9" stroke="#57606a">
-    <circle cx="75" cy="350" r="6"/>
-    <circle cx="105" cy="350" r="6"/>
-    <circle cx="425" cy="350" r="6"/>
-    <circle cx="455" cy="350" r="6"/>
+    <circle cx="75" cy="350" r="6" data-switch="C4R0"/>
+    <circle cx="105" cy="350" r="6" data-switch="C4R1"/>
+    <circle cx="425" cy="350" r="6" data-switch="C4R2"/>
+    <circle cx="455" cy="350" r="6" data-switch="C4R3"/>
   </g>
   <text x="48" y="400" class="label">"10 points" lanes 1–2 *</text>
   <text x="48" y="413" class="tag">C4·R0, C4·R1</text>
@@ -88,22 +88,22 @@
   <text x="480" y="413" class="tag end">C4·R2, C4·R3</text>
 
   <!-- Scores Bonus gate -->
-  <rect x="190" y="320" width="180" height="46" rx="4" fill="#ffffff" stroke="#d73a49" stroke-width="3"/>
+  <rect x="190" y="320" width="180" height="46" rx="4" fill="#ffffff" stroke="#d73a49" stroke-width="3" data-switch="C4R4"/>
   <text x="280" y="338" class="label mid">SCORES BONUS gate</text>
   <g fill="#1f2328">
-    <rect x="221" y="346" width="18" height="12" rx="2"/>
-    <rect x="271" y="346" width="18" height="12" rx="2"/>
-    <rect x="321" y="346" width="18" height="12" rx="2"/>
+    <rect x="221" y="346" width="18" height="12" rx="2" data-switch="C4R5" data-coil="12" data-trapdoor="0"/>
+    <rect x="271" y="346" width="18" height="12" rx="2" data-switch="C4R6" data-coil="13" data-trapdoor="1"/>
+    <rect x="321" y="346" width="18" height="12" rx="2" data-switch="C4R7" data-coil="14" data-trapdoor="2"/>
   </g>
   <text x="280" y="380" class="tag mid">Gate C4·R4 · trapdoors 1–3: C4·R5–R7, flap coils 12–14</text>
 
   <!-- Special when lit -->
-  <polygon points="280,400 300,432 260,432" fill="#ffd33d" stroke="#9a6700" stroke-width="2"/>
+  <polygon points="280,400 300,432 260,432" fill="#ffd33d" stroke="#9a6700" stroke-width="2" data-lamp="2"/>
   <text x="310" y="425" class="label">Special when lit: L2</text>
 
   <!-- "30 points when lit" rollovers -->
-  <circle cx="105" cy="455" r="10" fill="#ffd33d" stroke="#9a6700" stroke-width="2"/>
-  <circle cx="455" cy="455" r="10" fill="#ffd33d" stroke="#9a6700" stroke-width="2"/>
+  <circle cx="105" cy="455" r="10" fill="#ffd33d" stroke="#9a6700" stroke-width="2" data-switch="C5R0" data-lamp="20"/>
+  <circle cx="455" cy="455" r="10" fill="#ffd33d" stroke="#9a6700" stroke-width="2" data-switch="C5R1" data-lamp="21"/>
   <text x="123" y="452" class="label">"30 pts" left</text>
   <text x="123" y="465" class="tag">C5·R0 · L20</text>
   <text x="437" y="452" class="label end">"30 pts" right</text>
@@ -111,8 +111,8 @@
 
   <!-- Lower pop bumpers -->
   <g fill="#7ee787" stroke="#1a7f37" stroke-width="2">
-    <circle cx="105" cy="540" r="30"/>
-    <circle cx="455" cy="540" r="30"/>
+    <circle cx="105" cy="540" r="30" data-switch="C2R3" data-coil="6" data-lamp="27"/>
+    <circle cx="455" cy="540" r="30" data-switch="C2R4" data-coil="7" data-lamp="28"/>
   </g>
   <text x="105" y="537" class="label mid">Pop 4</text>
   <text x="105" y="550" class="tag mid">lower left</text>
@@ -124,16 +124,16 @@
   <!-- Bonus wheel (lamps only) -->
   <circle cx="280" cy="640" r="100" fill="#ffd8d3" stroke="#d73a49" stroke-width="2"/>
   <g fill="#ffd33d" stroke="#9a6700" stroke-width="1.5">
-    <circle cx="280" cy="560" r="13"/>
-    <circle cx="327" cy="575" r="13"/>
-    <circle cx="356" cy="615" r="13"/>
-    <circle cx="356" cy="665" r="13"/>
-    <circle cx="327" cy="705" r="13"/>
-    <circle cx="280" cy="720" r="13"/>
-    <circle cx="233" cy="705" r="13"/>
-    <circle cx="204" cy="665" r="13"/>
-    <circle cx="204" cy="615" r="13"/>
-    <circle cx="233" cy="575" r="13"/>
+    <circle cx="280" cy="560" r="13" data-lamp="8"/>
+    <circle cx="327" cy="575" r="13" data-lamp="9"/>
+    <circle cx="356" cy="615" r="13" data-lamp="10"/>
+    <circle cx="356" cy="665" r="13" data-lamp="11"/>
+    <circle cx="327" cy="705" r="13" data-lamp="12"/>
+    <circle cx="280" cy="720" r="13" data-lamp="13"/>
+    <circle cx="233" cy="705" r="13" data-lamp="14"/>
+    <circle cx="204" cy="665" r="13" data-lamp="15"/>
+    <circle cx="204" cy="615" r="13" data-lamp="16"/>
+    <circle cx="233" cy="575" r="13" data-lamp="17"/>
   </g>
   <text x="280" y="564" class="wheel">10</text>
   <text x="327" y="579" class="wheel">20</text>
@@ -145,14 +145,14 @@
   <text x="204" y="669" class="wheel">80</text>
   <text x="204" y="619" class="wheel">90</text>
   <text x="233" y="579" class="wheel">100</text>
-  <circle cx="280" cy="640" r="24" fill="#7ee787" stroke="#1a7f37" stroke-width="2"/>
+  <circle cx="280" cy="640" r="24" fill="#7ee787" stroke="#1a7f37" stroke-width="2" data-lamp="18"/>
   <text x="280" y="637" class="tag mid">centre</text>
   <text x="280" y="648" class="tag mid">L18</text>
   <text x="280" y="762" class="label mid">Bonus wheel (lamps only): 10 → L8 … 100 → L17</text>
 
   <!-- Kicking rubbers -->
-  <polygon points="80,800 80,900 160,920" fill="#ffffff" stroke="#1f2328" stroke-width="3"/>
-  <polygon points="480,800 480,900 400,920" fill="#ffffff" stroke="#1f2328" stroke-width="3"/>
+  <polygon points="80,800 80,900 160,920" fill="#ffffff" stroke="#1f2328" stroke-width="3" data-switch="C1R0" data-coil="1"/>
+  <polygon points="480,800 480,900 400,920" fill="#ffffff" stroke="#1f2328" stroke-width="3" data-switch="C1R1" data-coil="2"/>
   <text x="60" y="790" class="label">Left kicker</text>
   <text x="60" y="777" class="tag">C1·R0 · coil 1</text>
   <text x="500" y="790" class="label end">Right kicker</text>
@@ -160,8 +160,8 @@
 
   <!-- Flippers (inward facing) -->
   <g fill="#ffffff" stroke="#1f2328" stroke-width="3" stroke-linejoin="round">
-    <path d="M 175 935 L 248 968 L 244 978 L 170 952 Z"/>
-    <path d="M 385 935 L 312 968 L 316 978 L 390 952 Z"/>
+    <path d="M 175 935 L 248 968 L 244 978 L 170 952 Z" data-coil="8 9" data-flipper="left"/>
+    <path d="M 385 935 L 312 968 L 316 978 L 390 952 Z" data-coil="10 11" data-flipper="right"/>
   </g>
   <circle cx="174" cy="943" r="7" fill="#57606a"/>
   <circle cx="386" cy="943" r="7" fill="#57606a"/>
@@ -172,7 +172,7 @@
 
   <!-- Centre post and outhole -->
   <circle cx="280" cy="955" r="7" fill="#ffffff" stroke="#1f2328" stroke-width="2"/>
-  <circle cx="280" cy="1015" r="16" fill="#1f2328"/>
+  <circle cx="280" cy="1015" r="16" fill="#1f2328" data-switch="C0R0" data-coil="0"/>
   <text x="280" y="1060" class="label mid">Outhole: C0·R0 · ball serve: coil 0</text>
 
   <!-- Legend -->

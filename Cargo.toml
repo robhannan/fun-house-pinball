@@ -3,7 +3,7 @@
 # logic in `crates/` builds and tests on stable Rust on your laptop and in CI.
 [workspace]
 resolver = "3"
-members = ["crates/pinball-core"]
+members = ["crates/pinball-core", "crates/pinball-sim"]
 exclude = ["firmware"]
 
 [workspace.package]
