@@ -36,6 +36,8 @@ pub struct Simulator {
     /// Switches closed by [`Simulator::tap`], with when to release each one.
     taps: Vec<(SwitchId, Instant)>,
     outputs: Outputs,
+    /// Every coil that was on at any point during the last [`Simulator::advance`].
+    coils_seen: u32,
 }
 
 impl Default for Simulator {
@@ -54,6 +56,7 @@ impl Simulator {
             now: Instant::from_millis(0),
             taps: Vec::new(),
             outputs: Outputs::default(),
+            coils_seen: 0,
         }
     }
 
@@ -67,6 +70,14 @@ impl Simulator {
     #[must_use]
     pub const fn outputs(&self) -> Outputs {
         self.outputs
+    }
+
+    /// Every coil that was on at any point during the last
+    /// [`Simulator::advance`]. A 20 ms pulse can start and end between two
+    /// browser frames; this lets the page still show it.
+    #[must_use]
+    pub const fn coils_seen(&self) -> u32 {
+        self.coils_seen
     }
 
     /// Holds a switch closed or open, e.g. a flipper button.
@@ -93,6 +104,7 @@ impl Simulator {
     /// Runs the machine for `ms` simulated milliseconds (capped at
     /// [`MAX_ADVANCE_MS`]), one 1 ms tick at a time as the firmware does.
     pub fn advance(&mut self, ms: u32) {
+        self.coils_seen = 0;
         for _ in 0..ms.min(MAX_ADVANCE_MS) {
             self.now = self.now.plus(1);
             let now = self.now;
@@ -105,6 +117,7 @@ impl Simulator {
                 !due
             });
             self.outputs = self.machine.tick(now, &self.switches);
+            self.coils_seen |= self.outputs.coils;
         }
     }
 }
@@ -163,6 +176,12 @@ mod exports {
     #[unsafe(no_mangle)]
     pub extern "C" fn sim_coils() -> u32 {
         with(|sim| sim.outputs().coils)
+    }
+
+    /// Every coil that was on during the last advance, for showing short pulses.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_coils_seen() -> u32 {
+        with(|sim| sim.coils_seen())
     }
 
     /// Lamps 0–31 as a bitmap.
@@ -260,6 +279,19 @@ mod tests {
     }
 
     #[test]
+    fn a_pulse_inside_one_advance_is_still_seen() {
+        let mut sim = Simulator::new();
+        sim.tap(sw::START_BUTTON);
+        sim.advance(100);
+        sim.tap(sw::LEFT_KICKER);
+        // Long enough for the 20 ms kicker pulse to start and finish.
+        sim.advance(100);
+        let kicker = 1 << coil::LEFT_KICKER.index();
+        assert_eq!(sim.outputs().coils & kicker, 0);
+        assert_ne!(sim.coils_seen() & kicker, 0);
+    }
+
+    #[test]
     fn advance_is_capped() {
         let mut sim = Simulator::new();
         sim.advance(u32::MAX);
@@ -281,6 +313,10 @@ mod tests {
 
     const SVG: &str = include_str!("../../../docs/playfield.svg");
     const HTML: &str = include_str!("../../../sim/web/index.html");
+    // The tests below compare the page against lists of `playfield.rs`
+    // constants written out by hand, so a new constant must be added to them.
+    // Keyboard shortcuts live on the `index.html` buttons (`data-key`), so
+    // they're covered too.
 
     fn attribute_values(attribute: &str) -> BTreeSet<String> {
         let needle = format!("{attribute}=\"");

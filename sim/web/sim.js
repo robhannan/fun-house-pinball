@@ -10,7 +10,6 @@
 
 const PHASES = ["Attract", "Playing", "Tilted"];
 const COIL_GLOW_MS = 150; // keep short coil pulses visible
-const KEYS = { z: "D0", m: "D1", enter: "D2", t: "D3", d: "C0R0" };
 
 // "C2R3" (matrix column 2, row 3) -> 19; "D1" (direct input 1) -> 65.
 function switchIndex(label) {
@@ -81,19 +80,40 @@ function start(sim) {
     });
   }
 
+  // Keyboard shortcuts come from the buttons' data-key attributes, so the
+  // labels live in one place (index.html, which the Rust tests check).
+  const keys = new Map(
+    [...document.querySelectorAll("button[data-key]")].map((button) => [button.dataset.key, button]),
+  );
+  const held = new Set();
+  const keyButton = (event) =>
+    event.ctrlKey || event.metaKey || event.altKey ? undefined : keys.get(event.key.toLowerCase());
+
   addEventListener("keydown", (event) => {
-    const label = KEYS[event.key.toLowerCase()];
-    if (!label || event.repeat) return;
+    const button = keyButton(event);
+    if (!button) return;
     event.preventDefault();
-    if (label === "D0" || label === "D1") press(label, true);
-    else tap(label);
-    document.querySelector(`button[data-switch="${label}"]`)?.classList.add("pressed");
+    if (event.repeat) return;
+    if (button.hasAttribute("data-hold")) {
+      press(button.dataset.switch, true);
+      held.add(button);
+    } else {
+      tap(button.dataset.switch);
+    }
+    button.classList.add("pressed");
   });
+  const release = (button) => {
+    if (held.delete(button)) press(button.dataset.switch, false);
+    button.classList.remove("pressed");
+  };
   addEventListener("keyup", (event) => {
-    const label = KEYS[event.key.toLowerCase()];
-    if (!label) return;
-    if (label === "D0" || label === "D1") press(label, false);
-    document.querySelector(`button[data-switch="${label}"]`)?.classList.remove("pressed");
+    const button = keys.get(event.key.toLowerCase());
+    if (button) release(button);
+  });
+  // A key released while the window is in the background never sends keyup,
+  // so let go of everything when focus is lost.
+  addEventListener("blur", () => {
+    for (const button of [...held]) release(button);
   });
 
   const text = (id, value) => {
@@ -111,6 +131,7 @@ function start(sim) {
     if (ms > 0) sim.sim_advance(ms);
 
     const coilBits = sim.sim_coils() >>> 0;
+    const coilsSeen = sim.sim_coils_seen() >>> 0;
     const lampLow = sim.sim_lamps_low() >>> 0;
     const lampHigh = sim.sim_lamps_high() >>> 0;
 
@@ -119,7 +140,7 @@ function start(sim) {
       el.classList.toggle("lit", ((word >>> (lamp % 32)) & 1) === 1);
     }
     for (const coil of coils) {
-      if (coilBits & coil.mask) coil.lastOn = now;
+      if (coilsSeen & coil.mask) coil.lastOn = now;
       if (!coil.el.dataset.flipper) {
         coil.el.classList.toggle("firing", now - coil.lastOn < COIL_GLOW_MS);
       }
