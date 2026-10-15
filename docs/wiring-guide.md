@@ -246,6 +246,7 @@ Current assignments, from `playfield.rs`:
 | Top centre red bumper | 3 (D25) | 4 (D34) |
 | Side "10 points" lanes 1–4 (left to right) | 4 (D26) | 0–3 (D30–D33) |
 | "Scores Bonus" gate | 4 (D26) | 4 (D34) |
+| Trapdoors 1–3 under the gate (left to right) | 4 (D26) | 5–7 (D35–D37) |
 | "30 points" rollover: left | 5 (D27) | 0 (D30) |
 | "30 points" rollover: right | 5 (D27) | 1 (D31) |
 
@@ -360,6 +361,17 @@ Confirm which lug is which with the coil's datasheet or supplier. The power
 winding has the *lower* resistance; measure it with the multimeter's Ω setting,
 power off.
 
+**Trapdoor flaps** (the three trapdoors under the "Scores Bonus" gate) use the
+same single-coil MOSFET circuit. Unlike a kicker, a flap can be **held open for
+a long time**, so:
+
+- Each flap coil must be rated for **continuous duty** at your coil supply
+  voltage. A normal kicker coil held on will overheat and burn out.
+- Check that the flap is closed when its coil has no power, so that it fails
+  safe. The firmware assumes energised = open (*verify* on the real mechanism).
+- After it has been held open for a few minutes, check by touch that the coil
+  is no more than warm.
+
 | Coil | Number | Chip | Output (595 pin) |
 |---|---|---|---|
 | Ball serve | 0 | 1 | Q0 (15) |
@@ -370,6 +382,7 @@ power off.
 | Left flipper hold | 9 | 2 | Q1 (1) |
 | Right flipper power | 10 | 2 | Q2 (2) |
 | Right flipper hold | 11 | 2 | Q3 (3) |
+| Trapdoor flaps 1–3 (left to right) | 12–14 | 2 | Q4–Q6 (4–6) |
 
 ### 7c. Lamp drivers
 

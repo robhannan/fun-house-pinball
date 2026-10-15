@@ -13,7 +13,8 @@
 //!
 //! * top lanes either side of a red centre bumper
 //! * three pop bumpers across the top
-//! * "10 points" side lanes and the centre "Scores Bonus" gate
+//! * "10 points" side lanes and the centre "Scores Bonus" gate, with three
+//!   coil-driven trapdoors beneath it
 //! * "30 points when lit" rollovers, left and right
 //! * two lower pop bumpers, one each side
 //! * the 10–100 bonus wheel (lamps only), with "Special when lit" above it
@@ -82,6 +83,13 @@ pub mod sw {
     ];
     /// "Scores Bonus" gate in the centre.
     pub const BONUS_GATE: SwitchId = SwitchId::matrix(4, 4);
+    /// The three trapdoors under the "Scores Bonus" gate, left to right. Each
+    /// closes when a ball drops through its open flap.
+    pub const TRAPDOORS: [SwitchId; 3] = [
+        SwitchId::matrix(4, 5),
+        SwitchId::matrix(4, 6),
+        SwitchId::matrix(4, 7),
+    ];
     /// "30 points when lit" rollovers, left then right.
     pub const THIRTY_POINT_ROLLOVERS: [SwitchId; 2] =
         [SwitchId::matrix(5, 0), SwitchId::matrix(5, 1)];
@@ -114,6 +122,10 @@ pub mod coil {
     pub const RIGHT_FLIPPER_POWER: CoilId = CoilId::new(10);
     /// Right flipper hold winding.
     pub const RIGHT_FLIPPER_HOLD: CoilId = CoilId::new(11);
+    /// Trapdoor flaps under the "Scores Bonus" gate, matching
+    /// [`super::sw::TRAPDOORS`]. Assumed (*verify*): energised = flap open,
+    /// so every flap closes whenever coil power is cut.
+    pub const TRAPDOOR_FLAPS: [CoilId; 3] = [CoilId::new(12), CoilId::new(13), CoilId::new(14)];
 }
 
 /// Lamp assignments.
@@ -174,5 +186,12 @@ pub const COIL_KINDS: [CoilKind; COIL_COUNT] = {
     k[coil::LEFT_FLIPPER_HOLD.index()] = CoilKind::Hold;
     k[coil::RIGHT_FLIPPER_POWER.index()] = pulse(40, 0);
     k[coil::RIGHT_FLIPPER_HOLD.index()] = CoilKind::Hold;
+    // A flap can be held open indefinitely, so these coils must be rated for
+    // continuous duty at the coil supply voltage.
+    let mut i = 0;
+    while i < coil::TRAPDOOR_FLAPS.len() {
+        k[coil::TRAPDOOR_FLAPS[i].index()] = CoilKind::Hold;
+        i += 1;
+    }
     k
 };
