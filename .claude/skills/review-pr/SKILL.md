@@ -34,8 +34,10 @@ dir="$(mktemp -d)/pr-<n>"
 git worktree add --detach "$dir" FETCH_HEAD
 ```
 
-Do all reading and running inside `$dir`. When finished, run
-`git worktree remove --force "$dir"`.
+Shell variables don't survive between separate commands, so **note the path**
+that `$dir` expands to (`echo "$dir"`) and use it literally from then on. Do all
+reading and running inside that directory. When finished, run
+`git worktree remove --force <path>`.
 
 If the PR is merged or closed, say so at the top of the report.
 
@@ -50,7 +52,8 @@ Read these first, from the PR's version of the repo:
 
 ## 3. Read the change properly
 
-- `git diff origin/main...HEAD --stat`, then the full diff.
+- In the worktree, run `git diff origin/main...HEAD --stat`, then the full diff.
+  `origin/main` was updated by the first fetch, and `HEAD` is the PR.
 - **Read every changed file in full**, not just the diff hunks, so you see how
   the change fits the code around it.
 - For each claim in the PR description (tests added, numbers, "no coil timing
@@ -67,9 +70,14 @@ cargo test --locked
 (cd firmware && cargo fmt --check && cargo clippy --locked -- -D warnings)
 ```
 
-Also run `./sim/build.sh` if it exists. The firmware can't link without
-`avr-gcc`; `cargo clippy` there is enough. Report anything that fails, with the
-output.
+Also run `./sim/build.sh` if it exists. It needs the WebAssembly target
+(`rustup target add wasm32-unknown-unknown`).
+
+The firmware can't link without `avr-gcc`; `cargo clippy` there is enough.
+
+Check the PR's own CI too: `gh pr checks <n>`.
+
+Report anything that fails, with the output.
 
 ## 5. What to look for
 
@@ -98,7 +106,10 @@ Most important first:
      `data-lamp` attributes
    - the tables in `docs/wiring-guide.md`
    - the quantities in `docs/shopping-list.md`
-   - the part lists in the `crates/pinball-sim` tests
+   - the part lists in the `crates/pinball-sim` tests. These lists are
+     **written by hand**, not generated from `playfield.rs`, so check that new
+     constants were added to them. The tests compare sets, so also check that
+     each SVG element's switch, coil and lamp belong to the same part.
    - the pins in `firmware/src/main.rs` and `docs/hardware.md`
 
    Recount where you can.
@@ -129,6 +140,11 @@ For each finding, either:
 - show the exact lines, or
 - describe a concrete scenario that goes wrong (inputs or state → wrong
   result), or reproduce it.
+
+To reproduce a bug, put scratch code **outside the worktree**: for example, a
+throwaway crate in another `mktemp -d` directory that depends on the worktree's
+crates by path. Delete it afterwards. Writing scratch code there doesn't count
+as editing the PR.
 
 Drop anything you can't support. A short list of real problems beats a long list
 of maybes. Don't report style preferences that `rustfmt` and clippy already
