@@ -46,6 +46,10 @@ steps. The essentials:
    If none can be verified, keep the pinball placeholder.
 6. **Watch CI** (`gh pr checks <n> --watch`) and report the PR link and the
    result.
+7. **Get a fresh-context review** with the `review-pr` skill
+   (`/review-pr <n>`). It runs in a separate subagent that hasn't seen the
+   conversation that wrote the code. Relay its findings; don't post them to
+   GitHub unless asked.
 
 If `gh` acts as the wrong account, a `GITHUB_TOKEN` environment variable may be
 overriding the stored login. Check with `gh auth status`.
