@@ -32,6 +32,11 @@ Mega 2560. See `README.md` for setup and `docs/hardware.md` for wiring.
   failure in the code or build, add a test or CI check that would catch it next
   time, wherever that's possible. Process rules, such as the PR description and
   branch hygiene, are handled by the `github-pr` skill, not CI.
+- **Simulator:** `crates/pinball-sim` and `sim/web/` find parts by the
+  `data-switch` / `data-coil` / `data-lamp` attributes in `docs/playfield.svg`
+  and `sim/web/index.html`. When adding a part, add it to `PARTS` and give its
+  page element matching attributes; the simulator's tests check the page
+  against `PARTS`. Keep simulator-only code out of `pinball-core`.
 - **Don't present guesses as facts:** feature counts and rules not confirmed on
   the real table or schematic are marked *verify* or "assumed". Keep them marked.
 

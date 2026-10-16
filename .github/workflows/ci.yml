@@ -35,6 +35,8 @@ jobs:
       - run: cargo fmt --all --check
       - run: cargo clippy --all-targets --locked -- -D warnings
       - run: cargo test --locked
+      - name: Build the browser simulator
+        run: pnpm run build:sim
 
   firmware:
     name: Firmware (ATmega2560)

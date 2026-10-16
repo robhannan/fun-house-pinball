@@ -6,3 +6,4 @@ target/
 !.vscode/extensions.json
 !.vscode/settings.json
 node_modules/
+sim/web/generated/

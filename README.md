@@ -13,6 +13,8 @@ driven by an Arduino Mega 2560 instead of relays and stepper units.
 ```
 .
 ├── crates/pinball-core   # no_std game logic: switches, coils, lamps, rules (host-testable)
+├── crates/pinball-sim    # the game logic compiled to WebAssembly for the simulator
+├── sim/                  # browser simulator page and build script
 ├── firmware              # Arduino Mega 2560 binary: I/O + main loop (AVR, nightly)
 └── docs
     ├── hardware.md       # design at a glance: pin map, driver boards
@@ -35,6 +37,25 @@ your laptop without an Arduino.
 cargo test           # run the game-logic tests
 cargo clippy --all-targets
 ```
+
+### Simulator (play it in a browser)
+
+Try the rules without any hardware. The simulator runs the real `pinball-core`
+logic compiled to WebAssembly, on the playfield map from `docs/playfield.svg`.
+There's no ball physics: click a part to roll a ball over its switch.
+
+```sh
+pnpm install           # once, installs zx for the build script
+pnpm run build:sim
+python3 -m http.server -d sim/web 8000   # then open http://localhost:8000
+```
+
+Controls:
+
+- <kbd>Enter</kbd>: start
+- <kbd>Z</kbd> / <kbd>M</kbd>: hold the left / right flipper
+- <kbd>T</kbd>: tilt
+- <kbd>D</kbd>: drain
 
 ### Firmware (Arduino Mega 2560)
 
