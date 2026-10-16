@@ -42,6 +42,12 @@ Mega 2560. See `README.md` for setup and `docs/hardware.md` for wiring.
   `sim/samples/sources.json` and rebuild with `pnpm run import:samples`, which
   also regenerates `docs/sound-credits.md`; don't edit the WAVs or the credits
   by hand. Recording lengths set the durations.
+  - Check each recording for a spoken slate (some libraries announce the take
+    number at the start) and for mixed sources before cutting it.
+  - Coils make their own noise on the real machine, so kickers, flippers and
+    pop-bumper solenoids get no DFPlayer sound; the simulator plays their
+    noises from `COIL_SAMPLES` instead. Scoring events (including pop bumpers)
+    get a bell or chime.
   Firmware sends DFPlayer commands one byte per tick; never block the main
   loop on serial, because coil pulses only end when the loop runs.
 - **Simulator:** `crates/pinball-sim` and `sim/web/` find parts by the

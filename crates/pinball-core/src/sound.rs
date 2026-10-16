@@ -14,15 +14,17 @@
 
 use crate::time::Instant;
 
-/// A sound effect. The mix is classic pinball (bells, thumps, the knocker,
-/// the tilt buzzer) with circus extras (calliope, drum roll, clown horn, slide
+/// A sound effect: mostly the sounds a 1950s machine made (bells, the knocker,
+/// relays, the score motor), with circus extras (drum roll, fanfare, slide
 /// whistles, sad trombone).
+///
+/// Coils make their own noise on the real machine, so there are no sounds for
+/// kickers, flippers or the pop bumpers' solenoids; the simulator adds those
+/// itself.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Sound {
-    /// A pop bumper or the top centre bumper: a low thump.
+    /// A pop bumper or the top centre bumper scored: a chime.
     PopBumper,
-    /// A kicking rubber: a sharp thwack.
-    Kicker,
     /// A lane or rollover: a bell.
     Lane,
     /// A lit "30 points" rollover: three rising bells.
@@ -36,17 +38,17 @@ pub enum Sound {
     Special,
     /// A replay was won: the knocker.
     Replay,
-    /// Tilt: the buzzer.
+    /// Tilt: the tilt relay dropping out.
     Tilt,
-    /// A game started: a calliope circus march.
+    /// A game started: the score motor running, reels resetting and a chime.
     GameStart,
-    /// A player joined: a clown horn.
+    /// A player joined: a relay click and a bell.
     PlayerAdded,
     /// A ball was served: a slide whistle going up.
     BallServe,
     /// A ball drained: a slide whistle going down.
     Drain,
-    /// A ball dropped through a trapdoor: a spring "boing".
+    /// A ball dropped through a trapdoor: the ball falling into the hole.
     Trapdoor,
     /// The game ended: a sad trombone.
     GameOver,
@@ -54,9 +56,8 @@ pub enum Sound {
 
 impl Sound {
     /// Every sound, including each bonus-wheel position.
-    pub const ALL: [Self; 23] = [
+    pub const ALL: [Self; 22] = [
         Self::PopBumper,
-        Self::Kicker,
         Self::Lane,
         Self::ThirtyPoints,
         Self::BonusAdvance(1),
@@ -86,7 +87,6 @@ impl Sound {
     pub const fn track(self) -> u8 {
         match self {
             Self::PopBumper => 1,
-            Self::Kicker => 2,
             Self::Lane => 3,
             Self::ThirtyPoints => 4,
             Self::BonusCollect => 5,
@@ -110,7 +110,7 @@ impl Sound {
     #[must_use]
     pub const fn priority(self) -> u8 {
         match self {
-            Self::PopBumper | Self::Kicker => 1,
+            Self::PopBumper => 1,
             Self::Lane | Self::BonusAdvance(_) => 2,
             Self::ThirtyPoints => 3,
             // The serve ties with the drain so it can cut the drain's tail.
@@ -127,18 +127,17 @@ impl Sound {
     #[must_use]
     pub const fn duration_ms(self) -> u32 {
         match self {
-            Self::PopBumper => 250,
-            Self::Kicker => 300,
             Self::Replay => 400,
             Self::BonusAdvance(_) => 550,
+            Self::PopBumper | Self::Tilt => 600,
+            Self::PlayerAdded => 700,
+            Self::Trapdoor => 750,
             Self::Lane | Self::BallServe => 800,
-            Self::PlayerAdded | Self::Trapdoor => 1_000,
             Self::ThirtyPoints => 1_100,
-            Self::Tilt => 1_200,
             Self::Drain => 1_450,
             Self::Special => 2_000,
             Self::BonusCollect => 2_400,
-            Self::GameStart => 3_600,
+            Self::GameStart => 2_600,
             Self::GameOver => 4_300,
         }
     }
@@ -311,8 +310,8 @@ mod tests {
         let mut s = SoundScheduler::new();
         s.request(Sound::PopBumper);
         s.next(at(0));
-        s.request(Sound::Kicker);
-        assert_eq!(s.next(at(10)), Some(Sound::Kicker));
+        s.request(Sound::PopBumper);
+        assert_eq!(s.next(at(10)), Some(Sound::PopBumper));
         s.request(Sound::Tilt);
         assert_eq!(s.next(at(20)), Some(Sound::Tilt));
     }

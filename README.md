@@ -48,11 +48,13 @@ player's score reels, the credit window, and the player-up and ball-in-play
 lamps. Up to 4 players, and the operator settings (3, 4 or 5 balls; replay or
 novelty) can be changed on the page.
 
-It plays the machine's sounds too: a mix of classic pinball (bells, thumps,
-the knocker, the tilt buzzer) and circus (a calliope march, drum roll, clown
-horn, slide whistles, sad trombone). Most are cut from free CC0 recordings,
-including bells and relays from real electromechanical pinball machines
-(credits in [docs/sound-credits.md](docs/sound-credits.md)). Synthesised
+It plays the machine's sounds too: mostly what a 1950s machine sounded like
+(bells, relays, the score motor starting a game, the knocker), with circus
+extras (drum roll, fanfare, slide whistles, sad trombone). They're cut from
+free CC0 recordings, many from real electromechanical pinball machines
+(credits in [docs/sound-credits.md](docs/sound-credits.md)). The simulator
+also plays the noise each coil makes (kickers, pop bumpers, flippers), which
+the real machine makes by itself. Synthesised
 versions are kept in `sim/web/sounds.js` as a fallback, and the page can switch
 between the two. The **Sound test** panel plays each one, including the
 optional real bells.

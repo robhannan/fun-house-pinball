@@ -12,7 +12,7 @@
 // reels by data-score / data-digit. The Rust tests check them against
 // playfield.rs.
 
-import { BELL_SAMPLES, SOUNDS, render } from "./sounds.js";
+import { BELL_SAMPLES, COIL_SAMPLES, SOUNDS, render } from "./sounds.js";
 
 const PHASES = ["Attract", "Playing", "Tilted"];
 const COIL_GLOW_MS = 150; // keep short coil pulses visible
@@ -148,6 +148,7 @@ function start(sim) {
     if (el.textContent !== value) el.textContent = value;
   };
 
+  const coilLastOn = {};
   let last = performance.now();
   let carry = 0;
   function frame(now) {
@@ -165,6 +166,12 @@ function start(sim) {
     for (const { el, lamp } of lamps) {
       const word = lamp < 32 ? lampLow : lampHigh;
       el.classList.toggle("lit", ((word >>> (lamp % 32)) & 1) === 1);
+    }
+    for (const n of Object.keys(COIL_SAMPLES)) {
+      if (coilsSeen & (1 << n)) {
+        if (now - (coilLastOn[n] ?? -Infinity) > 60) audio.coil(n);
+        coilLastOn[n] = now;
+      }
     }
     for (const coil of coils) {
       if (coilsSeen & coil.mask) {
@@ -244,6 +251,7 @@ function soundPlayer() {
       gain.connect(context.destination);
       for (const [track, { sample }] of Object.entries(SOUNDS)) if (sample) loadRecording(track, sample);
       BELL_SAMPLES.forEach((file, n) => loadRecording(`bell-${n}`, file));
+      for (const file of new Set(Object.values(COIL_SAMPLES))) loadRecording(file, file);
     }
     if (context.state === "suspended") context.resume();
     return context;
@@ -256,10 +264,16 @@ function soundPlayer() {
     if (gain) gain.gain.value = Number(volume.value);
   });
 
-  const start = (audioBuffer) => {
+  const start = (audioBuffer, level = 1) => {
     const source = context.createBufferSource();
     source.buffer = audioBuffer;
-    source.connect(gain);
+    if (level === 1) {
+      source.connect(gain);
+    } else {
+      const quieter = context.createGain();
+      quieter.gain.value = level;
+      source.connect(quieter).connect(gain);
+    }
     source.start();
     return source;
   };
@@ -288,6 +302,17 @@ function soundPlayer() {
     if (on.checked && audioBuffer) start(audioBuffer);
   };
 
+  /**
+   * The noise coil `n` makes when it fires (kickers, pop bumpers, flippers). On
+   * the real machine the coils make it themselves, so only the simulator plays
+   * it, quieter than the effects and over whatever is playing.
+   */
+  const coilNoises = document.getElementById("coil-noises");
+  const coil = (n) => {
+    const audioBuffer = context && recorded.get(COIL_SAMPLES[n]);
+    if (on.checked && coilNoises.checked && audioBuffer) start(audioBuffer, 0.45);
+  };
+
   // The sound-test board: one button per sound, plus the bells.
   const board = document.getElementById("sound-test");
   const addButton = (label, action) => {
@@ -301,6 +326,9 @@ function soundPlayer() {
   };
   for (const [track, { name }] of Object.entries(SOUNDS)) addButton(name, () => play(Number(track)));
   ["1s", "10s", "100s"].forEach((label, n) => addButton(`Real bell: ${label}`, () => bell(n)));
+  addButton("Coil noise: kicker", () => coil(1));
+  addButton("Coil noise: pop bumper", () => coil(3));
+  addButton("Coil noise: flipper", () => coil(8));
 
-  return { play, bell };
+  return { play, bell, coil };
 }

@@ -290,12 +290,10 @@ impl Machine {
             }
             sw::LEFT_KICKER => {
                 kick(&mut self.coils, coil::LEFT_KICKER);
-                self.sound.request(Sound::Kicker);
                 self.add_score(1);
             }
             sw::RIGHT_KICKER => {
                 kick(&mut self.coils, coil::RIGHT_KICKER);
-                self.sound.request(Sound::Kicker);
                 self.add_score(1);
             }
             sw::TOP_CENTRE_BUMPER => {

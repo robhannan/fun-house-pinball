@@ -1,5 +1,5 @@
 {
-  "_comment": "Recorded sounds for the simulator and the DFPlayer's SD card. Every source is CC0 (public domain) from Freesound. Run `pnpm run import:samples` to rebuild sim/web/samples/ and docs/sound-credits.md from this file. Times are in seconds into each recording; `semitones` shifts pitch (and speed), `speed` speeds up without changing pitch; `drive` is how hard the sound is mastered (more = louder and punchier; default 2.5).",
+  "_comment": "Recorded sounds for the simulator and the DFPlayer's SD card. Every source is CC0 (public domain) from Freesound. Run `pnpm run import:samples` to rebuild sim/web/samples/ and docs/sound-credits.md from this file. Times are in seconds into each recording; `semitones` shifts pitch (and speed), `speed` speeds up without changing pitch; `drive` is how hard the sound is mastered (more = louder and punchier; default 2.5). Check each recording for a spoken slate (some libraries announce the take number at the start) before cutting it.",
   "sources": {
     "450270": {
       "title": "pinball-flipper hits.wav",
@@ -50,27 +50,6 @@
       "licence": "CC0 1.0",
       "preview": "https://cdn.freesound.org/previews/173/173941_3229685-hq.mp3"
     },
-    "410725": {
-      "title": "loud-buzzer.ogg",
-      "author": "talljosh",
-      "page": "https://freesound.org/people/talljosh/sounds/410725/",
-      "licence": "CC0 1.0",
-      "preview": "https://cdn.freesound.org/previews/410/410725_7984224-hq.mp3"
-    },
-    "141623": {
-      "title": "Calliope.wav",
-      "author": "moebiusbean",
-      "page": "https://freesound.org/people/moebiusbean/sounds/141623/",
-      "licence": "CC0 1.0",
-      "preview": "https://cdn.freesound.org/previews/141/141623_1085560-hq.mp3"
-    },
-    "468441": {
-      "title": "Honk! (Vintage Bicycle Horn)",
-      "author": "Breviceps",
-      "page": "https://freesound.org/people/Breviceps/sounds/468441/",
-      "licence": "CC0 1.0",
-      "preview": "https://cdn.freesound.org/previews/468/468441_9159316-hq.mp3"
-    },
     "622150": {
       "title": "Popping Cork",
       "author": "milcahrawr",
@@ -99,13 +78,6 @@
       "licence": "CC0 1.0",
       "preview": "https://cdn.freesound.org/previews/384/384702_1067129-hq.mp3"
     },
-    "510496": {
-      "title": "SpringBoing.wav",
-      "author": "Slanted",
-      "page": "https://freesound.org/people/Slanted/sounds/510496/",
-      "licence": "CC0 1.0",
-      "preview": "https://cdn.freesound.org/previews/510/510496_10007932-hq.mp3"
-    },
     "175409": {
       "title": "wah wah sad trombone.wav",
       "author": "kirbydx",
@@ -113,12 +85,19 @@
       "licence": "CC0 1.0",
       "preview": "https://cdn.freesound.org/previews/175/175409_1326576-hq.mp3"
     },
-    "438241": {
-      "title": "G20-26-Pinball Bell.wav",
-      "author": "craigsmith",
-      "page": "https://freesound.org/people/craigsmith/sounds/438241/",
+    "384699": {
+      "title": "Motor whirs then clicks and chimes",
+      "author": "bassmosphere",
+      "page": "https://freesound.org/people/bassmosphere/sounds/384699/",
       "licence": "CC0 1.0",
-      "preview": "https://cdn.freesound.org/previews/438/438241_2524442-hq.mp3"
+      "preview": "https://cdn.freesound.org/previews/384/384699_1067129-hq.mp3"
+    },
+    "384698": {
+      "title": "A relay switch being activated.",
+      "author": "bassmosphere",
+      "page": "https://freesound.org/people/bassmosphere/sounds/384698/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/384/384698_1067129-hq.mp3"
     }
   },
   "tracks": {
@@ -126,29 +105,13 @@
       "name": "Pop bumper",
       "layers": [
         {
-          "freesound": 450270,
-          "start": 3.18,
-          "length": 0.24
+          "freesound": 172266,
+          "start": 4.78,
+          "length": 0.6
         }
       ],
-      "drive": 4
-    },
-    "2": {
-      "name": "Kicker",
-      "layers": [
-        {
-          "freesound": 450270,
-          "start": 2.48,
-          "length": 0.28
-        },
-        {
-          "freesound": 384701,
-          "start": 0.03,
-          "length": 0.2,
-          "gain": 0.6
-        }
-      ],
-      "drive": 4
+      "fadeOut": 0.25,
+      "drive": 2.2
     },
     "3": {
       "name": "Lane chime",
@@ -234,38 +197,43 @@
       "name": "Tilt",
       "layers": [
         {
-          "freesound": 410725,
-          "start": 0.02,
-          "length": 1.2
+          "freesound": 384701,
+          "start": 0.0,
+          "length": 0.58
         }
       ],
-      "fadeOut": 0.1,
-      "drive": 1.5
+      "fadeOut": 0.05,
+      "drive": 2
     },
     "9": {
       "name": "Game start",
       "layers": [
         {
-          "freesound": 141623,
-          "start": 53.0,
-          "length": 3.6
+          "freesound": 384699,
+          "start": 0.0,
+          "length": 2.6
         }
       ],
-      "fadeIn": 0.03,
-      "fadeOut": 0.4,
+      "fadeOut": 0.2,
       "drive": 2.2
     },
     "10": {
       "name": "Player added",
       "layers": [
         {
-          "freesound": 468441,
-          "start": 0.03,
-          "length": 1.0
+          "freesound": 384698,
+          "start": 0.04,
+          "length": 0.15
+        },
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.55,
+          "at": 0.1
         }
       ],
-      "fadeOut": 0.05,
-      "drive": 3
+      "fadeOut": 0.2,
+      "drive": 2.5
     },
     "11": {
       "name": "Ball serve",
@@ -309,18 +277,12 @@
       "layers": [
         {
           "freesound": 384702,
-          "start": 0.1,
-          "length": 0.4
-        },
-        {
-          "freesound": 510496,
-          "start": 0,
-          "length": 0.95,
-          "at": 0.05
+          "start": 0.05,
+          "length": 0.7
         }
       ],
-      "fadeOut": 0.15,
-      "drive": 4.5
+      "fadeOut": 0.1,
+      "drive": 3
     },
     "14": {
       "name": "Game over",
@@ -470,7 +432,7 @@
       "layers": [
         {
           "freesound": 172266,
-          "start": 0.48,
+          "start": 4.78,
           "length": 1.2
         }
       ],
@@ -481,13 +443,53 @@
       "name": "Bell: 100s",
       "layers": [
         {
-          "freesound": 438241,
-          "start": 0.1,
-          "length": 1.6
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.8,
+          "semitones": -12
         }
       ],
       "fadeOut": 0.5,
       "drive": 2
+    },
+    "coil-kicker": {
+      "name": "Coil noise: kicker",
+      "layers": [
+        {
+          "freesound": 450270,
+          "start": 2.48,
+          "length": 0.28
+        },
+        {
+          "freesound": 384701,
+          "start": 0.03,
+          "length": 0.2,
+          "gain": 0.6
+        }
+      ],
+      "drive": 3
+    },
+    "coil-pop": {
+      "name": "Coil noise: pop bumper",
+      "layers": [
+        {
+          "freesound": 450270,
+          "start": 3.18,
+          "length": 0.24
+        }
+      ],
+      "drive": 3
+    },
+    "coil-flipper": {
+      "name": "Coil noise: flipper",
+      "layers": [
+        {
+          "freesound": 450270,
+          "start": 0.14,
+          "length": 0.32
+        }
+      ],
+      "drive": 3
     }
   }
 }

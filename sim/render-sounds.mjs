@@ -7,7 +7,7 @@
 // Copy the `01` folder to the root of a FAT32-formatted microSD card.
 import { argv, fs, path } from "zx";
 
-import { BELL_SAMPLES, SOUNDS, render } from "./web/sounds.js";
+import { BELL_SAMPLES, COIL_SAMPLES, SOUNDS, render } from "./web/sounds.js";
 import { SAMPLE_RATE, decodeWav, encodeWav } from "./wav.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -61,14 +61,14 @@ for (const [track, { name, durationMs, sample }] of Object.entries(SOUNDS)) {
   }
 }
 
-for (const sample of BELL_SAMPLES) {
-  const bell = await readSample(sample);
-  if (bell) check(sample, bell.samples, bell.sampleRate);
+for (const sample of [...BELL_SAMPLES, ...new Set(Object.values(COIL_SAMPLES))]) {
+  const extra = await readSample(sample);
+  if (extra) check(sample, extra.samples, extra.sampleRate);
 }
 
 if (problems.length > 0) {
   for (const problem of problems) console.log(`::error::${problem}`);
   process.exitCode = 1;
 } else {
-  console.log(`OK: ${Object.keys(SOUNDS).length} sounds and ${BELL_SAMPLES.length} bells are usable.`);
+  console.log(`OK: ${Object.keys(SOUNDS).length} sounds, ${BELL_SAMPLES.length} bells and the coil noises are usable.`);
 }

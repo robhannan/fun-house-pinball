@@ -1,8 +1,8 @@
-// Sound effects for the Fun House, synthesised from scratch so there are no
-// recordings to license. Loud and busy, to suit a 1950s pinball machine and a
-// circus: clanging chime bars, bangs and thwacks, the knocker and the tilt
-// buzzer, plus a full calliope band (oom-pah, drums, cymbals), brass fanfares,
-// drum rolls, a clown horn, slide whistles and a sad trombone.
+// Sound effects for the Fun House: mostly what a 1950s machine sounded like
+// (bells, relays, the score motor, the knocker), with circus extras (drum roll,
+// fanfare, slide whistles, sad trombone). Coils make their own noise on the
+// real machine, so kickers, flippers and pop-bumper solenoids have no sound
+// here; the simulator plays recordings of them (COIL_SAMPLES) when coils fire.
 //
 // Each sound has a recorded version (`sample`, from free CC0 recordings: see
 // docs/sound-credits.md) and this synthesised one as a fallback. Used in two
@@ -195,39 +195,8 @@ function slideWhistle(sampleRate, from, to, seconds, rand, curve = 1) {
 // ---------------------------------------------------------------------------
 // The sounds
 
-function popBumper(sampleRate) {
-  // BANG-clack: a punchy thud, a metallic clack and a short ring.
-  const rand = noise(1);
-  const out = buffer(sampleRate, 0.15);
-  const clack = highpass(sampleRate, 2500);
-  let phase = 0;
-  for (let i = 0; i < out.length; i++) {
-    const t = i / sampleRate;
-    phase += (TAU * (55 + 350 * Math.exp(-t * 45))) / sampleRate;
-    out[i] =
-      1.2 * Math.sin(phase) * Math.exp(-t * 20) +
-      1.0 * clack(rand()) * Math.exp(-t * 90) +
-      0.4 * Math.sin(TAU * 1850 * t) * Math.exp(-t * 30);
-  }
-  return master(out, 3);
-}
-
-function kicker(sampleRate) {
-  // THWACK: a sharp crack, a rubbery thump and a quick metal ping.
-  const rand = noise(2);
-  const out = buffer(sampleRate, 0.15);
-  const crack = highpass(sampleRate, 1200);
-  let phase = 0;
-  for (let i = 0; i < out.length; i++) {
-    const t = i / sampleRate;
-    phase += (TAU * (120 + 200 * Math.exp(-t * 60))) / sampleRate;
-    out[i] =
-      1.4 * crack(rand()) * Math.exp(-t * 55) +
-      0.9 * Math.sin(phase) * Math.exp(-t * 28) +
-      0.4 * Math.sin(TAU * 2600 * t) * Math.exp(-t * 45);
-  }
-  return master(out, 4.5);
-}
+/** A pop bumper scoring: a short chime (the solenoid makes its own noise). */
+const popBumper = (sampleRate) => master(chime(sampleRate, hz(76), 0.6, noise(1), 7), 2.2);
 
 const lane = (sampleRate) => master(chime(sampleRate, hz(84), 0.4, noise(3), 6), 3);
 
@@ -309,16 +278,12 @@ function replay(sampleRate) {
 }
 
 function tilt(sampleRate) {
-  // The tilt buzzer: a harsh, pulsing alarm.
-  const out = buffer(sampleRate, 1.2);
-  let phase = 0;
-  for (let i = 0; i < out.length; i++) {
-    const t = i / sampleRate;
-    phase += (TAU * 130) / sampleRate;
-    const raw = Math.sign(Math.sin(phase)) + 0.7 * saw(phase * 1.01);
-    const pulse = Math.sin(TAU * 9 * t) > -0.2 ? 1 : 0.15;
-    out[i] = raw * pulse * envelope(t, 1.2, 0.005, 0.15);
-  }
+  // The tilt relay dropping out: a hard clunk and a click.
+  const rand = noise(13);
+  const out = buffer(sampleRate, 0.6);
+  mix(out, kick(sampleRate, rand, 0.25), sampleRate, 0, 1);
+  mix(out, snare(sampleRate, rand, 0.05), sampleRate, 0.01, 0.6);
+  mix(out, snare(sampleRate, rand, 0.04), sampleRate, 0.22, 0.4);
   return master(out, 3);
 }
 
@@ -362,23 +327,12 @@ function gameStart(sampleRate) {
 }
 
 function playerAdded(sampleRate) {
-  // HONK HONK: a squeezed clown horn.
+  // A relay click, then a bell.
   const rand = noise(9);
-  const out = buffer(sampleRate, 0.5);
-  const honk = (pitch) => {
-    const h = buffer(sampleRate, 0.19);
-    const nasal = lowpass(sampleRate, 2600);
-    let phase = 0;
-    for (let i = 0; i < h.length; i++) {
-      const t = i / sampleRate;
-      phase += (TAU * pitch * (1 + 0.08 * Math.exp(-t * 30))) / sampleRate;
-      h[i] = nasal(Math.tanh(5 * saw(phase)) + 0.15 * rand()) * envelope(t, 0.19, 0.005, 0.03);
-    }
-    return h;
-  };
-  mix(out, honk(440), sampleRate, 0);
-  mix(out, honk(392), sampleRate, 0.24);
-  return master(out, 3);
+  const out = buffer(sampleRate, 0.7);
+  mix(out, snare(sampleRate, rand, 0.05), sampleRate, 0, 0.7);
+  mix(out, chime(sampleRate, hz(79), 0.6, rand, 6), sampleRate, 0.1);
+  return master(out, 2.2);
 }
 
 function ballServe(sampleRate) {
@@ -401,21 +355,11 @@ function drain(sampleRate) {
 }
 
 function trapdoor(sampleRate) {
-  // Clunk, BOING, and a short whistle down the hole.
+  // The ball dropping into the hole: a thunk and a rattle.
   const rand = noise(12);
-  const out = buffer(sampleRate, 0.8);
-  mix(out, kick(sampleRate, rand, 0.15), sampleRate, 0, 1.2);
-  mix(out, snare(sampleRate, rand, 0.06), sampleRate, 0, 0.8);
-  const boing = buffer(sampleRate, 0.5);
-  let phase = 0;
-  for (let i = 0; i < boing.length; i++) {
-    const t = i / sampleRate;
-    const f = 300 + 260 * Math.sin(TAU * 14 * t) * Math.exp(-t * 4);
-    phase += (TAU * f) / sampleRate;
-    boing[i] = (Math.sin(phase) + 0.5 * Math.sin(2 * phase)) * Math.exp(-t * 4);
-  }
-  mix(out, boing, sampleRate, 0.03);
-  mix(out, slideWhistle(sampleRate, 1400, 500, 0.3, rand), sampleRate, 0.48, 0.6);
+  const out = buffer(sampleRate, 0.75);
+  mix(out, kick(sampleRate, rand, 0.3), sampleRate, 0, 1.2);
+  for (let t = 0.15; t < 0.6; t += 0.07) mix(out, snare(sampleRate, rand, 0.04), sampleRate, t, 0.4 * (1 - t));
   return master(out, 2.5);
 }
 
@@ -459,19 +403,18 @@ function gameOver(sampleRate) {
  * kept as a fallback and for comparison.
  */
 export const SOUNDS = {
-  1: { name: "Pop bumper", durationMs: 250, sample: "samples/001.wav", render: popBumper },
-  2: { name: "Kicker", durationMs: 300, sample: "samples/002.wav", render: kicker },
+  1: { name: "Pop bumper", durationMs: 600, sample: "samples/001.wav", render: popBumper },
   3: { name: "Lane chime", durationMs: 800, sample: "samples/003.wav", render: lane },
   4: { name: "30 points", durationMs: 1100, sample: "samples/004.wav", render: thirtyPoints },
   5: { name: "Bonus collect", durationMs: 2400, sample: "samples/005.wav", render: bonusCollect },
   6: { name: "Special lit", durationMs: 2000, sample: "samples/006.wav", render: special },
   7: { name: "Replay (knocker)", durationMs: 400, sample: "samples/007.wav", render: replay },
-  8: { name: "Tilt", durationMs: 1200, sample: "samples/008.wav", render: tilt },
-  9: { name: "Game start", durationMs: 3600, sample: "samples/009.wav", render: gameStart },
-  10: { name: "Player added", durationMs: 1000, sample: "samples/010.wav", render: playerAdded },
+  8: { name: "Tilt", durationMs: 600, sample: "samples/008.wav", render: tilt },
+  9: { name: "Game start", durationMs: 2600, sample: "samples/009.wav", render: gameStart },
+  10: { name: "Player added", durationMs: 700, sample: "samples/010.wav", render: playerAdded },
   11: { name: "Ball serve", durationMs: 800, sample: "samples/011.wav", render: ballServe },
   12: { name: "Drain", durationMs: 1450, sample: "samples/012.wav", render: drain },
-  13: { name: "Trapdoor", durationMs: 1000, sample: "samples/013.wav", render: trapdoor },
+  13: { name: "Trapdoor", durationMs: 750, sample: "samples/013.wav", render: trapdoor },
   14: { name: "Game over", durationMs: 4300, sample: "samples/014.wav", render: gameOver },
   21: { name: "Bonus advance 20", durationMs: 550, sample: "samples/021.wav", render: bonusAdvance(1) },
   22: { name: "Bonus advance 30", durationMs: 550, sample: "samples/022.wav", render: bonusAdvance(2) },
@@ -484,10 +427,31 @@ export const SOUNDS = {
   29: { name: "Bonus advance 100", durationMs: 550, sample: "samples/029.wav", render: bonusAdvance(9) },
 };
 
-/** Renders track `track`'s synthesised version at `sampleRate`, already mastered. */
+/**
+ * Renders track `track`'s synthesised version at `sampleRate`, already
+ * mastered, and trimmed (with a short fade) to its `durationMs`.
+ */
 export function render(track, sampleRate) {
-  return SOUNDS[track].render(sampleRate);
+  const { render: synthesise, durationMs } = SOUNDS[track];
+  const samples = synthesise(sampleRate);
+  const length = Math.min(samples.length, Math.floor((durationMs / 1000) * sampleRate));
+  const fade = Math.min(length, Math.round(0.03 * sampleRate));
+  for (let i = 0; i < fade; i++) samples[length - 1 - i] *= i / fade;
+  return samples.subarray(0, length);
 }
+
+/** Simulator only: the noises the real coils make, by coil number. */
+export const COIL_SAMPLES = {
+  1: "samples/coil-kicker.wav",
+  2: "samples/coil-kicker.wav",
+  3: "samples/coil-pop.wav",
+  4: "samples/coil-pop.wav",
+  5: "samples/coil-pop.wav",
+  6: "samples/coil-pop.wav",
+  7: "samples/coil-pop.wav",
+  8: "samples/coil-flipper.wav",
+  10: "samples/coil-flipper.wav",
+};
 
 /** Recorded real bells for the optional bell coils (1s, 10s, 100s). */
 export const BELL_SAMPLES = ["samples/bell-1.wav", "samples/bell-10.wav", "samples/bell-100.wav"];
