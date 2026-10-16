@@ -1022,7 +1022,10 @@ mod tests {
     fn attract_music_plays_after_a_pause_and_the_lamps_dance() {
         use crate::music_beats::ATTRACT_MUSIC_BEATS_MS;
         let mut sim = Sim::new();
-        let started = sounds_during(&mut sim, |s| s.run(MUSIC_DELAY_MS + 10));
+        // Nothing during the pause (the game-over sound has it to itself)...
+        assert_eq!(sounds_during(&mut sim, |s| s.run(MUSIC_DELAY_MS - 1)), []);
+        // ...then the music.
+        let started = sounds_during(&mut sim, |s| s.run(10));
         assert_eq!(started, [Sound::AttractMusic]);
         // A few beats in, the playfield lamps are dancing.
         sim.run(ATTRACT_MUSIC_BEATS_MS[4]);
@@ -1057,6 +1060,24 @@ mod tests {
             .filter(|&&l| sim.last.lamps & (1 << l.index()) != 0)
             .collect();
         assert!(show_left.is_empty(), "{show_left:?}");
+    }
+
+    #[test]
+    fn the_music_comes_back_after_a_game() {
+        let mut sim = Sim::new();
+        sim.machine = Machine::with_settings(Settings {
+            balls_per_game: 3,
+            ..Settings::DEFAULT
+        });
+        sim.tap(sw::START_BUTTON);
+        for _ in 0..3 {
+            sim.tap(sw::OUTHOLE);
+        }
+        assert_eq!(sim.machine.phase(), Phase::Attract);
+        assert!(
+            !sounds_during(&mut sim, |s| s.run(MUSIC_DELAY_MS - 20)).contains(&Sound::AttractMusic)
+        );
+        assert!(sounds_during(&mut sim, |s| s.run(40)).contains(&Sound::AttractMusic));
     }
 
     #[test]

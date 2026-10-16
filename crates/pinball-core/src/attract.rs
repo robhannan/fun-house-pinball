@@ -67,10 +67,14 @@ const fn bit(index: usize) -> Pattern {
     1 << index
 }
 
+/// Lamps on the centre line, which belong to neither side in the see-saw: the
+/// bonus wheel's 10 (top) and 60 (bottom), the top-centre pop bumper and the
+/// middle train car.
+const CENTRE_LINE: Pattern = bit(WHEEL) | bit(WHEEL + 5) | bit(POPS + 1) | bit(TRAIN + 2);
+
 /// Lamps on the left of the playfield and backboard, for the see-saw. The
-/// bonus wheel runs clockwise from 10 at the top, so 60–100 are on the left.
-const LEFT: Pattern = bit(WHEEL + 5)
-    | bit(WHEEL + 6)
+/// bonus wheel runs clockwise from 10 at the top, so 70–100 are on the left.
+const LEFT: Pattern = bit(WHEEL + 6)
     | bit(WHEEL + 7)
     | bit(WHEEL + 8)
     | bit(WHEEL + 9)
@@ -111,7 +115,7 @@ const fn pattern(beat: usize) -> Pattern {
             if beat % 2 == 0 {
                 LEFT
             } else {
-                ALL & !LEFT & !bit(SPECIAL) & !bit(CENTRE)
+                ALL & !LEFT & !CENTRE_LINE & !bit(SPECIAL) & !bit(CENTRE)
             }
         }
         // Fill: the wheel, pops and train fill up through the phrase.
@@ -270,6 +274,13 @@ mod tests {
                 assert_ne!(p, 0, "beat {beat}");
             }
         }
+    }
+
+    #[test]
+    fn the_see_saw_sides_are_mirror_images() {
+        let right = ALL & !LEFT & !CENTRE_LINE & !bit(SPECIAL) & !bit(CENTRE);
+        assert_eq!(LEFT & CENTRE_LINE, 0);
+        assert_eq!(LEFT.count_ones(), right.count_ones());
     }
 
     #[test]
