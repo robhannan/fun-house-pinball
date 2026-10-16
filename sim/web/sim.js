@@ -6,10 +6,13 @@
 // - runs the simulated machine in step with real time
 // - lights lamps, flashes coils and raises flippers from the machine's outputs
 // - turns the backboard's score reels and credit window
+// - plays the machine's sounds (synthesised in sounds.js)
 //
 // Parts are found by their data-switch / data-coil / data-lamp attributes, and
 // reels by data-score / data-digit. The Rust tests check them against
 // playfield.rs.
+
+import { SOUNDS, render } from "./sounds.js";
 
 const PHASES = ["Attract", "Playing", "Tilted"];
 const COIL_GLOW_MS = 150; // keep short coil pulses visible
@@ -137,6 +140,8 @@ function start(sim) {
     for (const button of [...held]) release(button);
   });
 
+  const audio = soundPlayer();
+
   const text = (id, value) => {
     const el = document.getElementById(id);
     if (el.textContent !== value) el.textContent = value;
@@ -168,6 +173,10 @@ function start(sim) {
     }
     for (const { el, mask } of flippers) el.classList.toggle("up", (coilBits & mask) !== 0);
 
+    for (let track = sim.sim_take_sound(); track !== 0; track = sim.sim_take_sound()) {
+      audio.play(track);
+    }
+
     const ball = sim.sim_ball();
     for (const { el, player, place } of reels) {
       const digit = String(Math.floor(sim.sim_score_of(player) / place) % 10);
@@ -193,3 +202,63 @@ load().then(start, (error) => {
   document.getElementById("playfield").textContent =
     `Couldn't load the simulator (${error.message}). Run pnpm run build:sim, then serve sim/web/ over HTTP.`;
 });
+
+/**
+ * Plays sounds with the Web Audio API. Like the DFPlayer Mini, only one sound
+ * plays at a time: a new one stops the last. Browsers only allow audio after
+ * the user has interacted with the page, so the audio context starts on the
+ * first click or key press.
+ */
+function soundPlayer() {
+  let context;
+  let gain;
+  let current;
+  const buffers = new Map();
+  const on = document.getElementById("sound-on");
+  const volume = document.getElementById("volume");
+
+  const ensureContext = () => {
+    if (!context) {
+      context = new AudioContext();
+      gain = context.createGain();
+      gain.gain.value = Number(volume.value);
+      gain.connect(context.destination);
+    }
+    if (context.state === "suspended") context.resume();
+    return context;
+  };
+  for (const event of ["pointerdown", "keydown"]) addEventListener(event, ensureContext, { once: true });
+  volume.addEventListener("input", () => {
+    if (gain) gain.gain.value = Number(volume.value);
+  });
+
+  const play = (track) => {
+    if (!on.checked || !context || !SOUNDS[track]) return;
+    let audioBuffer = buffers.get(track);
+    if (!audioBuffer) {
+      const samples = render(track, context.sampleRate);
+      audioBuffer = context.createBuffer(1, samples.length, context.sampleRate);
+      audioBuffer.copyToChannel(samples, 0);
+      buffers.set(track, audioBuffer);
+    }
+    current?.stop();
+    current = context.createBufferSource();
+    current.buffer = audioBuffer;
+    current.connect(gain);
+    current.start();
+  };
+
+  // The sound-test board: one button per sound.
+  const board = document.getElementById("sound-test");
+  for (const [track, { name }] of Object.entries(SOUNDS)) {
+    const button = document.createElement("button");
+    button.textContent = name;
+    button.addEventListener("click", () => {
+      ensureContext();
+      play(Number(track));
+    });
+    board.append(button);
+  }
+
+  return { play };
+}

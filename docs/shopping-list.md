@@ -8,9 +8,9 @@ Everything needed to build the controller described in the
 
 | | Estimate |
 |---|---|
-| **Everything** | **£460–890** |
-| Without tools (if you already have them) | £395–740 |
-| Electronics only (sections 1–8, no pinball parts or tools) | £210–385 |
+| **Everything** | **£475–910** |
+| Without tools (if you already have them) | £405–765 |
+| Electronics only (sections 1–8, no pinball parts or tools) | £220–410 |
 
 These are rough **estimates in GBP, as of October 2026**, to help with budgeting.
 
@@ -135,6 +135,21 @@ flyback diodes or allow them to be fitted. Expect roughly £5–15 per 8-channel
 | LED replacement bulbs, #44/#47 bayonet (BA9S), 6.3 V | 40 | Count the sockets on the playfield and backglass first. Warm white looks closest to the original incandescents. | [AliExpress](https://www.aliexpress.com/w/wholesale-ba9s-6.3v-led-pinball.html) | 10–20 |
 
 **Section estimate: £14–28**
+
+## 6b. Sound
+
+A DFPlayer Mini plays the sound effects from a microSD card; see the
+[wiring guide](wiring-guide.md#7d-sound-dfplayer-mini).
+
+| Item | Qty | Notes | Link | Est. £ |
+|---|---|---|---|---|
+| DFPlayer Mini MP3/WAV player module | 2 | One spare. Sometimes sold as "MP3-TF-16P". | [AliExpress](https://www.aliexpress.com/w/wholesale-dfplayer-mini.html) | 3–6 |
+| microSD card, 8–32 GB | 1 | Formatted FAT32. Branded cards are more reliable; fakes are common. | [AliExpress](https://www.aliexpress.com/w/wholesale-microsd-card-16gb.html) | 3–6 |
+| Speaker, 3 W, 4–8 Ω, 50–77 mm | 1 | The DFPlayer drives it directly | [AliExpress](https://www.aliexpress.com/w/wholesale-3w-4ohm-speaker.html) | 2–4 |
+| 5 V 2 A DC adaptor | 1 | Powers the DFPlayer separately from the Arduino | [AliExpress](https://www.aliexpress.com/w/wholesale-5v-2a-power-adapter.html) | 3–6 |
+| 1 kΩ resistor | — | In the resistor kit from section 2 | — | — |
+
+**Section estimate: £11–22**
 
 ## 7. Power
 

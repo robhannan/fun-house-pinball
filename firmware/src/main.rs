@@ -12,9 +12,13 @@ mod io;
 use arduino_hal::hal::wdt;
 use arduino_hal::prelude::*;
 use arduino_hal::spi;
-use pinball_core::{Machine, Outputs, SwitchStates};
+use pinball_core::sound::{DFPLAYER_VOLUME, dfplayer_play, dfplayer_volume};
+use pinball_core::{Instant, Machine, Outputs, SwitchStates};
 
-use io::{OutputChain, SwitchScanner};
+use io::{OutputChain, SoundOut, SwitchScanner};
+
+/// The DFPlayer needs a moment after power-on before it accepts commands.
+const SOUND_STARTUP_MS: u32 = 2_000;
 
 #[arduino_hal::entry]
 fn main() -> ! {
@@ -82,6 +86,17 @@ fn main() -> ! {
         ],
     };
 
+    // DFPlayer Mini sound module on the second serial port: TX1 (D18) to its
+    // RX through a 1 kΩ resistor. Its TX isn't needed, but RX1 (D19) is wired
+    // for status in future.
+    let mut sound = SoundOut::new(arduino_hal::Usart::new(
+        dp.USART1,
+        pins.d19,
+        pins.d18.into_output(),
+        9600.into_baudrate(),
+    ));
+    let mut sound_ready = false;
+
     // If the main loop ever stalls, reset the board (which drops OE and with
     // it every coil) rather than leave a coil energised.
     let mut watchdog = wdt::Wdt::new(dp.WDT, dp.CPU.mcusr());
@@ -107,6 +122,18 @@ fn main() -> ! {
         switches.scan(&mut raw);
         let frame = machine.tick(now, &raw);
         outputs.write(&frame);
+
+        // Sounds only once the volume command has been queued (in an earlier
+        // tick), so a sound can't replace it.
+        if let (true, Some(effect)) = (sound_ready, frame.sound) {
+            sound.send(dfplayer_play(effect.track()));
+        }
+        if !sound_ready && now.reached(Instant::from_millis(SOUND_STARTUP_MS)) {
+            sound.send(dfplayer_volume(DFPLAYER_VOLUME));
+            sound_ready = true;
+        }
+        sound.poll();
+
         watchdog.feed();
     }
 }

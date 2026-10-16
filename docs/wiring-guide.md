@@ -141,6 +141,8 @@ on the board (`22`, `23`, ... and `GND`, `5V`).
 | 48 | Every 74HC595 pin 13 (output enable) + 10 kΩ pull-up to 5 V | 7 |
 | 5V | Every 74HC595 pin 16 and pin 10 | 7 |
 | GND | Common ground point, every 74HC595 pin 8, every ULN2803 pin 9 | 4, 7 |
+| 18 (TX1) | DFPlayer Mini RX (pin 2), **through a 1 kΩ resistor** | 7d |
+| 19 (RX1) | DFPlayer Mini TX (pin 3); optional, for future status messages | 7d |
 | USB | Your computer, for flashing and the serial console | 9 |
 
 Leave pins 50 and 53 unconnected; the SPI hardware uses them.
@@ -396,6 +398,54 @@ LEDs.
 | Backboard: player up 1–4 | 32–35 | 9 | Q0–Q3 |
 | Backboard: ball in play 1–5 (four train cars, then the dragon's head *) | 40–44 | 10 | Q0–Q4 |
 
+### 7d. Sound (DFPlayer Mini)
+
+Sound comes from a **DFPlayer Mini**, a small module that plays numbered WAV or
+MP3 files from a microSD card and drives a speaker directly. The Arduino tells it
+which file to play over a serial connection.
+
+The DFPlayer Mini pinout (pins 1–8 down the left, 9–16 up the right, with the
+SD card slot at the top):
+
+```
+            ┌──[ SD ]──┐
+      VCC  1│          │16 BUSY
+       RX  2│          │15 USB-
+       TX  3│ DFPlayer │14 USB+
+    DAC_R  4│   Mini   │13 ADKEY2
+    DAC_L  5│          │12 ADKEY1
+     SPK1  6│          │11 IO2
+      GND  7│          │10 GND
+     SPK2  8│          │ 9 IO1
+            └──────────┘
+```
+
+| DFPlayer pin | Connect to |
+|---|---|
+| 1 (VCC) | **A separate 5 V supply** (a 5 V 2 A adaptor), not the Arduino's 5V pin: the module can draw several hundred mA on loud sounds |
+| 7 (GND) | The common ground point |
+| 2 (RX) | Arduino **D18 (TX1)**, through a **1 kΩ resistor** (protects the module's 3.3 V input, and cuts hiss) |
+| 3 (TX) | Arduino D19 (RX1); optional |
+| 6 (SPK1), 8 (SPK2) | The speaker, 3 W at 4–8 Ω. **Don't connect either speaker pin to ground.** |
+
+Everything else stays unconnected.
+
+**The SD card:**
+
+1. Run `pnpm run render:sounds`. This writes every sound to
+   `target/sd-card/01/` as `001.wav`, `002.wav` and so on.
+2. Format a microSD card (8–32 GB) as **FAT32**.
+3. Copy the whole `01` folder to the card's root, so the files are at
+   `/01/001.wav`.
+4. Put the card in the DFPlayer.
+
+Sounds are synthesised in `sim/web/sounds.js`, the same file the simulator
+plays, so what you hear in the simulator is what the machine plays. After
+changing a sound, re-render and re-copy the card.
+
+The firmware waits 2 seconds after power-on for the module to start, then sets
+the volume (`DFPLAYER_VOLUME` in `crates/pinball-core/src/sound.rs`, 0–30).
+
 ---
 
 ## 8. Good wiring habits
@@ -441,6 +491,9 @@ to look. **Keep the coil supply switched off until step 6.**
    switch by hand: you should get one short, sharp kick. If the coil buzzes or
    stays on, cut the power and recheck the flyback diode and MOSFET wiring.
 7. **The remaining coils, one by one**, then the lamps.
+8. **Sound.** Wire the DFPlayer Mini and its speaker, and prepare the SD card
+   (section 7d). Power on and wait 2 seconds, then press start: you should hear
+   the calliope march.
 
 ---
 
@@ -458,6 +511,8 @@ to look. **Keep the coil supply switched off until step 6.**
 | MOSFET gets hot | Not a logic-level part, or gate resistor/pull-down wired wrong |
 | Board resets when a coil fires | Coil ground return too thin, or shared with logic wiring; give coils their own thick ground run |
 | LED bulbs dim | Lamp supply too low after the ULN2803's ~1 V drop |
+| No sound | SD card not FAT32; folder not named `01`; files not named `001.wav` etc.; DFPlayer RX wired to D1 (TX0) instead of D18 (TX1) |
+| Sound hisses or crackles | 1 kΩ resistor missing on the RX line, or the DFPlayer powered from the Arduino's 5V pin |
 
 ---
 

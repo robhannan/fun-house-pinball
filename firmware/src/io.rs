@@ -4,6 +4,7 @@
 
 use arduino_hal::port::Pin;
 use arduino_hal::port::mode::{Input, Output, PullUp};
+use arduino_hal::prelude::_embedded_hal_serial_Write;
 use embedded_hal::spi::SpiBus;
 use pinball_core::{Outputs, SwitchStates};
 
@@ -66,5 +67,51 @@ impl OutputChain {
     /// Lets the registers drive their outputs.
     pub fn enable(&mut self) {
         self.output_enable.set_low();
+    }
+}
+
+/// Sends commands to the DFPlayer Mini sound module, one byte per call.
+///
+/// The module listens at 9600 baud, so a 10-byte command takes about 10 ms.
+/// Sending it in one go would hold up the main loop, and coil pulses only end
+/// when the loop runs, so this never waits for the serial port.
+pub struct SoundOut<W> {
+    serial: W,
+    frame: [u8; 10],
+    sent: usize,
+    /// The next command to send; a newer one replaces it.
+    pending: Option<[u8; 10]>,
+}
+
+impl<W: _embedded_hal_serial_Write<u8, Error = core::convert::Infallible>> SoundOut<W> {
+    /// Wraps the serial port connected to the DFPlayer's RX pin.
+    pub fn new(serial: W) -> Self {
+        Self {
+            serial,
+            frame: [0; 10],
+            sent: 10,
+            pending: None,
+        }
+    }
+
+    /// Queues a command, sent after the one in progress.
+    pub fn send(&mut self, frame: [u8; 10]) {
+        self.pending = Some(frame);
+    }
+
+    /// Sends at most one byte, if the serial port is ready. Call every tick.
+    pub fn poll(&mut self) {
+        if self.sent == self.frame.len() {
+            match self.pending.take() {
+                Some(frame) => {
+                    self.frame = frame;
+                    self.sent = 0;
+                }
+                None => return,
+            }
+        }
+        if self.serial.write(self.frame[self.sent]).is_ok() {
+            self.sent += 1;
+        }
     }
 }

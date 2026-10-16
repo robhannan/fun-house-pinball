@@ -132,6 +132,23 @@
       </section>
 
       <section>
+        <h2>Sound</h2>
+        <div class="settings">
+          <label>Sound on
+            <input type="checkbox" id="sound-on" checked>
+          </label>
+          <label>Volume
+            <input type="range" id="volume" min="0" max="1" step="0.05" value="0.6">
+          </label>
+        </div>
+        <details style="margin-top: 12px;">
+          <summary>Sound test</summary>
+          <p style="margin: 8px 0;">Every sound, as on the DFPlayer's SD card. One plays at a time, like the real module.</p>
+          <div class="buttons" id="sound-test"></div>
+        </details>
+      </section>
+
+      <section>
         <h2>Operator settings</h2>
         <div class="settings">
           <label>Balls per game
@@ -166,6 +183,7 @@
           <li>Click lanes, bumpers and the gate to score.</li>
           <li>Click the outhole, or press <kbd>D</kbd>, to drain the ball.</li>
           <li>Orange glow = coil firing. Dim lamps are off. An open trapdoor glows.</li>
+          <li>Sound starts after your first click or key press (browsers require it).</li>
         </ul>
       </section>
     </aside>

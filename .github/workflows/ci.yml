@@ -37,6 +37,8 @@ jobs:
       - run: cargo test --locked
       - name: Build the browser simulator
         run: pnpm run build:sim
+      - name: Every sound renders cleanly
+        run: pnpm run check:sounds
 
   firmware:
     name: Firmware (ATmega2560)

@@ -11,6 +11,7 @@
 use crate::coils::{CoilId, Coils};
 use crate::lamps::{LampMode, Lamps};
 use crate::playfield::{COIL_KINDS, coil, lamp, sw};
+use crate::sound::{Sound, SoundScheduler};
 use crate::switches::{Debouncer, SwitchEvent, SwitchId, SwitchStates};
 use crate::time::Instant;
 
@@ -74,6 +75,8 @@ pub struct Outputs {
     pub coils: u32,
     /// Lamp bitmap; bit `n` lights lamp `n`.
     pub lamps: u64,
+    /// A sound to start now, if any.
+    pub sound: Option<Sound>,
 }
 
 /// The whole machine: switch filtering, rules, coils and lamps.
@@ -98,6 +101,7 @@ pub struct Machine {
     bonus_step: u8,
     tilt_warnings: u8,
     serve_at: Option<Instant>,
+    sound: SoundScheduler,
 }
 
 impl Default for Machine {
@@ -136,6 +140,7 @@ impl Machine {
             bonus_step: 0,
             tilt_warnings: 0,
             serve_at: None,
+            sound: SoundScheduler::new(),
         };
         machine.enter(Phase::Attract);
         machine
@@ -224,22 +229,31 @@ impl Machine {
         if self.serve_at.is_some_and(|at| now.reached(at)) {
             self.serve_at = None;
             self.coils.pulse(coil::BALL_SERVE, u16::MAX, now);
+            self.sound.request(Sound::BallServe);
         }
         Outputs {
             coils: self.coils.outputs(now),
             lamps: self.lamps.frame(now),
+            sound: self.sound.next(now),
         }
     }
 
     fn on_switch(&mut self, event: SwitchEvent, now: Instant) {
         match (self.phase, event) {
-            (_, SwitchEvent::Closed(sw::SLAM_TILT)) => self.enter(Phase::Attract),
+            (_, SwitchEvent::Closed(sw::SLAM_TILT)) => {
+                let was_playing = self.phase != Phase::Attract;
+                self.enter(Phase::Attract);
+                if was_playing {
+                    self.sound.request(Sound::GameOver);
+                }
+            }
 
             (Phase::Attract, SwitchEvent::Closed(sw::START_BUTTON)) => self.start_game(now),
             // Assumed (*verify*): players can be added while ball 1 is in play.
             (Phase::Playing | Phase::Tilted, SwitchEvent::Closed(sw::START_BUTTON)) => {
                 if self.ball == 1 && usize::from(self.players) < MAX_PLAYERS {
                     self.players += 1;
+                    self.sound.request(Sound::PlayerAdded);
                 }
             }
 
@@ -268,27 +282,42 @@ impl Machine {
             }
             sw::LEFT_KICKER => {
                 kick(&mut self.coils, coil::LEFT_KICKER);
+                self.sound.request(Sound::Kicker);
                 self.add_score(1);
             }
             sw::RIGHT_KICKER => {
                 kick(&mut self.coils, coil::RIGHT_KICKER);
+                self.sound.request(Sound::Kicker);
                 self.add_score(1);
             }
-            sw::TOP_CENTRE_BUMPER => self.add_score(1),
+            sw::TOP_CENTRE_BUMPER => {
+                self.sound.request(Sound::PopBumper);
+                self.add_score(1);
+            }
             sw::BONUS_GATE => self.collect_bonus(),
             // Assumed (*verify*): the ball drops under the playfield and rolls
             // to the outhole, which ends the ball as usual.
-            id if sw::TRAPDOORS.contains(&id) => self.close_trapdoors(),
+            id if sw::TRAPDOORS.contains(&id) => {
+                self.close_trapdoors();
+                self.sound.request(Sound::Trapdoor);
+            }
             _ => {
                 if let Some(n) = sw::POP_BUMPERS.iter().position(|&pop| pop == id) {
                     kick(&mut self.coils, coil::POP_BUMPERS[n]);
+                    self.sound.request(Sound::PopBumper);
                     self.add_score(1);
                 } else if sw::SIDE_LANES.contains(&id) || sw::TOP_LANES.contains(&id) {
+                    self.sound.request(Sound::Lane);
                     self.add_score(10);
                     self.advance_bonus();
                 } else if let Some(n) = sw::THIRTY_POINT_ROLLOVERS.iter().position(|&r| r == id) {
                     // TODO: find out what lights these on the original.
                     let lit = self.lamps.mode(lamp::THIRTY_POINTS[n]) != LampMode::Off;
+                    self.sound.request(if lit {
+                        Sound::ThirtyPoints
+                    } else {
+                        Sound::Lane
+                    });
                     self.add_score(if lit { 30 } else { 1 });
                 }
             }
@@ -336,6 +365,7 @@ impl Machine {
     fn award_replay(&mut self) {
         // TODO: fire a knocker and/or drive a credit unit.
         if self.settings.replays {
+            self.sound.request(Sound::Replay);
             self.replays[usize::from(self.player)] += 1;
             self.credits = (self.credits + 1).min(MAX_CREDITS);
         }
@@ -354,6 +384,10 @@ impl Machine {
                 lamp::BONUS_WHEEL[usize::from(self.bonus_step)],
                 LampMode::On,
             );
+            self.sound.request(Sound::BonusAdvance(self.bonus_step));
+            if self.bonus_step == 9 {
+                self.sound.request(Sound::Special);
+            }
         }
         if self.bonus_step == 9 {
             self.lamps.set(lamp::SPECIAL, LampMode::On);
@@ -363,6 +397,7 @@ impl Machine {
     /// Assumed rule: the "Scores Bonus" gate scores the lit wheel value, plus
     /// a replay (once) when the special is lit.
     fn collect_bonus(&mut self) {
+        self.sound.request(Sound::BonusCollect);
         self.add_score(self.bonus());
         if self.lamps.mode(lamp::SPECIAL) != LampMode::Off {
             self.lamps.set(lamp::SPECIAL, LampMode::Off);
@@ -392,6 +427,7 @@ impl Machine {
         self.players = 1;
         self.player = 0;
         self.enter(Phase::Playing);
+        self.sound.request(Sound::GameStart);
         self.lamps.set(lamp::BONUS_WHEEL[0], LampMode::On);
         self.serve_at = Some(now);
     }
@@ -408,8 +444,10 @@ impl Machine {
         }
         if self.ball > self.settings.balls_per_game {
             self.enter(Phase::Attract);
+            self.sound.request(Sound::GameOver);
         } else {
             self.enter(Phase::Playing);
+            self.sound.request(Sound::Drain);
             self.serve_at = Some(now.plus(SERVE_DELAY_MS));
         }
     }
@@ -457,6 +495,7 @@ impl Machine {
                 self.coils.set_enabled(false);
                 self.coils.set_enabled(true);
                 self.lamps.set(lamp::TILT, LampMode::On);
+                self.sound.request(Sound::Tilt);
             }
         }
         self.update_backboard_lamps();
@@ -473,6 +512,7 @@ mod tests {
         switches: SwitchStates,
         now: u32,
         last: Outputs,
+        sounds: Vec<Sound>,
     }
 
     impl Sim {
@@ -482,6 +522,7 @@ mod tests {
                 switches: SwitchStates::new(),
                 now: 0,
                 last: Outputs::default(),
+                sounds: Vec::new(),
             }
         }
 
@@ -491,6 +532,7 @@ mod tests {
                 self.last = self
                     .machine
                     .tick(Instant::from_millis(self.now), &self.switches);
+                self.sounds.extend(self.last.sound);
             }
         }
 
@@ -793,6 +835,82 @@ mod tests {
                 .iter()
                 .chain(&lamp::BALL_IN_PLAY)
                 .all(|&l| !lit(&sim, l))
+        );
+    }
+
+    /// Every sound started while running `f`.
+    fn sounds_during(sim: &mut Sim, f: impl FnOnce(&mut Sim)) -> Vec<Sound> {
+        sim.sounds.clear();
+        f(sim);
+        std::mem::take(&mut sim.sounds)
+    }
+
+    #[test]
+    fn game_events_make_sounds() {
+        let mut sim = Sim::new();
+        assert_eq!(
+            sounds_during(&mut sim, |s| s.tap(sw::START_BUTTON)),
+            [Sound::GameStart]
+        );
+        // The calliope isn't cut off by the ball serve or a bumper.
+        sim.run(SERVE_DELAY_MS);
+        assert_eq!(sounds_during(&mut sim, |s| s.tap(sw::POP_BUMPERS[0])), []);
+
+        sim.run(Sound::GameStart.duration_ms());
+        assert_eq!(
+            sounds_during(&mut sim, |s| s.tap(sw::POP_BUMPERS[0])),
+            [Sound::PopBumper]
+        );
+        sim.run(500);
+        // A lane rings, then the wheel's rising bell takes over (same priority, later).
+        assert_eq!(
+            sounds_during(&mut sim, |s| s.tap(sw::SIDE_LANES[0])),
+            [Sound::BonusAdvance(1)]
+        );
+        sim.run(500);
+        assert_eq!(
+            sounds_during(&mut sim, |s| s.tap(sw::BONUS_GATE)),
+            [Sound::BonusCollect]
+        );
+        sim.run(2_000);
+        assert_eq!(sounds_during(&mut sim, |s| s.tap(sw::TILT)), [Sound::Tilt]);
+        sim.run(2_000);
+        assert_eq!(
+            sounds_during(&mut sim, |s| s.tap(sw::OUTHOLE)),
+            [Sound::Drain]
+        );
+    }
+
+    #[test]
+    fn last_drain_plays_game_over() {
+        let mut sim = Sim::new();
+        sim.machine = Machine::with_settings(Settings {
+            balls_per_game: 3,
+            replays: true,
+        });
+        sim.tap(sw::START_BUTTON);
+        sim.run(5_000);
+        sim.tap(sw::OUTHOLE);
+        sim.tap(sw::OUTHOLE);
+        sim.run(1_000);
+        assert_eq!(
+            sounds_during(&mut sim, |s| s.tap(sw::OUTHOLE)),
+            [Sound::GameOver]
+        );
+    }
+
+    #[test]
+    fn a_replay_knocks() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        for _ in 0..39 {
+            sim.tap(sw::SIDE_LANES[0]);
+        }
+        sim.run(5_000);
+        // 400 points: the knocker beats the lane bell.
+        assert_eq!(
+            sounds_during(&mut sim, |s| s.tap(sw::SIDE_LANES[0])),
+            [Sound::Replay]
         );
     }
 

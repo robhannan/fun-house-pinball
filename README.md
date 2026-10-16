@@ -48,6 +48,11 @@ player's score reels, the credit window, and the player-up and ball-in-play
 lamps. Up to 4 players, and the operator settings (3, 4 or 5 balls; replay or
 novelty) can be changed on the page.
 
+It plays the machine's sounds too: a mix of classic pinball (bells, thumps,
+the knocker, the tilt buzzer) and circus (a calliope march, drum roll, clown
+horn, slide whistles, sad trombone). They're synthesised in
+`sim/web/sounds.js`, and the **Sound test** panel plays each one.
+
 ```sh
 pnpm install           # once, installs zx for the build script
 pnpm run build:sim
@@ -60,6 +65,18 @@ Controls:
 - <kbd>Z</kbd> / <kbd>M</kbd>: hold the left / right flipper
 - <kbd>T</kbd>: tilt
 - <kbd>D</kbd>: drain
+
+### Sound on the machine
+
+The machine plays the same sounds through a DFPlayer Mini. Render them to WAV
+files for its SD card with:
+
+```sh
+pnpm run render:sounds   # writes target/sd-card/01/001.wav, 002.wav, ...
+```
+
+Copy the `01` folder to the root of a FAT32 microSD card. Wiring is in
+[docs/wiring-guide.md](docs/wiring-guide.md#7d-sound-dfplayer-mini).
 
 ### Firmware (Arduino Mega 2560)
 
@@ -95,7 +112,7 @@ avr-hal, bump the toolchain to match its `rust-toolchain.toml`.
 - [ ] Check the features in `crates/pinball-core/src/playfield.rs` (taken from a
       photo) against the real playfield; counts marked *verify* are guesses
 - [ ] Confirm the scoring and bonus-wheel rules against the original schematic
-- [ ] Multi-player support (the instruction card prices per player)
+- [x] Multi-player support (1 to 4 players, #34)
 - [ ] Choose driver boards and confirm coil voltages and pulse times
 - [ ] Decide on a score display (backglass lamps, reels or LED digits)
-- [ ] Add sound
+- [x] Sound: synthesised effects, played by a DFPlayer Mini (wire and test on the machine)

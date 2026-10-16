@@ -6,7 +6,7 @@
 //! clicking parts of the playfield or using the keyboard.
 
 use pinball_core::{
-    Instant, MAX_PLAYERS, Machine, Outputs, Phase, Settings, SwitchId, SwitchStates,
+    Instant, MAX_PLAYERS, Machine, Outputs, Phase, Settings, Sound, SwitchId, SwitchStates,
 };
 
 /// How long a clicked switch stays closed, in simulated milliseconds. Long
@@ -40,6 +40,8 @@ pub struct Simulator {
     outputs: Outputs,
     /// Every coil that was on at any point during the last [`Simulator::advance`].
     coils_seen: u32,
+    /// Sounds started but not yet played by the page, oldest first.
+    sounds: std::collections::VecDeque<Sound>,
 }
 
 impl Default for Simulator {
@@ -65,6 +67,7 @@ impl Simulator {
             taps: Vec::new(),
             outputs: Outputs::default(),
             coils_seen: 0,
+            sounds: std::collections::VecDeque::new(),
         }
     }
 
@@ -86,6 +89,11 @@ impl Simulator {
     #[must_use]
     pub const fn coils_seen(&self) -> u32 {
         self.coils_seen
+    }
+
+    /// The oldest sound started but not yet taken by the page.
+    pub fn take_sound(&mut self) -> Option<Sound> {
+        self.sounds.pop_front()
     }
 
     /// Holds a switch closed or open, e.g. a flipper button.
@@ -126,6 +134,7 @@ impl Simulator {
             });
             self.outputs = self.machine.tick(now, &self.switches);
             self.coils_seen |= self.outputs.coils;
+            self.sounds.extend(self.outputs.sound);
         }
     }
 }
@@ -195,6 +204,13 @@ mod exports {
     #[unsafe(no_mangle)]
     pub extern "C" fn sim_coils() -> u32 {
         with(|sim| sim.outputs().coils)
+    }
+
+    /// The next sound to play, as its track number in `sim/web/sounds.js`; 0 when
+    /// there are none left.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_take_sound() -> u32 {
+        with(|sim| sim.take_sound().map_or(0, |sound| u32::from(sound.track())))
     }
 
     /// Every coil that was on during the last advance, for showing short pulses.
@@ -368,6 +384,7 @@ mod tests {
     const SVG: &str = include_str!("../../../docs/playfield.svg");
     const BACKBOARD: &str = include_str!("../../../docs/backboard.svg");
     const HTML: &str = include_str!("../../../sim/web/index.html");
+    const SOUNDS_JS: &str = include_str!("../../../sim/web/sounds.js");
 
     /// The I/O one page element refers to.
     #[derive(Debug, Default)]
@@ -466,6 +483,38 @@ mod tests {
         });
         assert_eq!(sim.machine().settings().balls_per_game, 3);
         assert!(!sim.machine().settings().replays);
+    }
+
+    #[test]
+    fn every_sound_is_synthesised_with_the_right_duration() {
+        for sound in Sound::ALL {
+            let entry = format!("\n  {}: {{ name: \"", sound.track());
+            let start = SOUNDS_JS
+                .find(&entry)
+                .unwrap_or_else(|| panic!("{sound:?}: no track {} in sounds.js", sound.track()));
+            let line = SOUNDS_JS[start + 1..].lines().next().unwrap_or_default();
+            let duration = line
+                .split("durationMs: ")
+                .nth(1)
+                .and_then(|rest| rest.split(',').next())
+                .and_then(|ms| ms.trim().parse::<u32>().ok());
+            assert_eq!(duration, Some(sound.duration_ms()), "{sound:?}: {line}");
+        }
+        let entries = SOUNDS_JS.matches(": { name: \"").count();
+        assert_eq!(
+            entries,
+            Sound::ALL.len(),
+            "sounds.js has tracks the core doesn't use"
+        );
+    }
+
+    #[test]
+    fn started_sounds_are_queued_for_the_page() {
+        let mut sim = Simulator::new();
+        sim.tap(sw::START_BUTTON);
+        sim.advance(100);
+        assert_eq!(sim.take_sound(), Some(Sound::GameStart));
+        assert_eq!(sim.take_sound(), None);
     }
 
     #[test]

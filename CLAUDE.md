@@ -32,6 +32,12 @@ Mega 2560. See `README.md` for setup and `docs/hardware.md` for wiring.
   failure in the code or build, add a test or CI check that would catch it next
   time, wherever that's possible. Process rules, such as the PR description and
   branch hygiene, are handled by the `github-pr` skill, not CI.
+- **Sound:** the `Sound` enum in `crates/pinball-core/src/sound.rs` and the
+  synthesised sounds in `sim/web/sounds.js` go together. Each sound's track
+  number and `durationMs` must match the core; the simulator's tests check
+  that, and `pnpm run check:sounds` checks every sound renders cleanly.
+  Firmware sends DFPlayer commands one byte per tick; never block the main
+  loop on serial, because coil pulses only end when the loop runs.
 - **Simulator:** `crates/pinball-sim` and `sim/web/` find parts by the
   `data-switch` / `data-coil` / `data-lamp` attributes in `docs/playfield.svg`
   and `sim/web/index.html`. When adding a part, add it to `PARTS` and give its
