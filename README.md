@@ -48,6 +48,17 @@ player's score reels, the credit window, and the player-up and ball-in-play
 lamps. Up to 4 players, and the operator settings (3, 4 or 5 balls; replay or
 novelty) can be changed on the page.
 
+It plays the machine's sounds too: mostly what a 1950s machine sounded like
+(bells, relays, the score motor starting a game, the knocker), with circus
+extras (drum roll, fanfare, slide whistles, sad trombone). They're cut from
+free CC0 recordings, many from real electromechanical pinball machines
+(credits in [docs/sound-credits.md](docs/sound-credits.md)). The simulator
+also plays the noise each coil makes (kickers, pop bumpers, flippers), which
+the real machine makes by itself. Synthesised
+versions are kept in `sim/web/sounds.js` as a fallback, and the page can switch
+between the two. The **Sound test** panel plays each one, including the
+optional real bells.
+
 ```sh
 pnpm install           # once, installs zx for the build script
 pnpm run build:sim
@@ -60,6 +71,20 @@ Controls:
 - <kbd>Z</kbd> / <kbd>M</kbd>: hold the left / right flipper
 - <kbd>T</kbd>: tilt
 - <kbd>D</kbd>: drain
+
+### Sound on the machine
+
+The machine plays the same sounds through a WAV Trigger, which mixes up to 14
+at once. Render them to WAV files for its SD card with:
+
+```sh
+pnpm run render:sounds   # writes target/sd-card/001_Pop-bumper.wav, ...
+```
+
+Copy the files to the root of a FAT32 microSD card. To change which
+recordings are used, edit `sim/samples/sources.json` and run
+`pnpm run import:samples` (needs `ffmpeg`). Wiring is in
+[docs/wiring-guide.md](docs/wiring-guide.md#7d-sound-wav-trigger).
 
 ### Firmware (Arduino Mega 2560)
 
@@ -98,4 +123,4 @@ avr-hal, bump the toolchain to match its `rust-toolchain.toml`.
 - [ ] Multi-player support (the instruction card prices per player)
 - [ ] Choose driver boards and confirm coil voltages and pulse times
 - [ ] Decide on a score display (backglass lamps, reels or LED digits)
-- [ ] Add sound
+- [x] Sound: recorded effects, mixed by a WAV Trigger (wire and test on the machine)

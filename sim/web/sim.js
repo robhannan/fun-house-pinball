@@ -6,10 +6,13 @@
 // - runs the simulated machine in step with real time
 // - lights lamps, flashes coils and raises flippers from the machine's outputs
 // - turns the backboard's score reels and credit window
+// - plays the machine's sounds (synthesised in sounds.js)
 //
 // Parts are found by their data-switch / data-coil / data-lamp attributes, and
 // reels by data-score / data-digit. The Rust tests check them against
 // playfield.rs.
+
+import { BELL_SAMPLES, COIL_SAMPLES, SOUNDS, render } from "./sounds.js";
 
 const PHASES = ["Attract", "Playing", "Tilted"];
 const COIL_GLOW_MS = 150; // keep short coil pulses visible
@@ -40,7 +43,7 @@ function start(sim) {
     el,
     lamp: Number(el.dataset.lamp),
   }));
-  const coils = [...document.querySelectorAll("#playfield [data-coil]")].map((el) => ({
+  const coils = [...document.querySelectorAll("[data-coil]")].map((el) => ({
     el,
     mask: el.dataset.coil.split(" ").reduce((m, c) => m | (1 << Number(c)), 0),
     lastOn: -Infinity,
@@ -77,7 +80,8 @@ function start(sim) {
   const powerCycle = () => {
     const balls = Number(document.getElementById("balls").value);
     const replays = document.getElementById("replay-mode").checked ? 1 : 0;
-    sim.sim_reset_with(balls, replays);
+    const bells = document.getElementById("bells-fitted").checked ? 1 : 0;
+    sim.sim_reset_with(balls, replays, bells);
   };
   document.getElementById("reset").addEventListener("click", powerCycle);
   document.getElementById("apply-settings").addEventListener("click", powerCycle);
@@ -137,11 +141,14 @@ function start(sim) {
     for (const button of [...held]) release(button);
   });
 
+  const audio = soundPlayer();
+
   const text = (id, value) => {
     const el = document.getElementById(id);
     if (el.textContent !== value) el.textContent = value;
   };
 
+  const coilLastOn = {};
   let last = performance.now();
   let carry = 0;
   function frame(now) {
@@ -160,13 +167,27 @@ function start(sim) {
       const word = lamp < 32 ? lampLow : lampHigh;
       el.classList.toggle("lit", ((word >>> (lamp % 32)) & 1) === 1);
     }
+    for (const n of Object.keys(COIL_SAMPLES)) {
+      if (coilsSeen & (1 << n)) {
+        if (now - (coilLastOn[n] ?? -Infinity) > 60) audio.coil(n);
+        coilLastOn[n] = now;
+      }
+    }
     for (const coil of coils) {
-      if (coilsSeen & coil.mask) coil.lastOn = now;
+      if (coilsSeen & coil.mask) {
+        // A bell stroke: each new pulse rings the bell.
+        if (coil.el.classList.contains("bell") && now - coil.lastOn > 40) audio.bell(Number(coil.el.dataset.coil) - 15);
+        coil.lastOn = now;
+      }
       if (!coil.el.dataset.flipper) {
         coil.el.classList.toggle("firing", now - coil.lastOn < COIL_GLOW_MS);
       }
     }
     for (const { el, mask } of flippers) el.classList.toggle("up", (coilBits & mask) !== 0);
+
+    for (let sound = sim.sim_take_sound(); sound !== 0; sound = sim.sim_take_sound()) {
+      audio.play(sound & 0xff, (sound & 0x100) !== 0);
+    }
 
     const ball = sim.sim_ball();
     for (const { el, player, place } of reels) {
@@ -193,3 +214,148 @@ load().then(start, (error) => {
   document.getElementById("playfield").textContent =
     `Couldn't load the simulator (${error.message}). Run pnpm run build:sim, then serve sim/web/ over HTTP.`;
 });
+
+/**
+ * Plays sounds with the Web Audio API, mixing them like the WAV Trigger: up to
+ * VOICES at once, and when all are busy the oldest unlocked sound is stopped to
+ * make room. Like the SD-card files, each sound is played with HEADROOM so that
+ * overlapping sounds don't clip, then a limiter brings the mix back up. Each sound can be the recorded
+ * version (from free recordings) or the synthesised one, picked on the page.
+ * Real bells ring separately, as real bells would. Browsers only allow audio
+ * after the user has interacted with the page, so the audio context is created
+ * suspended (the recordings load meanwhile) and resumes on the first click or
+ * key press.
+ */
+/** Sounds the WAV Trigger can mix at once. */
+const VOICES = 14;
+/** Matches the SD-card files (sim/render-sounds.mjs). */
+const HEADROOM = 0.5;
+
+function soundPlayer() {
+  let context;
+  let gain;
+  /** Playing sounds, oldest first: { source, locked }. */
+  let voices = [];
+  const synthesised = new Map();
+  const recorded = new Map();
+  const on = document.getElementById("sound-on");
+  const volume = document.getElementById("volume");
+  const style = document.getElementById("sound-style");
+
+  const loadRecording = async (key, file) => {
+    try {
+      const bytes = await (await fetch(file)).arrayBuffer();
+      recorded.set(key, await context.decodeAudioData(bytes));
+    } catch (error) {
+      console.warn(`couldn't load ${file}; using the synthesised sound`, error);
+    }
+  };
+
+  const ensureContext = () => {
+    if (!context) {
+      context = new AudioContext();
+      gain = context.createGain();
+      gain.gain.value = Number(volume.value);
+      // A limiter, then make-up gain for the headroom left in each sound.
+      const limiter = context.createDynamicsCompressor();
+      limiter.threshold.value = -6;
+      limiter.knee.value = 3;
+      limiter.ratio.value = 20;
+      limiter.attack.value = 0.002;
+      limiter.release.value = 0.1;
+      const makeUp = context.createGain();
+      makeUp.gain.value = 1 / HEADROOM;
+      gain.connect(limiter).connect(makeUp).connect(context.destination);
+      for (const [track, { sample }] of Object.entries(SOUNDS)) if (sample) loadRecording(track, sample);
+      BELL_SAMPLES.forEach((file, n) => loadRecording(`bell-${n}`, file));
+      for (const file of new Set(Object.values(COIL_SAMPLES))) loadRecording(file, file);
+    }
+    if (context.state === "suspended") context.resume();
+    return context;
+  };
+  // Create the (suspended) context now, so the recordings load straight away;
+  // the first click or key press resumes it.
+  ensureContext();
+  for (const event of ["pointerdown", "keydown"]) addEventListener(event, ensureContext, { once: true });
+  volume.addEventListener("input", () => {
+    if (gain) gain.gain.value = Number(volume.value);
+  });
+
+  const start = (audioBuffer, level = 1) => {
+    const source = context.createBufferSource();
+    source.buffer = audioBuffer;
+    if (level === 1) {
+      source.connect(gain);
+    } else {
+      const quieter = context.createGain();
+      quieter.gain.value = level;
+      source.connect(quieter).connect(gain);
+    }
+    source.start();
+    return source;
+  };
+
+  const bufferFor = (track) => {
+    if (style.value === "recorded" && recorded.has(String(track))) return recorded.get(String(track));
+    let audioBuffer = synthesised.get(track);
+    if (!audioBuffer) {
+      const samples = render(track, context.sampleRate);
+      audioBuffer = context.createBuffer(1, samples.length, context.sampleRate);
+      audioBuffer.copyToChannel(samples, 0);
+      synthesised.set(track, audioBuffer);
+    }
+    return audioBuffer;
+  };
+
+  /** Plays `track`, mixed with whatever is playing. */
+  const play = (track, locked = false) => {
+    if (!on.checked || !context || !SOUNDS[track]) return;
+    if (voices.length >= VOICES) {
+      const steal = voices.findIndex((voice) => !voice.locked);
+      if (steal < 0) return; // Every voice is locked: drop this one.
+      voices[steal].source.stop();
+      voices.splice(steal, 1);
+    }
+    const voice = { source: start(bufferFor(track), HEADROOM), locked };
+    voice.source.onended = () => {
+      voices = voices.filter((v) => v !== voice);
+    };
+    voices.push(voice);
+  };
+
+  /** Rings real bell `n` (0 = 1s, 1 = 10s, 2 = 100s), over whatever is playing. */
+  const bell = (n) => {
+    const audioBuffer = context && recorded.get(`bell-${n}`);
+    if (on.checked && audioBuffer) start(audioBuffer, HEADROOM);
+  };
+
+  /**
+   * The noise coil `n` makes when it fires (kickers, pop bumpers, flippers). On
+   * the real machine the coils make it themselves, so only the simulator plays
+   * it, quieter than the effects and over whatever is playing.
+   */
+  const coilNoises = document.getElementById("coil-noises");
+  const coil = (n) => {
+    const audioBuffer = context && recorded.get(COIL_SAMPLES[n]);
+    if (on.checked && coilNoises.checked && audioBuffer) start(audioBuffer, 0.45 * HEADROOM);
+  };
+
+  // The sound-test board: one button per sound, plus the bells.
+  const board = document.getElementById("sound-test");
+  const addButton = (label, action) => {
+    const button = document.createElement("button");
+    button.textContent = label;
+    button.addEventListener("click", () => {
+      ensureContext();
+      action();
+    });
+    board.append(button);
+  };
+  for (const [track, { name }] of Object.entries(SOUNDS)) addButton(name, () => play(Number(track)));
+  ["1s", "10s", "100s"].forEach((label, n) => addButton(`Real bell: ${label}`, () => bell(n)));
+  addButton("Coil noise: kicker", () => coil(1));
+  addButton("Coil noise: pop bumper", () => coil(3));
+  addButton("Coil noise: flipper", () => coil(8));
+
+  return { play, bell, coil };
+}

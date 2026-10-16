@@ -14,15 +14,18 @@
 
 #![cfg_attr(not(test), no_std)]
 
+pub mod bells;
 pub mod coils;
 pub mod game;
 pub mod lamps;
 pub mod playfield;
+pub mod sound;
 pub mod switches;
 pub mod time;
 
 pub use coils::{CoilId, CoilKind, Coils};
 pub use game::{MAX_CREDITS, MAX_PLAYERS, Machine, Outputs, Phase, Settings};
 pub use lamps::{LampId, LampMode, Lamps};
+pub use sound::{Sound, SoundScheduler};
 pub use switches::{Debouncer, SwitchEvent, SwitchId, SwitchStates};
 pub use time::Instant;

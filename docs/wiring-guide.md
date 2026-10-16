@@ -95,21 +95,27 @@ The full list, with quantities and links, is in
 ## 4. Power layout
 
 ```
-            ┌──────────────────────┐
- Mains ───▶ │ Inlet, fuse, switch  │  ◀── have this checked by an electrician
-            └──┬─────────┬──────┬──┘
-               │         │      │
-        ┌──────▼───┐ ┌───▼────┐ ┌▼─────────┐
-        │ Coil PSU │ │Lamp PSU│ │ 9 V for  │
-        │ (DC)     │ │ (DC)   │ │ Arduino  │
-        └─┬──────┬─┘ └─┬────┬─┘ └─┬──────┬─┘
-        +V│  fuse│-  +V│fuse│-   +│      │-
-          ▼      │     ▼    │     ▼      │
-       coils     │   lamps  │  Arduino   │
-                 │          │  barrel    │
-                 ▼          ▼  jack      ▼
-              ═══════ COMMON GROUND POINT ═══════
+            ┌───────────────────────────────┐
+ Mains ───▶ │      Inlet, fuse, switch      │  ◀── have this checked by an electrician
+            └──┬─────────┬──────┬───────┬───┘
+               │         │      │       │
+        ┌──────▼───┐ ┌───▼────┐ ┌▼──────┐ ┌▼────────┐
+        │ Coil PSU │ │Lamp PSU│ │ 9 V   │ │ 5 V 2 A │
+        │ (DC)     │ │ (DC)   │ │Arduino│ │ sound   │
+        └─┬──────┬─┘ └─┬────┬─┘ └─┬───┬─┘ └─┬─────┬─┘
+        +V│  fuse│-  +V│fuse│-   +│   │-   +│fuse │-
+          ▼      │     ▼    │     ▼   │     ▼     │
+       coils     │   lamps  │  Arduino│  WAV      │
+                 │          │  barrel │  Trigger  │
+                 ▼          ▼  jack   ▼           ▼
+              ══════════ COMMON GROUND POINT ══════════
 ```
+
+Every supply, the 5 V sound adaptor included, is fed from the machine's
+**switched mains inlet**, so the power switch turns everything off at once.
+**Have the electrician fit all of them.** Don't splice an adaptor into the mains
+wiring yourself. A plug-in adaptor can go in an enclosed multi-socket that the
+electrician wires to the inlet.
 
 - **Common ground:** run every DC supply's negative (–) terminal, and the
   Arduino's GND, to **one** ground point, such as a terminal block. Without a
@@ -118,8 +124,12 @@ The full list, with quantities and links, is in
   starting point:
   - coil rail: a slow-blow fuse rated for the supply, e.g. 5 A
   - lamp rail: about 25% above total lamp current
+  - sound rail (5 V): 2 A
 - **Arduino power:** use the barrel jack (7–12 V; 9 V is ideal). Its 5 V pin can
   power the 74HC595 chips, which draw very little, but **nothing else**.
+- **Sound power:** the WAV Trigger has its own 5 V supply (section 7d). Only
+  that supply's negative (–) goes to the common ground point; never join its
+  +5 V to the Arduino's 5V pin.
 - **Coil power off switch:** fit an easy-to-reach switch or interlock that cuts
   the coil supply only. You can then test switches and lamps with coils dead.
 
@@ -141,6 +151,8 @@ on the board (`22`, `23`, ... and `GND`, `5V`).
 | 48 | Every 74HC595 pin 13 (output enable) + 10 kΩ pull-up to 5 V | 7 |
 | 5V | Every 74HC595 pin 16 and pin 10 | 7 |
 | GND | Common ground point, every 74HC595 pin 8, every ULN2803 pin 9 | 4, 7 |
+| 18 (TX1) | WAV Trigger serial RX, **through a 1 kΩ resistor** | 7d |
+| 19 (RX1) | WAV Trigger serial TX; optional, for future status messages | 7d |
 | USB | Your computer, for flashing and the serial console | 9 |
 
 Leave pins 50 and 53 unconnected; the SPI hardware uses them.
@@ -355,6 +367,8 @@ a long time**, so:
 | Right flipper power | 10 | 2 | Q2 (2) |
 | Right flipper hold | 11 | 2 | Q3 (3) |
 | Trapdoor flaps 1–3 (left to right) | 12–14 | 2 | Q4–Q6 (4–6) |
+| *Optional:* bell for the 1s | 15 | 2 | Q7 (7) |
+| *Optional:* bells for the 10s, 100s | 16–17 | 3 | Q0–Q1 (15, 1) |
 
 ### 7c. Lamp drivers
 
@@ -395,6 +409,69 @@ LEDs.
 | Pop bumper caps 1–5 | 24–28 | 8 | Q0–Q4 |
 | Backboard: player up 1–4 | 32–35 | 9 | Q0–Q3 |
 | Backboard: ball in play 1–5 (four train cars, then the dragon's head *) | 40–44 | 10 | Q0–Q4 |
+
+### 7d. Sound (WAV Trigger)
+
+Sound comes from a **WAV Trigger** by Robertsonics, a board that plays WAV files
+from a microSD card and **mixes up to 14 sounds at once**. Pinball triggers
+sounds quickly, so several often overlap. The Arduino tells it which tracks to
+play over a serial connection at 57600 baud.
+
+| WAV Trigger connection | Connect to |
+|---|---|
+| **5Vin** (J8, pin 4) | **The separate 5 V sound supply** (section 4), not the Arduino's 5V pin: the board can draw over 200 mA with its amplifier on. Leave the barrel jack unused; the user guide says not to use both. |
+| GND | The common ground point |
+| Serial **RX** (on the 6-pin serial header, laid out like a SparkFun FTDI Basic; use the labels printed on the board) | Arduino **D18 (TX1)**, through a **1 kΩ resistor** |
+| Serial TX | Arduino D19 (RX1); optional, for future status messages |
+| Speaker header (2 pins) | The speaker, 4–8 Ω. The firmware turns the on-board amplifier on at start-up. |
+| *Optional:* stereo line-out jack | An external amplifier, if the on-board one isn't loud enough |
+
+Leave the small **Load/Run** switch next to the power connector on **Run**.
+
+**The SD card:**
+
+1. Run `pnpm run render:sounds`. This writes every sound to `target/sd-card/`,
+   named `001_Pop-bumper.wav`, `003_Lane-chime.wav` and so on. The WAV Trigger
+   takes the track number from the first three digits.
+2. Format a microSD card (up to 32 GB) as **FAT32 with a 32 KB allocation
+   size**. Smaller allocation sizes can cause clicks.
+3. Copy the files to the card's **root** (not a folder) and put it in the board.
+4. Power-cycle the WAV Trigger whenever you change the card. It only reads the
+   card at power-on, and blinks three times when it has found the files.
+
+The files are 16-bit 44.1 kHz stereo, the only format the WAV Trigger plays.
+They're also 6 dB below full scale: the board adds overlapping sounds together,
+and its volume control comes after the mix, so full-scale files would clip.
+
+The sounds are cut from free recordings (listed in `docs/sound-credits.md`),
+with synthesised versions in `sim/web/sounds.js` as a fallback. The simulator
+plays the same files and mixes them the same way, so what you hear there is
+what the machine plays. After changing a sound, run `pnpm run render:sounds`
+again and re-copy the card.
+
+The firmware waits 2 seconds after power-on while the board reads its card,
+then turns the amplifier on and sets the volume (`WAV_TRIGGER_GAIN_DB` in
+`crates/pinball-core/src/sound.rs`, −70 to +10 dB). The big moments (game start
+and over, tilt, a player joining, replays, bonus collect, special) are
+*locked*, so a flurry of chimes can't steal their voices.
+
+### 7e. Optional: real bells
+
+1950s machines rang real bells as the score went up, one stroke per point,
+driven by the score motor. None are fitted yet, but the controller is ready
+for three: one each for the 1s, 10s and 100s.
+
+- **Wiring:** each bell's coil is wired like any other coil (section 7b), on
+  coil outputs 15–17 (see the coil table above), with its own flyback diode.
+- **Turning them on:** set `bells: true` in the operator settings
+  (`Settings` in `crates/pinball-core/src/game.rs`). The bells then ring one
+  stroke per point, at a steady score-motor rhythm (`RING_INTERVAL_MS` in
+  `crates/pinball-core/src/bells.rs`). The WAV Trigger stops playing its recorded
+  chimes, so the real bells aren't doubled up.
+- **Coil limits:** a cautious 15 ms pulse, with at least 50 ms between strokes.
+  Check them against the real coils' ratings before use.
+- **Try it first:** the simulator's "Real bells fitted" setting plays recordings
+  of real bells, so you can hear how it would sound.
 
 ---
 
@@ -441,6 +518,9 @@ to look. **Keep the coil supply switched off until step 6.**
    switch by hand: you should get one short, sharp kick. If the coil buzzes or
    stays on, cut the power and recheck the flyback diode and MOSFET wiring.
 7. **The remaining coils, one by one**, then the lamps.
+8. **Sound.** Wire the WAV Trigger and its speaker, and prepare the SD card
+   (section 7d). Power on and wait 2 seconds, then press start: you should hear
+   the calliope march.
 
 ---
 
@@ -458,6 +538,10 @@ to look. **Keep the coil supply switched off until step 6.**
 | MOSFET gets hot | Not a logic-level part, or gate resistor/pull-down wired wrong |
 | Board resets when a coil fires | Coil ground return too thin, or shared with logic wiring; give coils their own thick ground run |
 | LED bulbs dim | Lamp supply too low after the ULN2803's ~1 V drop |
+| No sound | No three blinks at power-on: the card isn't FAT32, or the files aren't in its root or not named `001_…wav`. Blinks but silent: RX wired to D1 (TX0) instead of D18 (TX1), or no speaker on the speaker header. |
+| Sound clicks or pops | Card formatted with a small allocation size: reformat FAT32 with 32 KB |
+| Sound distorts when lots happens at once | Files at full scale (re-render with `pnpm run render:sounds`, which leaves headroom), or the volume set above 0 dB |
+| Sound hisses | 1 kΩ resistor missing on the RX line, or the board powered from the Arduino's 5V pin |
 
 ---
 

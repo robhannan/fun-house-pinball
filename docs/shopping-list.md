@@ -8,9 +8,9 @@ Everything needed to build the controller described in the
 
 | | Estimate |
 |---|---|
-| **Everything** | **£460–890** |
-| Without tools (if you already have them) | £395–740 |
-| Electronics only (sections 1–8, no pinball parts or tools) | £210–385 |
+| **Everything** | **£520–975** |
+| Without tools (if you already have them) | £455–825 |
+| Electronics only (sections 1–8, no pinball parts or tools) | £265–470 |
 
 These are rough **estimates in GBP, as of October 2026**, to help with budgeting.
 
@@ -136,6 +136,21 @@ flyback diodes or allow them to be fitted. Expect roughly £5–15 per 8-channel
 
 **Section estimate: £14–28**
 
+## 6b. Sound
+
+A WAV Trigger plays the sound effects from a microSD card, mixing up to 14 at
+once; see the [wiring guide](wiring-guide.md#7d-sound-wav-trigger).
+
+| Item | Qty | Notes | Link | Est. £ |
+|---|---|---|---|---|
+| WAV Trigger (Robertsonics / SparkFun WIG-13660) | 1 | Polyphonic WAV player with a small on-board amplifier. About $61 at SparkFun; check stock, as some listings show backorders. | [SparkFun](https://www.sparkfun.com/wav-trigger.html) · [Pimoroni](https://shop.pimoroni.com/products/wav-trigger) | 50–70 |
+| microSD card, up to 32 GB | 1 | Formatted FAT32 with 32 KB allocation. Branded cards are more reliable; fakes are common. | [AliExpress](https://www.aliexpress.com/w/wholesale-microsd-card-16gb.html) | 3–6 |
+| Speaker, 4–8 Ω, 50–77 mm | 1 | On the WAV Trigger's speaker header | [AliExpress](https://www.aliexpress.com/w/wholesale-3w-4ohm-speaker.html) | 2–4 |
+| 5 V 2 A DC adaptor | 1 | Powers the WAV Trigger separately from the Arduino | [AliExpress](https://www.aliexpress.com/w/wholesale-5v-2a-power-adapter.html) | 3–6 |
+| 1 kΩ resistor | — | In the resistor kit from section 2 | — | — |
+
+**Section estimate: £58–86**
+
 ## 7. Power
 
 Choose the coil voltage **with your coil supplier before ordering a supply**.
@@ -196,6 +211,7 @@ of the old parts.
 | Ball serve coil and mechanism | 1 | Only if replacing the manual ball lift | 25–60 |
 | Dual-wound flipper coils | 2 | DC, at your coil voltage; ask for the lug layout | 22–30 |
 | Trapdoor flap coils | 3 | **Continuous-duty**, DC, at your coil voltage | 30–60 |
+| *Optional:* bells with coils | 0–3 | Not needed now. For the authentic 1950s scoring sound later (wiring guide section 7e). | varies |
 | Flipper rebuild kits, rubber rings, pop bumper caps | As needed | | 40–100 |
 
 **Section estimate: £187–355**

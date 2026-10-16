@@ -9,7 +9,10 @@
   },
   "scripts": {
     "check:stray-files": "node .github/scripts/check-stray-files.mjs",
-    "build:sim": "node sim/build.mjs"
+    "build:sim": "node sim/build.mjs",
+    "render:sounds": "node sim/render-sounds.mjs",
+    "check:sounds": "node sim/render-sounds.mjs --check",
+    "import:samples": "node sim/import-samples.mjs"
   },
   "devDependencies": {
     "zx": "8.8.5"
