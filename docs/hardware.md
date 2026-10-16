@@ -22,7 +22,7 @@ is mature.
 | Shift-register output enable | D48 | **External 10k pull-up to 5V**, so outputs stay off at reset |
 | SPI SS (unused, must be output) | D53 | |
 | Serial console | D0/D1 (USB) | 57600 baud |
-| Sound module (DFPlayer Mini) | D18 (TX1), D19 (RX1) | 9600 baud; TX1 goes through a 1 kΩ resistor to the module's RX |
+| Sound board (WAV Trigger) | D18 (TX1), D19 (RX1) | 57600 baud; TX1 goes through a 1 kΩ resistor to the board's RX |
 
 ## Switches
 

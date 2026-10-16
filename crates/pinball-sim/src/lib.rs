@@ -134,7 +134,7 @@ impl Simulator {
             });
             self.outputs = self.machine.tick(now, &self.switches);
             self.coils_seen |= self.outputs.coils;
-            self.sounds.extend(self.outputs.sound);
+            self.sounds.extend(self.outputs.sounds.iter());
         }
     }
 }
@@ -208,11 +208,16 @@ mod exports {
         with(|sim| sim.outputs().coils)
     }
 
-    /// The next sound to play, as its track number in `sim/web/sounds.js`; 0 when
+    /// The next sound to play: its track number in `sim/web/sounds.js`, plus
+    /// 256 if it's locked against voice stealing (as on the WAV Trigger); 0 when
     /// there are none left.
     #[unsafe(no_mangle)]
     pub extern "C" fn sim_take_sound() -> u32 {
-        with(|sim| sim.take_sound().map_or(0, |sound| u32::from(sound.track())))
+        with(|sim| {
+            sim.take_sound().map_or(0, |sound| {
+                u32::from(sound.track()) | if sound.locked() { 256 } else { 0 }
+            })
+        })
     }
 
     /// Every coil that was on during the last advance, for showing short pulses.
@@ -543,6 +548,7 @@ mod tests {
         sim.tap(sw::START_BUTTON);
         sim.advance(100);
         assert_eq!(sim.take_sound(), Some(Sound::GameStart));
+        assert_eq!(sim.take_sound(), Some(Sound::BallServe));
         assert_eq!(sim.take_sound(), None);
     }
 

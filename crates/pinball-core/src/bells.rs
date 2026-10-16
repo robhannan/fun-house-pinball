@@ -4,7 +4,7 @@
 //! When it's on, scoring rings real bells the way an electromechanical score
 //! motor did: one stroke per unit, so 30 points is three strokes on the "10s"
 //! bell and a 100-point bonus is a run of ten. The strokes come at a steady
-//! [`RING_INTERVAL_MS`] rhythm. The DFPlayer then skips its recorded chimes,
+//! [`RING_INTERVAL_MS`] rhythm. The WAV Trigger then skips its recorded chimes,
 //! because the real bells replace them.
 
 use crate::coils::Coils;

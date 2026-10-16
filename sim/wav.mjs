@@ -1,22 +1,26 @@
-// Reads and writes 16-bit mono PCM WAV files, the format used for the
-// simulator's samples and the DFPlayer's SD card.
+// Reads and writes 16-bit PCM WAV files: mono for the simulator's samples,
+// stereo for the WAV Trigger's SD card (which only plays 16-bit 44.1 kHz
+// stereo, with no metadata before the audio).
 
 export const SAMPLE_RATE = 44_100;
 
-/** Encodes `samples` (-1..1) as a 16-bit mono WAV file. */
-export function encodeWav(samples, sampleRate = SAMPLE_RATE) {
-  const data = Buffer.alloc(samples.length * 2);
-  samples.forEach((s, i) => data.writeInt16LE(Math.round(Math.max(-1, Math.min(1, s)) * 32767), i * 2));
+/** Encodes `samples` (-1..1) as a 16-bit WAV file, copied to `channels` channels. */
+export function encodeWav(samples, sampleRate = SAMPLE_RATE, channels = 1) {
+  const data = Buffer.alloc(samples.length * 2 * channels);
+  samples.forEach((s, i) => {
+    const value = Math.round(Math.max(-1, Math.min(1, s)) * 32767);
+    for (let c = 0; c < channels; c++) data.writeInt16LE(value, (i * channels + c) * 2);
+  });
   const header = Buffer.alloc(44);
   header.write("RIFF", 0);
   header.writeUInt32LE(36 + data.length, 4);
   header.write("WAVEfmt ", 8);
   header.writeUInt32LE(16, 16); // fmt chunk size
   header.writeUInt16LE(1, 20); // PCM
-  header.writeUInt16LE(1, 22); // mono
+  header.writeUInt16LE(channels, 22);
   header.writeUInt32LE(sampleRate, 24);
-  header.writeUInt32LE(sampleRate * 2, 28); // byte rate
-  header.writeUInt16LE(2, 32); // block align
+  header.writeUInt32LE(sampleRate * 2 * channels, 28); // byte rate
+  header.writeUInt16LE(2 * channels, 32); // block align
   header.writeUInt16LE(16, 34); // bits per sample
   header.write("data", 36);
   header.writeUInt32LE(data.length, 40);

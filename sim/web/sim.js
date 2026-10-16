@@ -185,8 +185,8 @@ function start(sim) {
     }
     for (const { el, mask } of flippers) el.classList.toggle("up", (coilBits & mask) !== 0);
 
-    for (let track = sim.sim_take_sound(); track !== 0; track = sim.sim_take_sound()) {
-      audio.play(track);
+    for (let sound = sim.sim_take_sound(); sound !== 0; sound = sim.sim_take_sound()) {
+      audio.play(sound & 0xff, (sound & 0x100) !== 0);
     }
 
     const ball = sim.sim_ball();
@@ -216,18 +216,26 @@ load().then(start, (error) => {
 });
 
 /**
- * Plays sounds with the Web Audio API. Like the DFPlayer Mini, only one sound
- * plays at a time: a new one stops the last. Each sound can be the recorded
+ * Plays sounds with the Web Audio API, mixing them like the WAV Trigger: up to
+ * VOICES at once, and when all are busy the oldest unlocked sound is stopped to
+ * make room. Like the SD-card files, each sound is played with HEADROOM so that
+ * overlapping sounds don't clip, then a limiter brings the mix back up. Each sound can be the recorded
  * version (from free recordings) or the synthesised one, picked on the page.
  * Real bells ring separately, as real bells would. Browsers only allow audio
  * after the user has interacted with the page, so the audio context is created
  * suspended (the recordings load meanwhile) and resumes on the first click or
  * key press.
  */
+/** Sounds the WAV Trigger can mix at once. */
+const VOICES = 14;
+/** Matches the SD-card files (sim/render-sounds.mjs). */
+const HEADROOM = 0.5;
+
 function soundPlayer() {
   let context;
   let gain;
-  let current;
+  /** Playing sounds, oldest first: { source, locked }. */
+  let voices = [];
   const synthesised = new Map();
   const recorded = new Map();
   const on = document.getElementById("sound-on");
@@ -248,7 +256,16 @@ function soundPlayer() {
       context = new AudioContext();
       gain = context.createGain();
       gain.gain.value = Number(volume.value);
-      gain.connect(context.destination);
+      // A limiter, then make-up gain for the headroom left in each sound.
+      const limiter = context.createDynamicsCompressor();
+      limiter.threshold.value = -6;
+      limiter.knee.value = 3;
+      limiter.ratio.value = 20;
+      limiter.attack.value = 0.002;
+      limiter.release.value = 0.1;
+      const makeUp = context.createGain();
+      makeUp.gain.value = 1 / HEADROOM;
+      gain.connect(limiter).connect(makeUp).connect(context.destination);
       for (const [track, { sample }] of Object.entries(SOUNDS)) if (sample) loadRecording(track, sample);
       BELL_SAMPLES.forEach((file, n) => loadRecording(`bell-${n}`, file));
       for (const file of new Set(Object.values(COIL_SAMPLES))) loadRecording(file, file);
@@ -290,16 +307,26 @@ function soundPlayer() {
     return audioBuffer;
   };
 
-  const play = (track) => {
+  /** Plays `track`, mixed with whatever is playing. */
+  const play = (track, locked = false) => {
     if (!on.checked || !context || !SOUNDS[track]) return;
-    current?.stop();
-    current = start(bufferFor(track));
+    if (voices.length >= VOICES) {
+      const steal = voices.findIndex((voice) => !voice.locked);
+      if (steal < 0) return; // Every voice is locked: drop this one.
+      voices[steal].source.stop();
+      voices.splice(steal, 1);
+    }
+    const voice = { source: start(bufferFor(track), HEADROOM), locked };
+    voice.source.onended = () => {
+      voices = voices.filter((v) => v !== voice);
+    };
+    voices.push(voice);
   };
 
   /** Rings real bell `n` (0 = 1s, 1 = 10s, 2 = 100s), over whatever is playing. */
   const bell = (n) => {
     const audioBuffer = context && recorded.get(`bell-${n}`);
-    if (on.checked && audioBuffer) start(audioBuffer);
+    if (on.checked && audioBuffer) start(audioBuffer, HEADROOM);
   };
 
   /**
@@ -310,7 +337,7 @@ function soundPlayer() {
   const coilNoises = document.getElementById("coil-noises");
   const coil = (n) => {
     const audioBuffer = context && recorded.get(COIL_SAMPLES[n]);
-    if (on.checked && coilNoises.checked && audioBuffer) start(audioBuffer, 0.45);
+    if (on.checked && coilNoises.checked && audioBuffer) start(audioBuffer, 0.45 * HEADROOM);
   };
 
   // The sound-test board: one button per sound, plus the bells.

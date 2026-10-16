@@ -1,17 +1,24 @@
-// Writes the sounds to WAV files for the DFPlayer Mini's SD card. Each track
+// Writes the sounds to WAV files for the WAV Trigger's SD card. Each track
 // uses its recording from sim/web/samples/ if it has one, otherwise the
 // synthesised version from sim/web/sounds.js. Run with:
-//   pnpm run render:sounds          writes target/sd-card/01/NNN.wav
+//   pnpm run render:sounds          writes target/sd-card/NNN_Name.wav
 //   pnpm run check:sounds           only checks every sound is usable
 //
-// Copy the `01` folder to the root of a FAT32-formatted microSD card.
+// Copy the files to the root of a FAT32-formatted microSD card. The WAV
+// Trigger takes the track number from the first three digits of each name.
+//
+// Files are 16-bit 44.1 kHz stereo, the only format the WAV Trigger plays,
+// and are scaled by HEADROOM: the board mixes overlapping sounds, and its
+// volume control comes after the mix, so full-scale files would clip.
 import { argv, fs, path } from "zx";
 
 import { BELL_SAMPLES, COIL_SAMPLES, SOUNDS, render } from "./web/sounds.js";
 import { SAMPLE_RATE, decodeWav, encodeWav } from "./wav.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
-const out = path.join(root, "target/sd-card/01");
+const out = path.join(root, "target/sd-card");
+/** Peak level of each file, leaving room for overlapping sounds (-6 dB). */
+const HEADROOM = 0.5;
 const checkOnly = argv.check === true;
 const problems = [];
 
@@ -36,7 +43,9 @@ async function readSample(file) {
   return decodeWav(await fs.readFile(full));
 }
 
-if (!checkOnly) await fs.ensureDir(out);
+if (!checkOnly) {
+  await fs.emptyDir(out);
+}
 
 for (const [track, { name, durationMs, sample }] of Object.entries(SOUNDS)) {
   const synth = render(Number(track), SAMPLE_RATE);
@@ -54,8 +63,8 @@ for (const [track, { name, durationMs, sample }] of Object.entries(SOUNDS)) {
   }
 
   if (!checkOnly) {
-    const file = path.join(out, `${track.padStart(3, "0")}.wav`);
-    await fs.writeFile(file, encodeWav(chosen));
+    const file = path.join(out, `${track.padStart(3, "0")}_${name.replace(/[^A-Za-z0-9]+/g, "-")}.wav`);
+    await fs.writeFile(file, encodeWav(chosen.map((s) => s * HEADROOM), SAMPLE_RATE, 2));
     const ms = (chosen.length / SAMPLE_RATE) * 1000;
     console.log(`${path.relative(root, file)}  ${name}, ${kind} (${ms.toFixed(0)} ms)`);
   }

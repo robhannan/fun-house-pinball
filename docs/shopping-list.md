@@ -8,9 +8,9 @@ Everything needed to build the controller described in the
 
 | | Estimate |
 |---|---|
-| **Everything** | **£475–910** |
-| Without tools (if you already have them) | £405–765 |
-| Electronics only (sections 1–8, no pinball parts or tools) | £220–410 |
+| **Everything** | **£520–975** |
+| Without tools (if you already have them) | £455–825 |
+| Electronics only (sections 1–8, no pinball parts or tools) | £265–470 |
 
 These are rough **estimates in GBP, as of October 2026**, to help with budgeting.
 
@@ -138,18 +138,18 @@ flyback diodes or allow them to be fitted. Expect roughly £5–15 per 8-channel
 
 ## 6b. Sound
 
-A DFPlayer Mini plays the sound effects from a microSD card; see the
-[wiring guide](wiring-guide.md#7d-sound-dfplayer-mini).
+A WAV Trigger plays the sound effects from a microSD card, mixing up to 14 at
+once; see the [wiring guide](wiring-guide.md#7d-sound-wav-trigger).
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
-| DFPlayer Mini MP3/WAV player module | 2 | One spare. Sometimes sold as "MP3-TF-16P". | [AliExpress](https://www.aliexpress.com/w/wholesale-dfplayer-mini.html) | 3–6 |
-| microSD card, 8–32 GB | 1 | Formatted FAT32. Branded cards are more reliable; fakes are common. | [AliExpress](https://www.aliexpress.com/w/wholesale-microsd-card-16gb.html) | 3–6 |
-| Speaker, 3 W, 4–8 Ω, 50–77 mm | 1 | The DFPlayer drives it directly | [AliExpress](https://www.aliexpress.com/w/wholesale-3w-4ohm-speaker.html) | 2–4 |
-| 5 V 2 A DC adaptor | 1 | Powers the DFPlayer separately from the Arduino | [AliExpress](https://www.aliexpress.com/w/wholesale-5v-2a-power-adapter.html) | 3–6 |
+| WAV Trigger (Robertsonics / SparkFun WIG-13660) | 1 | Polyphonic WAV player with a small on-board amplifier. About $61 at SparkFun; check stock, as some listings show backorders. | [SparkFun](https://www.sparkfun.com/wav-trigger.html) · [Pimoroni](https://shop.pimoroni.com/products/wav-trigger) | 50–70 |
+| microSD card, up to 32 GB | 1 | Formatted FAT32 with 32 KB allocation. Branded cards are more reliable; fakes are common. | [AliExpress](https://www.aliexpress.com/w/wholesale-microsd-card-16gb.html) | 3–6 |
+| Speaker, 4–8 Ω, 50–77 mm | 1 | On the WAV Trigger's speaker header | [AliExpress](https://www.aliexpress.com/w/wholesale-3w-4ohm-speaker.html) | 2–4 |
+| 5 V 2 A DC adaptor | 1 | Powers the WAV Trigger separately from the Arduino | [AliExpress](https://www.aliexpress.com/w/wholesale-5v-2a-power-adapter.html) | 3–6 |
 | 1 kΩ resistor | — | In the resistor kit from section 2 | — | — |
 
-**Section estimate: £11–22**
+**Section estimate: £58–86**
 
 ## 7. Power
 

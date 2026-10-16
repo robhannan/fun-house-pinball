@@ -8,7 +8,7 @@
 // docs/sound-credits.md) and this synthesised one as a fallback. Used in two
 // places:
 // - the simulator (sim.js) plays them with the Web Audio API
-// - sim/render-sounds.mjs writes them to the DFPlayer Mini's SD card
+// - sim/render-sounds.mjs writes them to the WAV Trigger's SD card
 //   (`pnpm run render:sounds`)
 //
 // Keys are track numbers from `Sound::track()` in

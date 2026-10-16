@@ -12,7 +12,7 @@ use crate::bells::BellRinger;
 use crate::coils::{CoilId, Coils};
 use crate::lamps::{LampMode, Lamps};
 use crate::playfield::{COIL_KINDS, coil, lamp, sw};
-use crate::sound::{Sound, SoundScheduler};
+use crate::sound::{Sound, SoundScheduler, Sounds};
 use crate::switches::{Debouncer, SwitchEvent, SwitchId, SwitchStates};
 use crate::time::Instant;
 
@@ -42,7 +42,7 @@ pub struct Settings {
     /// Replay mode awards replays; novelty mode only scores points.
     pub replays: bool,
     /// Real bells are fitted on coils 15–17 (see [`crate::bells`]). Scoring then
-    /// rings them, and the DFPlayer skips its recorded chimes.
+    /// rings them, and the WAV Trigger skips its recorded chimes.
     pub bells: bool,
 }
 
@@ -80,8 +80,8 @@ pub struct Outputs {
     pub coils: u32,
     /// Lamp bitmap; bit `n` lights lamp `n`.
     pub lamps: u64,
-    /// A sound to start now, if any.
-    pub sound: Option<Sound>,
+    /// The sounds to start now (several can play at once).
+    pub sounds: Sounds,
 }
 
 /// The whole machine: switch filtering, rules, coils and lamps.
@@ -242,7 +242,7 @@ impl Machine {
         Outputs {
             coils: self.coils.outputs(now),
             lamps: self.lamps.frame(now),
-            sound: self.sound.next(now),
+            sounds: self.sound.next(now),
         }
     }
 
@@ -313,9 +313,11 @@ impl Machine {
                     self.sound.request(Sound::PopBumper);
                     self.add_score(1);
                 } else if sw::SIDE_LANES.contains(&id) || sw::TOP_LANES.contains(&id) {
-                    self.chime(Sound::Lane);
                     self.add_score(10);
-                    self.advance_bonus();
+                    // One bell per lane: the wheel's climbing bell if it moved.
+                    if !self.advance_bonus() {
+                        self.chime(Sound::Lane);
+                    }
                 } else if let Some(n) = sw::THIRTY_POINT_ROLLOVERS.iter().position(|&r| r == id) {
                     // TODO: find out what lights these on the original.
                     let lit = self.lamps.mode(lamp::THIRTY_POINTS[n]) != LampMode::Off;
@@ -388,9 +390,10 @@ impl Machine {
     }
 
     /// Assumed rule: each lane advances the bonus wheel one step; reaching
-    /// 100 lights the special.
-    fn advance_bonus(&mut self) {
-        if self.bonus_step < 9 {
+    /// 100 lights the special. Returns whether the wheel moved.
+    fn advance_bonus(&mut self) -> bool {
+        let advanced = self.bonus_step < 9;
+        if advanced {
             self.lamps.set(
                 lamp::BONUS_WHEEL[usize::from(self.bonus_step)],
                 LampMode::Off,
@@ -408,6 +411,7 @@ impl Machine {
         if self.bonus_step == 9 {
             self.lamps.set(lamp::SPECIAL, LampMode::On);
         }
+        advanced
     }
 
     /// Assumed rule: the "Scores Bonus" gate scores the lit wheel value, plus
@@ -550,7 +554,7 @@ mod tests {
                 self.last = self
                     .machine
                     .tick(Instant::from_millis(self.now), &self.switches);
-                self.sounds.extend(self.last.sound);
+                self.sounds.extend(self.last.sounds.iter());
             }
         }
 
@@ -869,37 +873,60 @@ mod tests {
     #[test]
     fn game_events_make_sounds() {
         let mut sim = Sim::new();
+        // Several sounds can play at once: the start-up and the first ball.
         assert_eq!(
             sounds_during(&mut sim, |s| s.tap(sw::START_BUTTON)),
-            [Sound::GameStart]
+            [Sound::GameStart, Sound::BallServe]
         );
-        // The calliope isn't cut off by the ball serve or a bumper.
-        sim.run(SERVE_DELAY_MS);
-        assert_eq!(sounds_during(&mut sim, |s| s.tap(sw::POP_BUMPERS[0])), []);
-
-        sim.run(Sound::GameStart.duration_ms());
         assert_eq!(
             sounds_during(&mut sim, |s| s.tap(sw::POP_BUMPERS[0])),
             [Sound::PopBumper]
         );
-        sim.run(500);
-        // A lane rings, then the wheel's rising bell takes over (same priority, later).
+        // A lane rings the wheel's climbing bell, not the lane bell as well.
         assert_eq!(
             sounds_during(&mut sim, |s| s.tap(sw::SIDE_LANES[0])),
             [Sound::BonusAdvance(1)]
         );
-        sim.run(500);
         assert_eq!(
             sounds_during(&mut sim, |s| s.tap(sw::BONUS_GATE)),
             [Sound::BonusCollect]
         );
-        sim.run(2_000);
         assert_eq!(sounds_during(&mut sim, |s| s.tap(sw::TILT)), [Sound::Tilt]);
-        sim.run(2_000);
         assert_eq!(
             sounds_during(&mut sim, |s| s.tap(sw::OUTHOLE)),
             [Sound::Drain]
         );
+    }
+
+    #[test]
+    fn a_full_wheel_falls_back_to_the_lane_bell() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        for _ in 0..9 {
+            sim.tap(sw::SIDE_LANES[0]);
+        }
+        assert_eq!(
+            sounds_during(&mut sim, |s| s.tap(sw::SIDE_LANES[0])),
+            [Sound::Lane]
+        );
+    }
+
+    #[test]
+    fn a_burst_of_bumpers_doesnt_stack_chimes() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.sounds.clear();
+        // Two bumpers closing within a few milliseconds.
+        sim.switches.set(sw::POP_BUMPERS[0], true);
+        sim.run(3);
+        sim.switches.set(sw::POP_BUMPERS[1], true);
+        sim.run(5);
+        let chimes = sim
+            .sounds
+            .iter()
+            .filter(|&&s| s == Sound::PopBumper)
+            .count();
+        assert_eq!(chimes, 1);
     }
 
     #[test]
@@ -977,11 +1004,8 @@ mod tests {
             sim.tap(sw::SIDE_LANES[0]);
         }
         sim.run(5_000);
-        // 400 points: the knocker beats the lane bell.
-        assert_eq!(
-            sounds_during(&mut sim, |s| s.tap(sw::SIDE_LANES[0])),
-            [Sound::Replay]
-        );
+        // 400 points: the knocker, along with the lane's bell.
+        assert!(sounds_during(&mut sim, |s| s.tap(sw::SIDE_LANES[0])).contains(&Sound::Replay));
     }
 
     #[test]

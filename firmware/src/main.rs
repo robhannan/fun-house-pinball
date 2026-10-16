@@ -12,12 +12,14 @@ mod io;
 use arduino_hal::hal::wdt;
 use arduino_hal::prelude::*;
 use arduino_hal::spi;
-use pinball_core::sound::{DFPLAYER_VOLUME, dfplayer_play, dfplayer_volume};
+use pinball_core::sound::{
+    WAV_TRIGGER_GAIN_DB, wav_trigger_amp, wav_trigger_gain, wav_trigger_play,
+};
 use pinball_core::{Instant, Machine, Outputs, SwitchStates};
 
 use io::{OutputChain, SoundOut, SwitchScanner};
 
-/// The DFPlayer needs a moment after power-on before it accepts commands.
+/// The WAV Trigger indexes its SD card at power-on before it accepts commands.
 const SOUND_STARTUP_MS: u32 = 2_000;
 
 #[arduino_hal::entry]
@@ -86,14 +88,14 @@ fn main() -> ! {
         ],
     };
 
-    // DFPlayer Mini sound module on the second serial port: TX1 (D18) to its
-    // RX through a 1 kΩ resistor. Its TX isn't needed, but RX1 (D19) is wired
-    // for status in future.
+    // WAV Trigger sound board on the second serial port at its default 57600
+    // baud: TX1 (D18) to its RX through a 1 kΩ resistor. Its TX isn't needed,
+    // but RX1 (D19) is wired for status in future.
     let mut sound = SoundOut::new(arduino_hal::Usart::new(
         dp.USART1,
         pins.d19,
         pins.d18.into_output(),
-        9600.into_baudrate(),
+        57600.into_baudrate(),
     ));
     let mut sound_ready = false;
 
@@ -115,6 +117,8 @@ fn main() -> ! {
     loop {
         let now = clock::now();
         if now == last_tick {
+            // Keep the sound board's serial port busy while waiting.
+            sound.poll();
             continue;
         }
         last_tick = now;
@@ -123,13 +127,16 @@ fn main() -> ! {
         let frame = machine.tick(now, &raw);
         outputs.write(&frame);
 
-        // Sounds only once the volume command has been queued (in an earlier
-        // tick), so a sound can't replace it.
-        if let (true, Some(effect)) = (sound_ready, frame.sound) {
-            sound.send(dfplayer_play(effect.track()));
-        }
-        if !sound_ready && now.reached(Instant::from_millis(SOUND_STARTUP_MS)) {
-            sound.send(dfplayer_volume(DFPLAYER_VOLUME));
+        if sound_ready {
+            for effect in frame.sounds.iter() {
+                sound.send(&wav_trigger_play(
+                    u16::from(effect.track()),
+                    effect.locked(),
+                ));
+            }
+        } else if now.reached(Instant::from_millis(SOUND_STARTUP_MS)) {
+            sound.send(&wav_trigger_amp(true));
+            sound.send(&wav_trigger_gain(WAV_TRIGGER_GAIN_DB));
             sound_ready = true;
         }
         sound.poll();

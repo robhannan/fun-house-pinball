@@ -1,5 +1,5 @@
 {
-  "_comment": "Recorded sounds for the simulator and the DFPlayer's SD card. Every source is CC0 (public domain) from Freesound. Run `pnpm run import:samples` to rebuild sim/web/samples/ and docs/sound-credits.md from this file. Times are in seconds into each recording; `semitones` shifts pitch (and speed), `speed` speeds up without changing pitch; `drive` is how hard the sound is mastered (more = louder and punchier; default 2.5). Check each recording for a spoken slate (some libraries announce the take number at the start) before cutting it.",
+  "_comment": "Recorded sounds for the simulator and the WAV Trigger's SD card. Every source is CC0 (public domain) from Freesound. Run `pnpm run import:samples` to rebuild sim/web/samples/ and docs/sound-credits.md from this file. Times are in seconds into each recording; `semitones` shifts pitch (and speed), `speed` speeds up without changing pitch; `drive` is how hard the sound is mastered (more = louder and punchier; default 2.5). Check each recording for a spoken slate (some libraries announce the take number at the start) before cutting it.",
   "sources": {
     "450270": {
       "title": "pinball-flipper hits.wav",

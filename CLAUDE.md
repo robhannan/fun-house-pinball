@@ -45,11 +45,12 @@ Mega 2560. See `README.md` for setup and `docs/hardware.md` for wiring.
   - Check each recording for a spoken slate (some libraries announce the take
     number at the start) and for mixed sources before cutting it.
   - Coils make their own noise on the real machine, so kickers, flippers and
-    pop-bumper solenoids get no DFPlayer sound; the simulator plays their
+    pop-bumper solenoids get no WAV Trigger sound; the simulator plays their
     noises from `COIL_SAMPLES` instead. Scoring events (including pop bumpers)
     get a bell or chime.
-  Firmware sends DFPlayer commands one byte per tick; never block the main
-  loop on serial, because coil pulses only end when the loop runs.
+  Firmware queues WAV Trigger commands and sends them without waiting; never
+  block the main loop on serial, because coil pulses only end when the loop
+  runs. Up to 14 sounds mix at once, so sound files keep 6 dB of headroom.
 - **Simulator:** `crates/pinball-sim` and `sim/web/` find parts by the
   `data-switch` / `data-coil` / `data-lamp` attributes in `docs/playfield.svg`
   and `sim/web/index.html`. When adding a part, add it to `PARTS` and give its

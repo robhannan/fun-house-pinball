@@ -1,3 +1,0 @@
-# Product names that clippy's doc_markdown lint would otherwise want in backticks.
-# ".." keeps clippy's default list.
-doc-valid-idents = ["DFPlayer", ".."]

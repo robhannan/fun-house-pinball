@@ -74,17 +74,17 @@ Controls:
 
 ### Sound on the machine
 
-The machine plays the same sounds through a DFPlayer Mini. Render them to WAV
-files for its SD card with:
+The machine plays the same sounds through a WAV Trigger, which mixes up to 14
+at once. Render them to WAV files for its SD card with:
 
 ```sh
-pnpm run render:sounds   # writes target/sd-card/01/001.wav, 002.wav, ...
+pnpm run render:sounds   # writes target/sd-card/001_Pop-bumper.wav, ...
 ```
 
-Copy the `01` folder to the root of a FAT32 microSD card. To change which
+Copy the files to the root of a FAT32 microSD card. To change which
 recordings are used, edit `sim/samples/sources.json` and run
 `pnpm run import:samples` (needs `ffmpeg`). Wiring is in
-[docs/wiring-guide.md](docs/wiring-guide.md#7d-sound-dfplayer-mini).
+[docs/wiring-guide.md](docs/wiring-guide.md#7d-sound-wav-trigger).
 
 ### Firmware (Arduino Mega 2560)
 
@@ -123,4 +123,4 @@ avr-hal, bump the toolchain to match its `rust-toolchain.toml`.
 - [ ] Multi-player support (the instruction card prices per player)
 - [ ] Choose driver boards and confirm coil voltages and pulse times
 - [ ] Decide on a score display (backglass lamps, reels or LED digits)
-- [x] Sound: synthesised effects, played by a DFPlayer Mini (wire and test on the machine)
+- [x] Sound: recorded effects, mixed by a WAV Trigger (wire and test on the machine)

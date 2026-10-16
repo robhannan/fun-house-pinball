@@ -70,48 +70,51 @@ impl OutputChain {
     }
 }
 
-/// Sends commands to the DFPlayer Mini sound module, one byte per call.
+/// Sends commands to the WAV Trigger sound board without ever waiting.
 ///
-/// The module listens at 9600 baud, so a 10-byte command takes about 10 ms.
-/// Sending it in one go would hold up the main loop, and coil pulses only end
-/// when the loop runs, so this never waits for the serial port.
+/// Commands are queued, and [`SoundOut::poll`] sends whatever the serial port
+/// will take right now. The main loop calls it while waiting for each tick too,
+/// so at 57600 baud a 9-byte command goes out in about 1.6 ms. Coil pulses only
+/// end when the loop runs, so it must never block on the serial port.
 pub struct SoundOut<W> {
     serial: W,
-    frame: [u8; 10],
-    sent: usize,
-    /// The next command to send; a newer one replaces it.
-    pending: Option<[u8; 10]>,
+    queue: [u8; QUEUE_LEN],
+    head: usize,
+    len: usize,
 }
 
+/// Room for seven play commands: more than can sensibly start in one tick.
+const QUEUE_LEN: usize = 64;
+
 impl<W: _embedded_hal_serial_Write<u8, Error = core::convert::Infallible>> SoundOut<W> {
-    /// Wraps the serial port connected to the DFPlayer's RX pin.
+    /// Wraps the serial port connected to the WAV Trigger's RX pin.
     pub fn new(serial: W) -> Self {
         Self {
             serial,
-            frame: [0; 10],
-            sent: 10,
-            pending: None,
+            queue: [0; QUEUE_LEN],
+            head: 0,
+            len: 0,
         }
     }
 
-    /// Queues a command, sent after the one in progress.
-    pub fn send(&mut self, frame: [u8; 10]) {
-        self.pending = Some(frame);
+    /// Queues a command. Returns `false` (and drops it) if the queue is full,
+    /// rather than splitting a command.
+    pub fn send(&mut self, command: &[u8]) -> bool {
+        if self.len + command.len() > QUEUE_LEN {
+            return false;
+        }
+        for &byte in command {
+            self.queue[(self.head + self.len) % QUEUE_LEN] = byte;
+            self.len += 1;
+        }
+        true
     }
 
-    /// Sends at most one byte, if the serial port is ready. Call every tick.
+    /// Sends queued bytes until the serial port is busy or the queue is empty.
     pub fn poll(&mut self) {
-        if self.sent == self.frame.len() {
-            match self.pending.take() {
-                Some(frame) => {
-                    self.frame = frame;
-                    self.sent = 0;
-                }
-                None => return,
-            }
-        }
-        if self.serial.write(self.frame[self.sent]).is_ok() {
-            self.sent += 1;
+        while self.len > 0 && self.serial.write(self.queue[self.head]).is_ok() {
+            self.head = (self.head + 1) % QUEUE_LEN;
+            self.len -= 1;
         }
     }
 }

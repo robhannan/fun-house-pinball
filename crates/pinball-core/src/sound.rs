@@ -1,16 +1,17 @@
-//! Sound effects: which sound to play, and the DFPlayer Mini commands that play
-//! it.
+//! Sound effects: which sounds to play, and the WAV Trigger commands that play
+//! them.
 //!
-//! The rules ask for a [`Sound`] whenever something happens. The DFPlayer only
-//! plays one sound at a time, so a [`SoundScheduler`] decides which request
-//! actually plays: a new sound starts if nothing is playing, or if it's at least
-//! as important as the one that is. That stops a run of pop bumpers from
-//! cutting off the game-start calliope, while letting bumpers retrigger each
-//! other.
+//! The rules ask for a [`Sound`] whenever something happens. The WAV Trigger
+//! (by Robertsonics) mixes up to 14 sounds at once, so in fast play several can
+//! overlap. The [`SoundScheduler`] only stops the same sound restarting within
+//! [`MIN_RETRIGGER_MS`], so a ball rattling between pop bumpers doesn't stack
+//! a dozen copies of the chime. Important sounds are [`Sound::locked`] on the
+//! board, so a flurry of chimes can't steal their voices.
 //!
-//! The sounds themselves are synthesised in `sim/web/sounds.js`, which the
-//! simulator plays directly and `pnpm run render:sounds` renders to WAV files
-//! for the DFPlayer's SD card. Tests check that file against [`Sound::ALL`].
+//! The sound files are built in `sim/web/` (recordings, with synthesised
+//! fallbacks in `sounds.js`); the simulator plays them directly, and
+//! `pnpm run render:sounds` writes them to the WAV Trigger's SD card. Tests
+//! check `sounds.js` against [`Sound::ALL`].
 
 use crate::time::Instant;
 
@@ -103,23 +104,27 @@ impl Sound {
         }
     }
 
-    /// Higher wins when sounds compete for the player. The game-start march
-    /// sits in the middle: playfield noise can't cut it off, but a player
-    /// joining or a tilt can, because those are the only signs that they
-    /// happened.
+    /// Whether the WAV Trigger must never steal this sound's voice when all 14
+    /// are busy: the big moments, and the sounds that are the only sign that
+    /// something happened (a player joining, a tilt).
     #[must_use]
-    pub const fn priority(self) -> u8 {
-        match self {
-            Self::PopBumper => 1,
-            Self::Lane | Self::BonusAdvance(_) => 2,
-            Self::ThirtyPoints => 3,
-            // The serve ties with the drain so it can cut the drain's tail.
-            Self::BallServe | Self::Drain | Self::Trapdoor => 5,
-            Self::GameStart | Self::BonusCollect | Self::Special => 6,
-            Self::PlayerAdded | Self::Replay => 7,
-            Self::Tilt => 8,
-            Self::GameOver => 9,
-        }
+    pub const fn locked(self) -> bool {
+        matches!(
+            self,
+            Self::GameStart
+                | Self::GameOver
+                | Self::Tilt
+                | Self::PlayerAdded
+                | Self::Replay
+                | Self::BonusCollect
+                | Self::Special
+        )
+    }
+
+    /// The sound with SD-card track number `track`, if there is one.
+    #[must_use]
+    pub fn from_track(track: u8) -> Option<Self> {
+        Self::ALL.into_iter().find(|sound| sound.track() == track)
     }
 
     /// How long the sound lasts: the length of its recording. `sim/web/sounds.js`
@@ -153,83 +158,118 @@ const fn clamp_step(n: u8) -> u8 {
     }
 }
 
-/// Picks which requested sound plays, one at a time.
+/// A set of sounds, such as those to start in one tick.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Sounds(u32);
+
+impl Sounds {
+    /// No sounds.
+    pub const NONE: Self = Self(0);
+
+    /// Adds `sound`.
+    pub fn insert(&mut self, sound: Sound) {
+        self.0 |= 1 << sound.track();
+    }
+
+    /// Whether `sound` is in the set.
+    #[must_use]
+    pub const fn contains(self, sound: Sound) -> bool {
+        self.0 & (1 << sound.track()) != 0
+    }
+
+    /// Whether the set is empty.
+    #[must_use]
+    pub const fn is_empty(self) -> bool {
+        self.0 == 0
+    }
+
+    /// The sounds in the set, in [`Sound::ALL`] order.
+    pub fn iter(self) -> impl Iterator<Item = Sound> {
+        Sound::ALL
+            .into_iter()
+            .filter(move |&sound| self.contains(sound))
+    }
+}
+
+/// The shortest gap before the same sound can start again.
+pub const MIN_RETRIGGER_MS: u32 = 30;
+
+/// Collects the sounds asked for in a tick, and drops quick repeats.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct SoundScheduler {
-    requested: Option<Sound>,
-    playing: Option<(Sound, Instant)>,
+    requested: Sounds,
+    /// When each track last started, by track number.
+    last_started: [Option<Instant>; 32],
 }
 
 impl SoundScheduler {
-    /// A scheduler with nothing playing.
+    /// A scheduler with nothing requested.
     #[must_use]
     pub const fn new() -> Self {
         Self {
-            requested: None,
-            playing: None,
+            requested: Sounds::NONE,
+            last_started: [None; 32],
         }
     }
 
-    /// Asks for `sound`. If several are asked for before the next
-    /// [`SoundScheduler::next`], the most important wins (the latest, on a tie).
+    /// Asks for `sound` to start.
     pub fn request(&mut self, sound: Sound) {
-        if self
-            .requested
-            .is_none_or(|current| sound.priority() >= current.priority())
-        {
-            self.requested = Some(sound);
-        }
+        self.requested.insert(sound);
     }
 
-    /// The sound to start now, if any. A request is dropped if a more important
-    /// sound is still playing.
-    pub fn next(&mut self, now: Instant) -> Option<Sound> {
-        let sound = self.requested.take()?;
-        if let Some((playing, ends)) = self.playing {
-            if !now.reached(ends) && sound.priority() < playing.priority() {
-                return None;
+    /// The sounds to start now: everything requested since the last call,
+    /// except a sound that already started less than [`MIN_RETRIGGER_MS`] ago.
+    pub fn next(&mut self, now: Instant) -> Sounds {
+        let mut start = Sounds::NONE;
+        for sound in self.requested.iter() {
+            let last = &mut self.last_started[usize::from(sound.track())];
+            if last.is_some_and(|at| !now.reached(at.plus(MIN_RETRIGGER_MS))) {
+                continue;
             }
+            *last = Some(now);
+            start.insert(sound);
         }
-        self.playing = Some((sound, now.plus(sound.duration_ms())));
-        Some(sound)
+        self.requested = Sounds::NONE;
+        start
     }
 }
 
-/// The DFPlayer Mini's volume setting at power-on (0–30).
-pub const DFPLAYER_VOLUME: u8 = 28;
+/// The WAV Trigger's output gain at power-on, in dB (-70 to +10; 0 = unity).
+pub const WAV_TRIGGER_GAIN_DB: i16 = 0;
 
-/// The DFPlayer Mini command that plays `track` from folder `01` on the SD card
-/// (file `01/NNN.wav` or `01/NNN.mp3`, where `NNN` is the zero-padded track).
+/// The WAV Trigger command that plays `track` mixed with whatever is playing
+/// (`PLAY_POLY`), locked against voice stealing if `lock`.
 #[must_use]
-pub const fn dfplayer_play(track: u8) -> [u8; 10] {
-    dfplayer_command(0x0F, 0x01, track)
+pub const fn wav_trigger_play(track: u16, lock: bool) -> [u8; 9] {
+    let [low, high] = track.to_le_bytes();
+    [0xF0, 0xAA, 0x09, 0x0D, 0x01, low, high, lock as u8, 0x55]
 }
 
-/// The DFPlayer Mini command that sets the volume (clamped to 0–30).
+/// The WAV Trigger command that sets the output gain in dB (clamped to -70 to
+/// +10).
 #[must_use]
-pub const fn dfplayer_volume(volume: u8) -> [u8; 10] {
-    let volume = if volume > 30 { 30 } else { volume };
-    dfplayer_command(0x06, 0x00, volume)
+pub const fn wav_trigger_gain(db: i16) -> [u8; 7] {
+    let db = if db < -70 {
+        -70
+    } else if db > 10 {
+        10
+    } else {
+        db
+    };
+    let [low, high] = db.to_le_bytes();
+    [0xF0, 0xAA, 0x07, 0x05, low, high, 0x55]
 }
 
-/// A 10-byte DFPlayer frame: start, version, length, command, no feedback,
-/// two parameter bytes, a checksum (the negated sum of bytes 1–6) and the end
-/// marker.
-const fn dfplayer_command(command: u8, high: u8, low: u8) -> [u8; 10] {
-    let sum = 0xFF_u16 + 0x06 + command as u16 + high as u16 + low as u16;
-    let checksum = 0_u16.wrapping_sub(sum).to_be_bytes();
-    [
-        0x7E,
-        0xFF,
-        0x06,
-        command,
-        0x00,
-        high,
-        low,
-        checksum[0],
-        checksum[1],
-        0xEF,
-    ]
+/// The WAV Trigger command that turns its on-board speaker amplifier on or off.
+#[must_use]
+pub const fn wav_trigger_amp(on: bool) -> [u8; 6] {
+    [0xF0, 0xAA, 0x06, 0x09, on as u8, 0x55]
+}
+
+/// The WAV Trigger command that stops every track.
+#[must_use]
+pub const fn wav_trigger_stop_all() -> [u8; 5] {
+    [0xF0, 0xAA, 0x05, 0x04, 0x55]
 }
 
 #[cfg(test)]
@@ -242,86 +282,75 @@ mod tests {
         Instant::from_millis(ms)
     }
 
+    // Examples from the Robertsonics WAV Trigger User Guide (2023-01-14).
+
     #[test]
-    fn checksum_matches_the_dfplayer_datasheet_example() {
-        // "Play track 1" (command 0x03) from the DFPlayer Mini datasheet.
+    fn play_matches_the_user_guide_example() {
+        // "Plays track 7 polyphonically with voice locked".
         assert_eq!(
-            dfplayer_command(0x03, 0x00, 0x01),
-            [0x7E, 0xFF, 0x06, 0x03, 0x00, 0x00, 0x01, 0xFE, 0xF7, 0xEF]
+            wav_trigger_play(7, true),
+            [0xF0, 0xAA, 0x09, 0x0D, 0x01, 0x07, 0x00, 0x01, 0x55]
         );
+        assert_eq!(wav_trigger_play(300, false)[5..8], [0x2C, 0x01, 0x00]);
     }
 
     #[test]
-    fn play_and_volume_commands() {
+    fn gain_matches_the_user_guide_example() {
+        // "Sets output gain to -10dB".
         assert_eq!(
-            dfplayer_play(9),
-            [0x7E, 0xFF, 0x06, 0x0F, 0x00, 0x01, 0x09, 0xFE, 0xE2, 0xEF]
+            wav_trigger_gain(-10),
+            [0xF0, 0xAA, 0x07, 0x05, 0xF6, 0xFF, 0x55]
         );
-        assert_eq!(dfplayer_volume(99)[6], 30);
+        assert_eq!(wav_trigger_gain(99)[4], 10);
     }
 
     #[test]
-    fn tracks_are_unique() {
+    fn amp_and_stop_all_match_the_user_guide_examples() {
+        assert_eq!(wav_trigger_amp(true), [0xF0, 0xAA, 0x06, 0x09, 0x01, 0x55]);
+        assert_eq!(wav_trigger_stop_all(), [0xF0, 0xAA, 0x05, 0x04, 0x55]);
+    }
+
+    #[test]
+    fn tracks_are_unique_and_fit_the_set() {
         let tracks: HashSet<u8> = Sound::ALL.iter().map(|s| s.track()).collect();
         assert_eq!(tracks.len(), Sound::ALL.len());
+        assert!(tracks.iter().all(|&t| t < 32));
+        for sound in Sound::ALL {
+            assert_eq!(Sound::from_track(sound.track()), Some(sound));
+        }
     }
 
     #[test]
-    fn a_more_important_sound_is_not_cut_off() {
-        let mut s = SoundScheduler::new();
-        s.request(Sound::GameStart);
-        assert_eq!(s.next(at(0)), Some(Sound::GameStart));
-
-        s.request(Sound::PopBumper);
-        assert_eq!(s.next(at(100)), None);
-
-        // Once it has finished, anything can play.
-        s.request(Sound::PopBumper);
-        assert_eq!(
-            s.next(at(Sound::GameStart.duration_ms())),
-            Some(Sound::PopBumper)
-        );
-    }
-
-    #[test]
-    fn a_player_joining_or_a_tilt_interrupts_the_march() {
-        let mut s = SoundScheduler::new();
-        s.request(Sound::GameStart);
-        s.next(at(0));
-        s.request(Sound::PlayerAdded);
-        assert_eq!(s.next(at(500)), Some(Sound::PlayerAdded));
-
-        s.request(Sound::GameStart);
-        s.next(at(1_000));
-        s.request(Sound::Tilt);
-        assert_eq!(s.next(at(1_500)), Some(Sound::Tilt));
-    }
-
-    #[test]
-    fn the_march_beats_the_ball_serve_at_game_start() {
+    fn several_sounds_can_start_at_once() {
         let mut s = SoundScheduler::new();
         s.request(Sound::GameStart);
         s.request(Sound::BallServe);
-        assert_eq!(s.next(at(0)), Some(Sound::GameStart));
+        s.request(Sound::PopBumper);
+        let started: Vec<Sound> = s.next(at(0)).iter().collect();
+        assert_eq!(
+            started,
+            [Sound::PopBumper, Sound::GameStart, Sound::BallServe]
+        );
+        assert!(s.next(at(1)).is_empty());
     }
 
     #[test]
-    fn equal_or_higher_priority_interrupts() {
+    fn the_same_sound_cannot_restart_too_quickly() {
         let mut s = SoundScheduler::new();
         s.request(Sound::PopBumper);
-        s.next(at(0));
+        assert!(s.next(at(0)).contains(Sound::PopBumper));
         s.request(Sound::PopBumper);
-        assert_eq!(s.next(at(10)), Some(Sound::PopBumper));
-        s.request(Sound::Tilt);
-        assert_eq!(s.next(at(20)), Some(Sound::Tilt));
-    }
-
-    #[test]
-    fn the_most_important_request_in_a_tick_wins() {
-        let mut s = SoundScheduler::new();
-        s.request(Sound::Replay);
         s.request(Sound::Lane);
-        assert_eq!(s.next(at(0)), Some(Sound::Replay));
-        assert_eq!(s.next(at(1)), None);
+        let started = s.next(at(10));
+        assert!(!started.contains(Sound::PopBumper));
+        assert!(started.contains(Sound::Lane));
+        s.request(Sound::PopBumper);
+        assert!(s.next(at(MIN_RETRIGGER_MS)).contains(Sound::PopBumper));
+    }
+
+    #[test]
+    fn the_big_moments_are_locked() {
+        assert!(Sound::GameStart.locked() && Sound::Tilt.locked() && Sound::PlayerAdded.locked());
+        assert!(!Sound::PopBumper.locked() && !Sound::Lane.locked());
     }
 }
