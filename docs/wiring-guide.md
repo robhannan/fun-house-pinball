@@ -95,21 +95,27 @@ The full list, with quantities and links, is in
 ## 4. Power layout
 
 ```
-            ┌──────────────────────┐
- Mains ───▶ │ Inlet, fuse, switch  │  ◀── have this checked by an electrician
-            └──┬─────────┬──────┬──┘
-               │         │      │
-        ┌──────▼───┐ ┌───▼────┐ ┌▼─────────┐
-        │ Coil PSU │ │Lamp PSU│ │ 9 V for  │
-        │ (DC)     │ │ (DC)   │ │ Arduino  │
-        └─┬──────┬─┘ └─┬────┬─┘ └─┬──────┬─┘
-        +V│  fuse│-  +V│fuse│-   +│      │-
-          ▼      │     ▼    │     ▼      │
-       coils     │   lamps  │  Arduino   │
-                 │          │  barrel    │
-                 ▼          ▼  jack      ▼
-              ═══════ COMMON GROUND POINT ═══════
+            ┌───────────────────────────────┐
+ Mains ───▶ │      Inlet, fuse, switch      │  ◀── have this checked by an electrician
+            └──┬─────────┬──────┬───────┬───┘
+               │         │      │       │
+        ┌──────▼───┐ ┌───▼────┐ ┌▼──────┐ ┌▼────────┐
+        │ Coil PSU │ │Lamp PSU│ │ 9 V   │ │ 5 V 2 A │
+        │ (DC)     │ │ (DC)   │ │Arduino│ │ sound   │
+        └─┬──────┬─┘ └─┬────┬─┘ └─┬───┬─┘ └─┬─────┬─┘
+        +V│  fuse│-  +V│fuse│-   +│   │-   +│fuse │-
+          ▼      │     ▼    │     ▼   │     ▼     │
+       coils     │   lamps  │  Arduino│  DFPlayer │
+                 │          │  barrel │   VCC     │
+                 ▼          ▼  jack   ▼           ▼
+              ══════════ COMMON GROUND POINT ══════════
 ```
+
+Every supply, the 5 V sound adaptor included, is fed from the machine's
+**switched mains inlet**, so the power switch turns everything off at once.
+**Have the electrician fit all of them.** Don't splice an adaptor into the mains
+wiring yourself. A plug-in adaptor can go in an enclosed multi-socket that the
+electrician wires to the inlet.
 
 - **Common ground:** run every DC supply's negative (–) terminal, and the
   Arduino's GND, to **one** ground point, such as a terminal block. Without a
@@ -118,8 +124,12 @@ The full list, with quantities and links, is in
   starting point:
   - coil rail: a slow-blow fuse rated for the supply, e.g. 5 A
   - lamp rail: about 25% above total lamp current
+  - sound rail (5 V): 2 A
 - **Arduino power:** use the barrel jack (7–12 V; 9 V is ideal). Its 5 V pin can
   power the 74HC595 chips, which draw very little, but **nothing else**.
+- **Sound power:** the DFPlayer Mini has its own 5 V supply (section 7d). Only
+  that supply's negative (–) goes to the common ground point; never join its
+  +5 V to the Arduino's 5V pin.
 - **Coil power off switch:** fit an easy-to-reach switch or interlock that cuts
   the coil supply only. You can then test switches and lamps with coils dead.
 

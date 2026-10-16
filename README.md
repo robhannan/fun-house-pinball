@@ -112,7 +112,7 @@ avr-hal, bump the toolchain to match its `rust-toolchain.toml`.
 - [ ] Check the features in `crates/pinball-core/src/playfield.rs` (taken from a
       photo) against the real playfield; counts marked *verify* are guesses
 - [ ] Confirm the scoring and bonus-wheel rules against the original schematic
-- [x] Multi-player support (1 to 4 players, #34)
+- [ ] Multi-player support (the instruction card prices per player)
 - [ ] Choose driver boards and confirm coil voltages and pulse times
 - [ ] Decide on a score display (backglass lamps, reels or LED digits)
 - [x] Sound: synthesised effects, played by a DFPlayer Mini (wire and test on the machine)

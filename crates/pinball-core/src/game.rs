@@ -882,6 +882,18 @@ mod tests {
     }
 
     #[test]
+    fn adding_a_player_during_the_march_honks() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.run(500);
+        assert_eq!(
+            sounds_during(&mut sim, |s| s.tap(sw::START_BUTTON)),
+            [Sound::PlayerAdded]
+        );
+        assert_eq!(sim.machine.players(), 2);
+    }
+
+    #[test]
     fn last_drain_plays_game_over() {
         let mut sim = Sim::new();
         sim.machine = Machine::with_settings(Settings {

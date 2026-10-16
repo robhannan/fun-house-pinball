@@ -103,19 +103,22 @@ impl Sound {
         }
     }
 
-    /// Higher wins when sounds compete for the player.
+    /// Higher wins when sounds compete for the player. The game-start march
+    /// sits in the middle: playfield noise can't cut it off, but a player
+    /// joining or a tilt can, because those are the only signs that they
+    /// happened.
     #[must_use]
     pub const fn priority(self) -> u8 {
         match self {
             Self::PopBumper | Self::Kicker => 1,
             Self::Lane | Self::BonusAdvance(_) => 2,
             Self::ThirtyPoints => 3,
-            Self::PlayerAdded | Self::BallServe => 4,
-            Self::Drain | Self::Trapdoor => 5,
+            Self::BallServe => 4,
+            Self::GameStart | Self::Drain | Self::Trapdoor => 5,
             Self::BonusCollect | Self::Special => 6,
-            Self::Replay => 7,
+            Self::PlayerAdded | Self::Replay => 7,
             Self::Tilt => 8,
-            Self::GameStart | Self::GameOver => 9,
+            Self::GameOver => 9,
         }
     }
 
@@ -128,12 +131,14 @@ impl Sound {
             Self::Lane => 400,
             Self::PlayerAdded => 500,
             Self::ThirtyPoints => 600,
-            Self::BallServe | Self::Trapdoor => 700,
-            Self::Drain => 900,
-            Self::Special | Self::Tilt => 1_200,
-            Self::BonusCollect => 1_600,
+            Self::BallServe => 700,
+            Self::Trapdoor => 800,
+            Self::Drain => 1_000,
+            Self::Tilt => 1_200,
+            Self::Special => 1_500,
+            Self::BonusCollect => 2_000,
             Self::GameOver => 2_600,
-            Self::GameStart => 4_000,
+            Self::GameStart => 3_400,
         }
     }
 }
@@ -191,7 +196,7 @@ impl SoundScheduler {
 }
 
 /// The DFPlayer Mini's volume setting at power-on (0–30).
-pub const DFPLAYER_VOLUME: u8 = 20;
+pub const DFPLAYER_VOLUME: u8 = 28;
 
 /// The DFPlayer Mini command that plays `track` from folder `01` on the SD card
 /// (file `01/NNN.wav` or `01/NNN.mp3`, where `NNN` is the zero-padded track).
@@ -272,7 +277,32 @@ mod tests {
 
         // Once it has finished, anything can play.
         s.request(Sound::PopBumper);
-        assert_eq!(s.next(at(4_000)), Some(Sound::PopBumper));
+        assert_eq!(
+            s.next(at(Sound::GameStart.duration_ms())),
+            Some(Sound::PopBumper)
+        );
+    }
+
+    #[test]
+    fn a_player_joining_or_a_tilt_interrupts_the_march() {
+        let mut s = SoundScheduler::new();
+        s.request(Sound::GameStart);
+        s.next(at(0));
+        s.request(Sound::PlayerAdded);
+        assert_eq!(s.next(at(500)), Some(Sound::PlayerAdded));
+
+        s.request(Sound::GameStart);
+        s.next(at(1_000));
+        s.request(Sound::Tilt);
+        assert_eq!(s.next(at(1_500)), Some(Sound::Tilt));
+    }
+
+    #[test]
+    fn the_march_beats_the_ball_serve_at_game_start() {
+        let mut s = SoundScheduler::new();
+        s.request(Sound::GameStart);
+        s.request(Sound::BallServe);
+        assert_eq!(s.next(at(0)), Some(Sound::GameStart));
     }
 
     #[test]
