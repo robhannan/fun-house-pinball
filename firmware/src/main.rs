@@ -13,7 +13,7 @@ use arduino_hal::hal::wdt;
 use arduino_hal::prelude::*;
 use arduino_hal::spi;
 use pinball_core::sound::{
-    WAV_TRIGGER_GAIN_DB, wav_trigger_amp, wav_trigger_gain, wav_trigger_play,
+    WAV_TRIGGER_GAIN_DB, wav_trigger_amp, wav_trigger_gain, wav_trigger_play, wav_trigger_stop,
 };
 use pinball_core::{Instant, Machine, Outputs, SwitchStates};
 
@@ -128,6 +128,9 @@ fn main() -> ! {
         outputs.write(&frame);
 
         if sound_ready {
+            for effect in frame.stop_sounds.iter() {
+                sound.send(&wav_trigger_stop(u16::from(effect.track())));
+            }
             for effect in frame.sounds.iter() {
                 sound.send(&wav_trigger_play(
                     u16::from(effect.track()),

@@ -8,6 +8,7 @@
 //! "Novelty or Replay", and a "Multi-Tilt feature [that] permits player to
 //! continue playing in turn if one player tilts game".
 
+use crate::attract::AttractShow;
 use crate::bells::BellRinger;
 use crate::coils::{CoilId, Coils};
 use crate::lamps::{LampMode, Lamps};
@@ -34,6 +35,10 @@ pub const REPLAY_SCORES: [u32; 5] = [400, 600, 700, 800, 900];
 
 const FLIPPER_POWER_MS: u16 = 40;
 
+/// How long attract mode waits before the music starts (after the game-over
+/// sound). It then loops for as long as the machine is in attract mode.
+pub const MUSIC_DELAY_MS: u32 = 5_000;
+
 /// Operator settings, set inside the cabinet on the original.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Settings {
@@ -44,6 +49,8 @@ pub struct Settings {
     /// Real bells are fitted on coils 15–17 (see [`crate::bells`]). Scoring then
     /// rings them, and the WAV Trigger skips its recorded chimes.
     pub bells: bool,
+    /// Background music in attract mode, with the lamps dancing to it.
+    pub attract_music: bool,
 }
 
 impl Settings {
@@ -52,6 +59,7 @@ impl Settings {
         balls_per_game: 5,
         replays: true,
         bells: false,
+        attract_music: true,
     };
 }
 
@@ -82,6 +90,8 @@ pub struct Outputs {
     pub lamps: u64,
     /// The sounds to start now (several can play at once).
     pub sounds: Sounds,
+    /// The sounds to stop now, such as the attract music when a game starts.
+    pub stop_sounds: Sounds,
 }
 
 /// The whole machine: switch filtering, rules, coils and lamps.
@@ -108,6 +118,9 @@ pub struct Machine {
     serve_at: Option<Instant>,
     sound: SoundScheduler,
     bells: BellRinger,
+    show: AttractShow,
+    /// When the attract music starts; set when attract mode is first ticked.
+    music_at: Option<Instant>,
 }
 
 impl Default for Machine {
@@ -148,6 +161,8 @@ impl Machine {
             serve_at: None,
             sound: SoundScheduler::new(),
             bells: BellRinger::new(),
+            show: AttractShow::new(),
+            music_at: None,
         };
         machine.enter(Phase::Attract);
         machine
@@ -238,11 +253,13 @@ impl Machine {
             self.coils.pulse(coil::BALL_SERVE, u16::MAX, now);
             self.sound.request(Sound::BallServe);
         }
+        self.attract_music(now);
         self.bells.tick(now, &mut self.coils);
         Outputs {
             coils: self.coils.outputs(now),
             lamps: self.lamps.frame(now),
             sounds: self.sound.next(now),
+            stop_sounds: self.sound.take_stops(),
         }
     }
 
@@ -439,7 +456,26 @@ impl Machine {
         self.coils.hold(hold, pressed);
     }
 
+    /// Loops the attract music, and runs the light show to it.
+    fn attract_music(&mut self, now: Instant) {
+        if self.phase == Phase::Attract && self.settings.attract_music {
+            let at = *self.music_at.get_or_insert(now.plus(MUSIC_DELAY_MS));
+            if !self.show.is_running() && now.reached(at) {
+                self.sound.request(Sound::AttractMusic);
+                self.show.start(now);
+            }
+        }
+        if self.show.tick(now, &mut self.lamps) {
+            // The loop ended: start the music again, in step with the show.
+            self.sound.request(Sound::AttractMusic);
+        }
+    }
+
     fn start_game(&mut self, now: Instant) {
+        if self.show.is_running() {
+            self.show.stop(&mut self.lamps);
+            self.sound.stop(Sound::AttractMusic);
+        }
         self.scores = [0; MAX_PLAYERS];
         self.replays = [0; MAX_PLAYERS];
         self.bonus_step = 0;
@@ -492,6 +528,7 @@ impl Machine {
         match phase {
             Phase::Attract => {
                 self.bells.clear();
+                self.music_at = None;
                 self.ball = 0;
                 self.player = 0;
                 self.serve_at = None;
@@ -527,6 +564,7 @@ impl Machine {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::music_beats::ATTRACT_MUSIC_MS;
 
     /// Drives a [`Machine`] with simulated switches and a 1 ms clock.
     struct Sim {
@@ -763,6 +801,7 @@ mod tests {
             balls_per_game: 3,
             replays: true,
             bells: false,
+            attract_music: false,
         };
         let mut sim = Sim::new();
         sim.machine = Machine::with_settings(settings);
@@ -782,6 +821,7 @@ mod tests {
             balls_per_game,
             replays: true,
             bells: false,
+            attract_music: false,
         };
         assert_eq!(
             Machine::with_settings(settings(1))
@@ -816,6 +856,7 @@ mod tests {
             balls_per_game: 5,
             replays: false,
             bells: false,
+            attract_music: false,
         });
         sim.tap(sw::START_BUTTON);
         for _ in 0..40 {
@@ -978,12 +1019,77 @@ mod tests {
     }
 
     #[test]
+    fn attract_music_plays_after_a_pause_and_the_lamps_dance() {
+        use crate::music_beats::ATTRACT_MUSIC_BEATS_MS;
+        let mut sim = Sim::new();
+        let started = sounds_during(&mut sim, |s| s.run(MUSIC_DELAY_MS + 10));
+        assert_eq!(started, [Sound::AttractMusic]);
+        // A few beats in, the playfield lamps are dancing.
+        sim.run(ATTRACT_MUSIC_BEATS_MS[4]);
+        let wheel = lamp::BONUS_WHEEL
+            .iter()
+            .any(|&l| sim.last.lamps & (1 << l.index()) != 0);
+        let pops = lamp::POP_BUMPERS
+            .iter()
+            .any(|&l| sim.last.lamps & (1 << l.index()) != 0);
+        assert!(wheel || pops);
+        // Game over stays lit throughout.
+        assert_ne!(sim.last.lamps & (1 << lamp::GAME_OVER.index()), 0);
+    }
+
+    #[test]
+    fn starting_a_game_stops_the_music_and_the_show() {
+        let mut sim = Sim::new();
+        sim.run(MUSIC_DELAY_MS + 1_000);
+        sim.switches.set(sw::START_BUTTON, true);
+        let mut stopped = false;
+        for _ in 0..5 {
+            sim.run(1);
+            stopped |= sim.last.stop_sounds.contains(Sound::AttractMusic);
+        }
+        assert!(stopped);
+        assert_eq!(sim.machine.phase(), Phase::Playing);
+        // Only the game's own lamps: the first bonus position and the pop caps.
+        let show_left: Vec<_> = lamp::BONUS_WHEEL[1..]
+            .iter()
+            .chain(&lamp::PLAYER_UP[1..])
+            .chain(&lamp::BALL_IN_PLAY[1..])
+            .filter(|&&l| sim.last.lamps & (1 << l.index()) != 0)
+            .collect();
+        assert!(show_left.is_empty(), "{show_left:?}");
+    }
+
+    #[test]
+    fn attract_music_can_be_turned_off() {
+        let mut sim = Sim::new();
+        sim.machine = Machine::with_settings(Settings {
+            attract_music: false,
+            ..Settings::DEFAULT
+        });
+        assert!(
+            !sounds_during(&mut sim, |s| s.run(MUSIC_DELAY_MS * 2)).contains(&Sound::AttractMusic)
+        );
+    }
+
+    #[test]
+    fn attract_music_loops_seamlessly() {
+        let mut sim = Sim::new();
+        sim.run(MUSIC_DELAY_MS + 10);
+        // Exactly one restart per loop, on the loop boundary.
+        let again = sounds_during(&mut sim, |s| s.run(ATTRACT_MUSIC_MS));
+        assert_eq!(again, [Sound::AttractMusic]);
+        let twice = sounds_during(&mut sim, |s| s.run(2 * ATTRACT_MUSIC_MS));
+        assert_eq!(twice, [Sound::AttractMusic, Sound::AttractMusic]);
+    }
+
+    #[test]
     fn last_drain_plays_game_over() {
         let mut sim = Sim::new();
         sim.machine = Machine::with_settings(Settings {
             balls_per_game: 3,
             replays: true,
             bells: false,
+            attract_music: false,
         });
         sim.tap(sw::START_BUTTON);
         sim.run(5_000);

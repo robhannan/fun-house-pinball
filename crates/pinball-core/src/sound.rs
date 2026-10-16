@@ -53,11 +53,14 @@ pub enum Sound {
     Trapdoor,
     /// The game ended: a sad trombone.
     GameOver,
+    /// Background music in attract mode: "Entrance of the Gladiators" (Julius
+    /// Fučík, 1897), the classic circus march. The lamps dance to its beats.
+    AttractMusic,
 }
 
 impl Sound {
     /// Every sound, including each bonus-wheel position.
-    pub const ALL: [Self; 22] = [
+    pub const ALL: [Self; 23] = [
         Self::PopBumper,
         Self::Lane,
         Self::ThirtyPoints,
@@ -80,6 +83,7 @@ impl Sound {
         Self::Drain,
         Self::Trapdoor,
         Self::GameOver,
+        Self::AttractMusic,
     ];
 
     /// The sound's file number on the SD card (`01/NNN.wav`) and in
@@ -100,6 +104,7 @@ impl Sound {
             Self::Drain => 12,
             Self::Trapdoor => 13,
             Self::GameOver => 14,
+            Self::AttractMusic => 30,
             Self::BonusAdvance(n) => 20 + clamp_step(n),
         }
     }
@@ -118,6 +123,7 @@ impl Sound {
                 | Self::Replay
                 | Self::BonusCollect
                 | Self::Special
+                | Self::AttractMusic
         )
     }
 
@@ -144,6 +150,7 @@ impl Sound {
             Self::BonusCollect => 2_400,
             Self::GameStart => 2_600,
             Self::GameOver => 4_300,
+            Self::AttractMusic => crate::music_beats::ATTRACT_MUSIC_MS,
         }
     }
 }
@@ -198,6 +205,7 @@ pub const MIN_RETRIGGER_MS: u32 = 30;
 #[derive(Clone, Copy, Debug, Default)]
 pub struct SoundScheduler {
     requested: Sounds,
+    stopping: Sounds,
     /// When each track last started, by track number.
     last_started: [Option<Instant>; 32],
 }
@@ -208,6 +216,7 @@ impl SoundScheduler {
     pub const fn new() -> Self {
         Self {
             requested: Sounds::NONE,
+            stopping: Sounds::NONE,
             last_started: [None; 32],
         }
     }
@@ -215,6 +224,16 @@ impl SoundScheduler {
     /// Asks for `sound` to start.
     pub fn request(&mut self, sound: Sound) {
         self.requested.insert(sound);
+    }
+
+    /// Asks for `sound` to stop, if it's playing.
+    pub fn stop(&mut self, sound: Sound) {
+        self.stopping.insert(sound);
+    }
+
+    /// The sounds to stop now: everything asked to stop since the last call.
+    pub fn take_stops(&mut self) -> Sounds {
+        core::mem::take(&mut self.stopping)
     }
 
     /// The sounds to start now: everything requested since the last call,
@@ -266,6 +285,13 @@ pub const fn wav_trigger_amp(on: bool) -> [u8; 6] {
     [0xF0, 0xAA, 0x06, 0x09, on as u8, 0x55]
 }
 
+/// The WAV Trigger command that stops `track`.
+#[must_use]
+pub const fn wav_trigger_stop(track: u16) -> [u8; 9] {
+    let [low, high] = track.to_le_bytes();
+    [0xF0, 0xAA, 0x09, 0x0D, 0x04, low, high, 0x00, 0x55]
+}
+
 /// The WAV Trigger command that stops every track.
 #[must_use]
 pub const fn wav_trigger_stop_all() -> [u8; 5] {
@@ -302,6 +328,23 @@ mod tests {
             [0xF0, 0xAA, 0x07, 0x05, 0xF6, 0xFF, 0x55]
         );
         assert_eq!(wav_trigger_gain(99)[4], 10);
+    }
+
+    #[test]
+    fn stop_uses_the_stop_track_code() {
+        // CONTROL_TRACK with code STOP (0x04), per the user guide.
+        assert_eq!(
+            wav_trigger_stop(30),
+            [0xF0, 0xAA, 0x09, 0x0D, 0x04, 0x1E, 0x00, 0x00, 0x55]
+        );
+    }
+
+    #[test]
+    fn stops_are_collected_once() {
+        let mut s = SoundScheduler::new();
+        s.stop(Sound::AttractMusic);
+        assert!(s.take_stops().contains(Sound::AttractMusic));
+        assert!(s.take_stops().is_empty());
     }
 
     #[test]

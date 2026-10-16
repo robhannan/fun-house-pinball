@@ -81,7 +81,9 @@ function start(sim) {
     const balls = Number(document.getElementById("balls").value);
     const replays = document.getElementById("replay-mode").checked ? 1 : 0;
     const bells = document.getElementById("bells-fitted").checked ? 1 : 0;
-    sim.sim_reset_with(balls, replays, bells);
+    const music = document.getElementById("attract-music").checked ? 1 : 0;
+    audio.stopAll();
+    sim.sim_reset_with(balls, replays, bells, music);
   };
   document.getElementById("reset").addEventListener("click", powerCycle);
   document.getElementById("apply-settings").addEventListener("click", powerCycle);
@@ -185,6 +187,7 @@ function start(sim) {
     }
     for (const { el, mask } of flippers) el.classList.toggle("up", (coilBits & mask) !== 0);
 
+    for (let track = sim.sim_take_stop(); track !== 0; track = sim.sim_take_stop()) audio.stop(track);
     for (let sound = sim.sim_take_sound(); sound !== 0; sound = sim.sim_take_sound()) {
       audio.play(sound & 0xff, (sound & 0x100) !== 0);
     }
@@ -234,7 +237,7 @@ const HEADROOM = 0.5;
 function soundPlayer() {
   let context;
   let gain;
-  /** Playing sounds, oldest first: { source, locked }. */
+  /** Playing sounds, oldest first: { source, locked, track }. */
   let voices = [];
   const synthesised = new Map();
   const recorded = new Map();
@@ -296,6 +299,10 @@ function soundPlayer() {
   };
 
   const bufferFor = (track) => {
+    // The attract music has no synthesised stand-in: the lamps follow the
+    // recording's beats, so anything else would be out of step. If it hasn't
+    // loaded yet, the lamps dance in silence.
+    if (SOUNDS[track].recordingOnly) return recorded.get(String(track));
     if (style.value === "recorded" && recorded.has(String(track))) return recorded.get(String(track));
     let audioBuffer = synthesised.get(track);
     if (!audioBuffer) {
@@ -316,11 +323,21 @@ function soundPlayer() {
       voices[steal].source.stop();
       voices.splice(steal, 1);
     }
-    const voice = { source: start(bufferFor(track), HEADROOM), locked };
+    const audioBuffer = bufferFor(track);
+    if (!audioBuffer) return;
+    const voice = { source: start(audioBuffer, HEADROOM), locked, track };
     voice.source.onended = () => {
       voices = voices.filter((v) => v !== voice);
     };
     voices.push(voice);
+  };
+
+  /** Stops every playing copy of `track`, as the WAV Trigger's STOP does. */
+  const stop = (track) => {
+    for (const voice of voices.filter((v) => v.track === track)) voice.source.stop();
+  };
+  const stopAll = () => {
+    for (const voice of voices) voice.source.stop();
   };
 
   /** Rings real bell `n` (0 = 1s, 1 = 10s, 2 = 100s), over whatever is playing. */
@@ -357,5 +374,5 @@ function soundPlayer() {
   addButton("Coil noise: pop bumper", () => coil(3));
   addButton("Coil noise: flipper", () => coil(8));
 
-  return { play, bell, coil };
+  return { play, stop, stopAll, bell, coil };
 }

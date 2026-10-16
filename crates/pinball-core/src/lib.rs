@@ -14,10 +14,12 @@
 
 #![cfg_attr(not(test), no_std)]
 
+pub mod attract;
 pub mod bells;
 pub mod coils;
 pub mod game;
 pub mod lamps;
+pub mod music_beats;
 pub mod playfield;
 pub mod sound;
 pub mod switches;
