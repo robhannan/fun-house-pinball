@@ -50,8 +50,12 @@ novelty) can be changed on the page.
 
 It plays the machine's sounds too: a mix of classic pinball (bells, thumps,
 the knocker, the tilt buzzer) and circus (a calliope march, drum roll, clown
-horn, slide whistles, sad trombone). They're synthesised in
-`sim/web/sounds.js`, and the **Sound test** panel plays each one.
+horn, slide whistles, sad trombone). Most are cut from free CC0 recordings,
+including bells and relays from real electromechanical pinball machines
+(credits in [docs/sound-credits.md](docs/sound-credits.md)). Synthesised
+versions are kept in `sim/web/sounds.js` as a fallback, and the page can switch
+between the two. The **Sound test** panel plays each one, including the
+optional real bells.
 
 ```sh
 pnpm install           # once, installs zx for the build script
@@ -75,7 +79,9 @@ files for its SD card with:
 pnpm run render:sounds   # writes target/sd-card/01/001.wav, 002.wav, ...
 ```
 
-Copy the `01` folder to the root of a FAT32 microSD card. Wiring is in
+Copy the `01` folder to the root of a FAT32 microSD card. To change which
+recordings are used, edit `sim/samples/sources.json` and run
+`pnpm run import:samples` (needs `ffmpeg`). Wiring is in
 [docs/wiring-guide.md](docs/wiring-guide.md#7d-sound-dfplayer-mini).
 
 ### Firmware (Arduino Mega 2560)

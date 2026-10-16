@@ -161,13 +161,15 @@ mod exports {
         with(|sim| *sim = Simulator::new());
     }
 
-    /// Power-cycles the machine with `balls` per game (clamped to 3–5) and
-    /// replays on (`replays != 0`) or novelty mode.
+    /// Power-cycles the machine with `balls_per_game` (clamped to 3–5),
+    /// replays on (`replay_mode != 0`) or novelty mode, and real bells fitted
+    /// (`bells_fitted != 0`) or not.
     #[unsafe(no_mangle)]
-    pub extern "C" fn sim_reset_with(balls: u32, replays: u32) {
+    pub extern "C" fn sim_reset_with(balls_per_game: u32, replay_mode: u32, bells_fitted: u32) {
         let settings = Settings {
-            balls_per_game: balls.min(5) as u8,
-            replays: replays != 0,
+            balls_per_game: balls_per_game.min(5) as u8,
+            replays: replay_mode != 0,
+            bells: bells_fitted != 0,
         };
         with(|sim| *sim = Simulator::with_settings(settings));
     }
@@ -480,6 +482,7 @@ mod tests {
         let sim = Simulator::with_settings(Settings {
             balls_per_game: 3,
             replays: false,
+            bells: false,
         });
         assert_eq!(sim.machine().settings().balls_per_game, 3);
         assert!(!sim.machine().settings().replays);
@@ -506,6 +509,32 @@ mod tests {
             Sound::ALL.len(),
             "sounds.js has tracks the core doesn't use"
         );
+    }
+
+    #[test]
+    fn every_recorded_sound_exists_and_matches_its_track() {
+        let web = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../sim/web");
+        for sound in Sound::ALL {
+            let entry = format!("\n  {}: {{ name: \"", sound.track());
+            let start = SOUNDS_JS.find(&entry).expect("checked above");
+            let line = SOUNDS_JS[start + 1..].lines().next().unwrap_or_default();
+            let Some(sample) = line
+                .split("sample: \"")
+                .nth(1)
+                .and_then(|rest| rest.split('"').next())
+            else {
+                continue;
+            };
+            assert_eq!(
+                sample,
+                format!("samples/{:03}.wav", sound.track()),
+                "{sound:?}"
+            );
+            assert!(
+                web.join(sample).is_file(),
+                "{sound:?}: {sample} is missing (pnpm run import:samples)"
+            );
+        }
     }
 
     #[test]

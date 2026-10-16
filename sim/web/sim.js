@@ -12,7 +12,7 @@
 // reels by data-score / data-digit. The Rust tests check them against
 // playfield.rs.
 
-import { SOUNDS, render } from "./sounds.js";
+import { BELL_SAMPLES, SOUNDS, render } from "./sounds.js";
 
 const PHASES = ["Attract", "Playing", "Tilted"];
 const COIL_GLOW_MS = 150; // keep short coil pulses visible
@@ -43,7 +43,7 @@ function start(sim) {
     el,
     lamp: Number(el.dataset.lamp),
   }));
-  const coils = [...document.querySelectorAll("#playfield [data-coil]")].map((el) => ({
+  const coils = [...document.querySelectorAll("[data-coil]")].map((el) => ({
     el,
     mask: el.dataset.coil.split(" ").reduce((m, c) => m | (1 << Number(c)), 0),
     lastOn: -Infinity,
@@ -80,7 +80,8 @@ function start(sim) {
   const powerCycle = () => {
     const balls = Number(document.getElementById("balls").value);
     const replays = document.getElementById("replay-mode").checked ? 1 : 0;
-    sim.sim_reset_with(balls, replays);
+    const bells = document.getElementById("bells-fitted").checked ? 1 : 0;
+    sim.sim_reset_with(balls, replays, bells);
   };
   document.getElementById("reset").addEventListener("click", powerCycle);
   document.getElementById("apply-settings").addEventListener("click", powerCycle);
@@ -166,7 +167,11 @@ function start(sim) {
       el.classList.toggle("lit", ((word >>> (lamp % 32)) & 1) === 1);
     }
     for (const coil of coils) {
-      if (coilsSeen & coil.mask) coil.lastOn = now;
+      if (coilsSeen & coil.mask) {
+        // A bell stroke: each new pulse rings the bell.
+        if (coil.el.classList.contains("bell") && now - coil.lastOn > 40) audio.bell(Number(coil.el.dataset.coil) - 15);
+        coil.lastOn = now;
+      }
       if (!coil.el.dataset.flipper) {
         coil.el.classList.toggle("firing", now - coil.lastOn < COIL_GLOW_MS);
       }
@@ -205,17 +210,31 @@ load().then(start, (error) => {
 
 /**
  * Plays sounds with the Web Audio API. Like the DFPlayer Mini, only one sound
- * plays at a time: a new one stops the last. Browsers only allow audio after
- * the user has interacted with the page, so the audio context starts on the
- * first click or key press.
+ * plays at a time: a new one stops the last. Each sound can be the recorded
+ * version (from free recordings) or the synthesised one, picked on the page.
+ * Real bells ring separately, as real bells would. Browsers only allow audio
+ * after the user has interacted with the page, so the audio context is created
+ * suspended (the recordings load meanwhile) and resumes on the first click or
+ * key press.
  */
 function soundPlayer() {
   let context;
   let gain;
   let current;
-  const buffers = new Map();
+  const synthesised = new Map();
+  const recorded = new Map();
   const on = document.getElementById("sound-on");
   const volume = document.getElementById("volume");
+  const style = document.getElementById("sound-style");
+
+  const loadRecording = async (key, file) => {
+    try {
+      const bytes = await (await fetch(file)).arrayBuffer();
+      recorded.set(key, await context.decodeAudioData(bytes));
+    } catch (error) {
+      console.warn(`couldn't load ${file}; using the synthesised sound`, error);
+    }
+  };
 
   const ensureContext = () => {
     if (!context) {
@@ -223,42 +242,65 @@ function soundPlayer() {
       gain = context.createGain();
       gain.gain.value = Number(volume.value);
       gain.connect(context.destination);
+      for (const [track, { sample }] of Object.entries(SOUNDS)) if (sample) loadRecording(track, sample);
+      BELL_SAMPLES.forEach((file, n) => loadRecording(`bell-${n}`, file));
     }
     if (context.state === "suspended") context.resume();
     return context;
   };
+  // Create the (suspended) context now, so the recordings load straight away;
+  // the first click or key press resumes it.
+  ensureContext();
   for (const event of ["pointerdown", "keydown"]) addEventListener(event, ensureContext, { once: true });
   volume.addEventListener("input", () => {
     if (gain) gain.gain.value = Number(volume.value);
   });
 
-  const play = (track) => {
-    if (!on.checked || !context || !SOUNDS[track]) return;
-    let audioBuffer = buffers.get(track);
+  const start = (audioBuffer) => {
+    const source = context.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(gain);
+    source.start();
+    return source;
+  };
+
+  const bufferFor = (track) => {
+    if (style.value === "recorded" && recorded.has(String(track))) return recorded.get(String(track));
+    let audioBuffer = synthesised.get(track);
     if (!audioBuffer) {
       const samples = render(track, context.sampleRate);
       audioBuffer = context.createBuffer(1, samples.length, context.sampleRate);
       audioBuffer.copyToChannel(samples, 0);
-      buffers.set(track, audioBuffer);
+      synthesised.set(track, audioBuffer);
     }
-    current?.stop();
-    current = context.createBufferSource();
-    current.buffer = audioBuffer;
-    current.connect(gain);
-    current.start();
+    return audioBuffer;
   };
 
-  // The sound-test board: one button per sound.
+  const play = (track) => {
+    if (!on.checked || !context || !SOUNDS[track]) return;
+    current?.stop();
+    current = start(bufferFor(track));
+  };
+
+  /** Rings real bell `n` (0 = 1s, 1 = 10s, 2 = 100s), over whatever is playing. */
+  const bell = (n) => {
+    const audioBuffer = context && recorded.get(`bell-${n}`);
+    if (on.checked && audioBuffer) start(audioBuffer);
+  };
+
+  // The sound-test board: one button per sound, plus the bells.
   const board = document.getElementById("sound-test");
-  for (const [track, { name }] of Object.entries(SOUNDS)) {
+  const addButton = (label, action) => {
     const button = document.createElement("button");
-    button.textContent = name;
+    button.textContent = label;
     button.addEventListener("click", () => {
       ensureContext();
-      play(Number(track));
+      action();
     });
     board.append(button);
-  }
+  };
+  for (const [track, { name }] of Object.entries(SOUNDS)) addButton(name, () => play(Number(track)));
+  ["1s", "10s", "100s"].forEach((label, n) => addButton(`Real bell: ${label}`, () => bell(n)));
 
-  return { play };
+  return { play, bell };
 }

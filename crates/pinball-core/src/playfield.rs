@@ -126,6 +126,9 @@ pub mod coil {
     /// [`super::sw::TRAPDOORS`]. Assumed (*verify*): energised = flap open,
     /// so every flap closes whenever coil power is cut.
     pub const TRAPDOOR_FLAPS: [CoilId; 3] = [CoilId::new(12), CoilId::new(13), CoilId::new(14)];
+    /// Optional real bells for the 1s, 10s and 100s, rung by scoring (see
+    /// `crate::bells`). Not fitted yet: only used when `Settings::bells` is on.
+    pub const BELLS: [CoilId; 3] = [CoilId::new(15), CoilId::new(16), CoilId::new(17)];
 }
 
 /// Lamp assignments.
@@ -211,6 +214,13 @@ pub const COIL_KINDS: [CoilKind; COIL_COUNT] = {
     let mut i = 0;
     while i < coil::TRAPDOOR_FLAPS.len() {
         k[coil::TRAPDOOR_FLAPS[i].index()] = CoilKind::Hold;
+        i += 1;
+    }
+    // Optional bells: short strokes. Conservative until real bells and their
+    // coil ratings are chosen.
+    let mut i = 0;
+    while i < coil::BELLS.len() {
+        k[coil::BELLS[i].index()] = pulse(15, 50);
         i += 1;
     }
     k
@@ -363,6 +373,10 @@ pub const PARTS: &[Part] = &[
         &[coil::TRAPDOOR_FLAPS[2]],
         None,
     ),
+    // Optional bells (not fitted yet)
+    part("Bell: 1s (optional)", None, &[coil::BELLS[0]], None),
+    part("Bell: 10s (optional)", None, &[coil::BELLS[1]], None),
+    part("Bell: 100s (optional)", None, &[coil::BELLS[2]], None),
     part(
         "30 points rollover (left)",
         Some(sw::THIRTY_POINT_ROLLOVERS[0]),

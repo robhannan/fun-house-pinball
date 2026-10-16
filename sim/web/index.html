@@ -53,6 +53,9 @@
     .stats dt { color: var(--muted); }
     .stats dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
     .settings { display: grid; gap: 10px; font-size: 14px; }
+    .bells { display: flex; gap: 8px; margin-top: 12px; }
+    .bell { flex: 1; text-align: center; padding: 8px; border-radius: 999px; border: 2px solid var(--border); font-weight: 700; opacity: .4; }
+    .bell.firing { opacity: 1; background: var(--lamp); color: #1f2328; border-color: #9a6700; }
     .settings label { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
     select { font: inherit; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
     .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -140,12 +143,28 @@
           <label>Volume
             <input type="range" id="volume" min="0" max="1" step="0.05" value="0.9">
           </label>
+          <label>Sounds
+            <select id="sound-style">
+              <option value="recorded" selected>Recorded (free recordings)</option>
+              <option value="synthesised">Synthesised</option>
+            </select>
+          </label>
         </div>
         <details style="margin-top: 12px;">
           <summary>Sound test</summary>
-          <p style="margin: 8px 0;">Every sound, as on the DFPlayer's SD card. One plays at a time, like the real module.</p>
+          <p style="margin: 8px 0;">Every sound, as on the DFPlayer's SD card. One plays at a time, like the real module. Recordings are credited in <code>docs/sound-credits.md</code>.</p>
           <div class="buttons" id="sound-test"></div>
         </details>
+      </section>
+
+      <section>
+        <h2>Bells (optional)</h2>
+        <p>Real bells aren't fitted yet. Tick "Real bells fitted" below to hear how they'd ring: one stroke per point, like the original score motor.</p>
+        <div class="bells">
+          <span class="bell" data-coil="15">1s</span>
+          <span class="bell" data-coil="16">10s</span>
+          <span class="bell" data-coil="17">100s</span>
+        </div>
       </section>
 
       <section>
@@ -160,6 +179,9 @@
           </label>
           <label>Replay mode (off = novelty)
             <input type="checkbox" id="replay-mode" checked>
+          </label>
+          <label>Real bells fitted (optional, coils 15–17)
+            <input type="checkbox" id="bells-fitted">
           </label>
           <button id="apply-settings">Apply and power cycle</button>
         </div>

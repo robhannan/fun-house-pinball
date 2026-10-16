@@ -367,6 +367,8 @@ a long time**, so:
 | Right flipper power | 10 | 2 | Q2 (2) |
 | Right flipper hold | 11 | 2 | Q3 (3) |
 | Trapdoor flaps 1–3 (left to right) | 12–14 | 2 | Q4–Q6 (4–6) |
+| *Optional:* bell for the 1s | 15 | 2 | Q7 (7) |
+| *Optional:* bells for the 10s, 100s | 16–17 | 3 | Q0–Q1 (15, 1) |
 
 ### 7c. Lamp drivers
 
@@ -449,12 +451,31 @@ Everything else stays unconnected.
    `/01/001.wav`.
 4. Put the card in the DFPlayer.
 
-Sounds are synthesised in `sim/web/sounds.js`, the same file the simulator
-plays, so what you hear in the simulator is what the machine plays. After
-changing a sound, re-render and re-copy the card.
+The sounds are cut from free recordings (listed in `docs/sound-credits.md`),
+with synthesised versions in `sim/web/sounds.js` as a fallback. The simulator
+plays the same files, so what you hear there is what the machine plays. After
+changing a sound, run `pnpm run render:sounds` again and re-copy the card.
 
 The firmware waits 2 seconds after power-on for the module to start, then sets
 the volume (`DFPLAYER_VOLUME` in `crates/pinball-core/src/sound.rs`, 0–30).
+
+### 7e. Optional: real bells
+
+1950s machines rang real bells as the score went up, one stroke per point,
+driven by the score motor. None are fitted yet, but the controller is ready
+for three: one each for the 1s, 10s and 100s.
+
+- **Wiring:** each bell's coil is wired like any other coil (section 7b), on
+  coil outputs 15–17 (see the coil table above), with its own flyback diode.
+- **Turning them on:** set `bells: true` in the operator settings
+  (`Settings` in `crates/pinball-core/src/game.rs`). The bells then ring one
+  stroke per point, at a steady score-motor rhythm (`RING_INTERVAL_MS` in
+  `crates/pinball-core/src/bells.rs`). The DFPlayer stops playing its recorded
+  chimes, so the real bells aren't doubled up.
+- **Coil limits:** a cautious 15 ms pulse, with at least 50 ms between strokes.
+  Check them against the real coils' ratings before use.
+- **Try it first:** the simulator's "Real bells fitted" setting plays recordings
+  of real bells, so you can hear how it would sound.
 
 ---
 

@@ -211,6 +211,7 @@ of the old parts.
 | Ball serve coil and mechanism | 1 | Only if replacing the manual ball lift | 25–60 |
 | Dual-wound flipper coils | 2 | DC, at your coil voltage; ask for the lug layout | 22–30 |
 | Trapdoor flap coils | 3 | **Continuous-duty**, DC, at your coil voltage | 30–60 |
+| *Optional:* bells with coils | 0–3 | Not needed now. For the authentic 1950s scoring sound later (wiring guide section 7e). | varies |
 | Flipper rebuild kits, rubber rings, pop bumper caps | As needed | | 40–100 |
 
 **Section estimate: £187–355**

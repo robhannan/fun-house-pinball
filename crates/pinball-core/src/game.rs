@@ -8,6 +8,7 @@
 //! "Novelty or Replay", and a "Multi-Tilt feature [that] permits player to
 //! continue playing in turn if one player tilts game".
 
+use crate::bells::BellRinger;
 use crate::coils::{CoilId, Coils};
 use crate::lamps::{LampMode, Lamps};
 use crate::playfield::{COIL_KINDS, coil, lamp, sw};
@@ -40,6 +41,9 @@ pub struct Settings {
     pub balls_per_game: u8,
     /// Replay mode awards replays; novelty mode only scores points.
     pub replays: bool,
+    /// Real bells are fitted on coils 15–17 (see [`crate::bells`]). Scoring then
+    /// rings them, and the DFPlayer skips its recorded chimes.
+    pub bells: bool,
 }
 
 impl Settings {
@@ -47,6 +51,7 @@ impl Settings {
     pub const DEFAULT: Self = Self {
         balls_per_game: 5,
         replays: true,
+        bells: false,
     };
 }
 
@@ -102,6 +107,7 @@ pub struct Machine {
     tilt_warnings: u8,
     serve_at: Option<Instant>,
     sound: SoundScheduler,
+    bells: BellRinger,
 }
 
 impl Default for Machine {
@@ -141,6 +147,7 @@ impl Machine {
             tilt_warnings: 0,
             serve_at: None,
             sound: SoundScheduler::new(),
+            bells: BellRinger::new(),
         };
         machine.enter(Phase::Attract);
         machine
@@ -231,6 +238,7 @@ impl Machine {
             self.coils.pulse(coil::BALL_SERVE, u16::MAX, now);
             self.sound.request(Sound::BallServe);
         }
+        self.bells.tick(now, &mut self.coils);
         Outputs {
             coils: self.coils.outputs(now),
             lamps: self.lamps.frame(now),
@@ -307,7 +315,7 @@ impl Machine {
                     self.sound.request(Sound::PopBumper);
                     self.add_score(1);
                 } else if sw::SIDE_LANES.contains(&id) || sw::TOP_LANES.contains(&id) {
-                    self.sound.request(Sound::Lane);
+                    self.chime(Sound::Lane);
                     self.add_score(10);
                     self.advance_bonus();
                 } else if let Some(n) = sw::THIRTY_POINT_ROLLOVERS.iter().position(|&r| r == id) {
@@ -345,9 +353,19 @@ impl Machine {
         }
     }
 
+    /// A chime sound, unless real bells are fitted: they ring instead.
+    fn chime(&mut self, sound: Sound) {
+        if !self.settings.bells {
+            self.sound.request(sound);
+        }
+    }
+
     /// Adds to the current player's score, awarding replays at the card's
-    /// thresholds.
+    /// thresholds, and ringing the bells if they're fitted.
     fn add_score(&mut self, points: u32) {
+        if self.settings.bells {
+            self.bells.score(points);
+        }
         let player = usize::from(self.player);
         let before = self.scores[player];
         self.scores[player] += points;
@@ -384,7 +402,7 @@ impl Machine {
                 lamp::BONUS_WHEEL[usize::from(self.bonus_step)],
                 LampMode::On,
             );
-            self.sound.request(Sound::BonusAdvance(self.bonus_step));
+            self.chime(Sound::BonusAdvance(self.bonus_step));
             if self.bonus_step == 9 {
                 self.sound.request(Sound::Special);
             }
@@ -471,6 +489,7 @@ impl Machine {
         self.phase = phase;
         match phase {
             Phase::Attract => {
+                self.bells.clear();
                 self.ball = 0;
                 self.player = 0;
                 self.serve_at = None;
@@ -490,6 +509,7 @@ impl Machine {
                 }
             }
             Phase::Tilted => {
+                self.bells.clear();
                 // Cut everything (including held flippers), then re-enable so
                 // the ball can still be served once this one drains.
                 self.coils.set_enabled(false);
@@ -740,6 +760,7 @@ mod tests {
         let settings = Settings {
             balls_per_game: 3,
             replays: true,
+            bells: false,
         };
         let mut sim = Sim::new();
         sim.machine = Machine::with_settings(settings);
@@ -758,6 +779,7 @@ mod tests {
         let settings = |balls_per_game| Settings {
             balls_per_game,
             replays: true,
+            bells: false,
         };
         assert_eq!(
             Machine::with_settings(settings(1))
@@ -791,6 +813,7 @@ mod tests {
         sim.machine = Machine::with_settings(Settings {
             balls_per_game: 5,
             replays: false,
+            bells: false,
         });
         sim.tap(sw::START_BUTTON);
         for _ in 0..40 {
@@ -894,11 +917,48 @@ mod tests {
     }
 
     #[test]
+    fn fitted_bells_ring_for_points_and_replace_the_chimes() {
+        let mut sim = Sim::new();
+        sim.machine = Machine::with_settings(Settings {
+            bells: true,
+            ..Settings::DEFAULT
+        });
+        sim.tap(sw::START_BUTTON);
+        sim.run(Sound::GameStart.duration_ms());
+        let tens = 1 << coil::BELLS[1].index();
+        let sounds = sounds_during(&mut sim, |s| s.tap(sw::SIDE_LANES[0]));
+        assert!(!sounds.contains(&Sound::Lane), "{sounds:?}");
+        assert!(
+            !sounds.iter().any(|s| matches!(s, Sound::BonusAdvance(_))),
+            "{sounds:?}"
+        );
+        // The 10s bell rang once for the 10 points.
+        let mut rang = false;
+        for _ in 0..200 {
+            sim.run(1);
+            rang |= sim.last.coils & tens != 0;
+        }
+        assert!(rang);
+    }
+
+    #[test]
+    fn bells_are_silent_unless_fitted() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        let bells: u32 = coil::BELLS.iter().map(|b| 1 << b.index()).sum();
+        for _ in 0..5 {
+            sim.tap(sw::SIDE_LANES[0]);
+            assert_eq!(sim.last.coils & bells, 0);
+        }
+    }
+
+    #[test]
     fn last_drain_plays_game_over() {
         let mut sim = Sim::new();
         sim.machine = Machine::with_settings(Settings {
             balls_per_game: 3,
             replays: true,
+            bells: false,
         });
         sim.tap(sw::START_BUTTON);
         sim.run(5_000);

@@ -1,0 +1,493 @@
+{
+  "_comment": "Recorded sounds for the simulator and the DFPlayer's SD card. Every source is CC0 (public domain) from Freesound. Run `pnpm run import:samples` to rebuild sim/web/samples/ and docs/sound-credits.md from this file. Times are in seconds into each recording; `semitones` shifts pitch (and speed), `speed` speeds up without changing pitch; `drive` is how hard the sound is mastered (more = louder and punchier; default 2.5).",
+  "sources": {
+    "450270": {
+      "title": "pinball-flipper hits.wav",
+      "author": "schafferdavid",
+      "page": "https://freesound.org/people/schafferdavid/sounds/450270/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/450/450270_98337-hq.mp3"
+    },
+    "384701": {
+      "title": "Relay and loud click",
+      "author": "bassmosphere",
+      "page": "https://freesound.org/people/bassmosphere/sounds/384701/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/384/384701_1067129-hq.mp3"
+    },
+    "172266": {
+      "title": "nipit_play_bells.wav",
+      "author": "relwin",
+      "page": "https://freesound.org/people/relwin/sounds/172266/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/172/172266_1024769-hq.mp3"
+    },
+    "424927": {
+      "title": "Drum Roll, Please!",
+      "author": "HoBoTrails",
+      "page": "https://freesound.org/people/HoBoTrails/sounds/424927/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/424/424927_6842851-hq.mp3"
+    },
+    "807997": {
+      "title": "crash Zildjian 16 inches bassized very long 2",
+      "author": "Logicogonist",
+      "page": "https://freesound.org/people/Logicogonist/sounds/807997/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/807/807997_3797507-hq.mp3"
+    },
+    "449069": {
+      "title": "Fanfare.wav",
+      "author": "ricniclas",
+      "page": "https://freesound.org/people/ricniclas/sounds/449069/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/449/449069_9215381-hq.mp3"
+    },
+    "173941": {
+      "title": "wood hammer, gavel, knock, pound, jury, court.mp3",
+      "author": "JohnsonBrandEditing",
+      "page": "https://freesound.org/people/JohnsonBrandEditing/sounds/173941/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/173/173941_3229685-hq.mp3"
+    },
+    "410725": {
+      "title": "loud-buzzer.ogg",
+      "author": "talljosh",
+      "page": "https://freesound.org/people/talljosh/sounds/410725/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/410/410725_7984224-hq.mp3"
+    },
+    "141623": {
+      "title": "Calliope.wav",
+      "author": "moebiusbean",
+      "page": "https://freesound.org/people/moebiusbean/sounds/141623/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/141/141623_1085560-hq.mp3"
+    },
+    "468441": {
+      "title": "Honk! (Vintage Bicycle Horn)",
+      "author": "Breviceps",
+      "page": "https://freesound.org/people/Breviceps/sounds/468441/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/468/468441_9159316-hq.mp3"
+    },
+    "622150": {
+      "title": "Popping Cork",
+      "author": "milcahrawr",
+      "page": "https://freesound.org/people/milcahrawr/sounds/622150/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/622/622150_11995365-hq.mp3"
+    },
+    "403002": {
+      "title": "classic dizzy take slide whistle.wav",
+      "author": "martian",
+      "page": "https://freesound.org/people/martian/sounds/403002/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/403/403002_84709-hq.mp3"
+    },
+    "517632": {
+      "title": "SLIDE WHISTLE - 2",
+      "author": "SamuelGremaud",
+      "page": "https://freesound.org/people/SamuelGremaud/sounds/517632/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/517/517632_8031303-hq.mp3"
+    },
+    "384702": {
+      "title": "Instant Drain",
+      "author": "bassmosphere",
+      "page": "https://freesound.org/people/bassmosphere/sounds/384702/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/384/384702_1067129-hq.mp3"
+    },
+    "510496": {
+      "title": "SpringBoing.wav",
+      "author": "Slanted",
+      "page": "https://freesound.org/people/Slanted/sounds/510496/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/510/510496_10007932-hq.mp3"
+    },
+    "175409": {
+      "title": "wah wah sad trombone.wav",
+      "author": "kirbydx",
+      "page": "https://freesound.org/people/kirbydx/sounds/175409/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/175/175409_1326576-hq.mp3"
+    },
+    "438241": {
+      "title": "G20-26-Pinball Bell.wav",
+      "author": "craigsmith",
+      "page": "https://freesound.org/people/craigsmith/sounds/438241/",
+      "licence": "CC0 1.0",
+      "preview": "https://cdn.freesound.org/previews/438/438241_2524442-hq.mp3"
+    }
+  },
+  "tracks": {
+    "1": {
+      "name": "Pop bumper",
+      "layers": [
+        {
+          "freesound": 450270,
+          "start": 3.18,
+          "length": 0.24
+        }
+      ],
+      "drive": 4
+    },
+    "2": {
+      "name": "Kicker",
+      "layers": [
+        {
+          "freesound": 450270,
+          "start": 2.48,
+          "length": 0.28
+        },
+        {
+          "freesound": 384701,
+          "start": 0.03,
+          "length": 0.2,
+          "gain": 0.6
+        }
+      ],
+      "drive": 4
+    },
+    "3": {
+      "name": "Lane chime",
+      "layers": [
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.8
+        }
+      ],
+      "fadeOut": 0.3,
+      "drive": 2.2
+    },
+    "4": {
+      "name": "30 points",
+      "layers": [
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.4,
+          "at": 0
+        },
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.4,
+          "at": 0.13
+        },
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.8,
+          "at": 0.26
+        }
+      ],
+      "fadeOut": 0.3,
+      "drive": 2.2
+    },
+    "5": {
+      "name": "Bonus collect",
+      "layers": [
+        {
+          "freesound": 424927,
+          "start": 3.6,
+          "length": 2.4
+        },
+        {
+          "freesound": 807997,
+          "start": 0,
+          "length": 1.0,
+          "at": 1.38,
+          "gain": 0.6
+        }
+      ],
+      "fadeOut": 0.4,
+      "drive": 4
+    },
+    "6": {
+      "name": "Special lit",
+      "layers": [
+        {
+          "freesound": 449069,
+          "start": 0,
+          "length": 2.0
+        }
+      ],
+      "fadeOut": 0.2,
+      "drive": 2.5
+    },
+    "7": {
+      "name": "Replay (knocker)",
+      "layers": [
+        {
+          "freesound": 173941,
+          "start": 0.18,
+          "length": 0.4
+        }
+      ],
+      "fadeOut": 0.1,
+      "drive": 5
+    },
+    "8": {
+      "name": "Tilt",
+      "layers": [
+        {
+          "freesound": 410725,
+          "start": 0.02,
+          "length": 1.2
+        }
+      ],
+      "fadeOut": 0.1,
+      "drive": 1.5
+    },
+    "9": {
+      "name": "Game start",
+      "layers": [
+        {
+          "freesound": 141623,
+          "start": 53.0,
+          "length": 3.6
+        }
+      ],
+      "fadeIn": 0.03,
+      "fadeOut": 0.4,
+      "drive": 2.2
+    },
+    "10": {
+      "name": "Player added",
+      "layers": [
+        {
+          "freesound": 468441,
+          "start": 0.03,
+          "length": 1.0
+        }
+      ],
+      "fadeOut": 0.05,
+      "drive": 3
+    },
+    "11": {
+      "name": "Ball serve",
+      "layers": [
+        {
+          "freesound": 622150,
+          "start": 0.1,
+          "length": 0.15
+        },
+        {
+          "freesound": 403002,
+          "start": 0.05,
+          "length": 0.68,
+          "at": 0.08
+        }
+      ],
+      "fadeOut": 0.08,
+      "drive": 3
+    },
+    "12": {
+      "name": "Drain",
+      "layers": [
+        {
+          "freesound": 517632,
+          "start": 7.95,
+          "length": 4.0,
+          "speed": 4
+        },
+        {
+          "freesound": 384702,
+          "start": 0.1,
+          "length": 0.45,
+          "at": 0.98
+        }
+      ],
+      "fadeOut": 0.1,
+      "drive": 3
+    },
+    "13": {
+      "name": "Trapdoor",
+      "layers": [
+        {
+          "freesound": 384702,
+          "start": 0.1,
+          "length": 0.4
+        },
+        {
+          "freesound": 510496,
+          "start": 0,
+          "length": 0.95,
+          "at": 0.05
+        }
+      ],
+      "fadeOut": 0.15,
+      "drive": 4.5
+    },
+    "14": {
+      "name": "Game over",
+      "layers": [
+        {
+          "freesound": 175409,
+          "start": 0.3,
+          "length": 4.3
+        }
+      ],
+      "fadeOut": 0.3,
+      "drive": 2.5
+    },
+    "21": {
+      "name": "Bonus advance 20",
+      "layers": [
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.45,
+          "semitones": -2
+        }
+      ],
+      "fadeOut": 0.2,
+      "drive": 2.2
+    },
+    "22": {
+      "name": "Bonus advance 30",
+      "layers": [
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.45,
+          "semitones": 0
+        }
+      ],
+      "fadeOut": 0.2,
+      "drive": 2.2
+    },
+    "23": {
+      "name": "Bonus advance 40",
+      "layers": [
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.45,
+          "semitones": 1
+        }
+      ],
+      "fadeOut": 0.2,
+      "drive": 2.2
+    },
+    "24": {
+      "name": "Bonus advance 50",
+      "layers": [
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.45,
+          "semitones": 3
+        }
+      ],
+      "fadeOut": 0.2,
+      "drive": 2.2
+    },
+    "25": {
+      "name": "Bonus advance 60",
+      "layers": [
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.45,
+          "semitones": 5
+        }
+      ],
+      "fadeOut": 0.2,
+      "drive": 2.2
+    },
+    "26": {
+      "name": "Bonus advance 70",
+      "layers": [
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.45,
+          "semitones": 7
+        }
+      ],
+      "fadeOut": 0.2,
+      "drive": 2.2
+    },
+    "27": {
+      "name": "Bonus advance 80",
+      "layers": [
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.45,
+          "semitones": 8
+        }
+      ],
+      "fadeOut": 0.2,
+      "drive": 2.2
+    },
+    "28": {
+      "name": "Bonus advance 90",
+      "layers": [
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.45,
+          "semitones": 10
+        }
+      ],
+      "fadeOut": 0.2,
+      "drive": 2.2
+    },
+    "29": {
+      "name": "Bonus advance 100",
+      "layers": [
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 0.45,
+          "semitones": 12
+        }
+      ],
+      "fadeOut": 0.2,
+      "drive": 2.2
+    }
+  },
+  "extras": {
+    "bell-1": {
+      "name": "Bell: 1s",
+      "layers": [
+        {
+          "freesound": 172266,
+          "start": 3.3,
+          "length": 1.2
+        }
+      ],
+      "fadeOut": 0.4,
+      "drive": 2
+    },
+    "bell-10": {
+      "name": "Bell: 10s",
+      "layers": [
+        {
+          "freesound": 172266,
+          "start": 0.48,
+          "length": 1.2
+        }
+      ],
+      "fadeOut": 0.4,
+      "drive": 2
+    },
+    "bell-100": {
+      "name": "Bell: 100s",
+      "layers": [
+        {
+          "freesound": 438241,
+          "start": 0.1,
+          "length": 1.6
+        }
+      ],
+      "fadeOut": 0.5,
+      "drive": 2
+    }
+  }
+}

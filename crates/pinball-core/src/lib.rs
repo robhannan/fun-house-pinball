@@ -14,6 +14,7 @@
 
 #![cfg_attr(not(test), no_std)]
 
+pub mod bells;
 pub mod coils;
 pub mod game;
 pub mod lamps;

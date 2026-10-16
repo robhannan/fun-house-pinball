@@ -4,10 +4,12 @@
 // buzzer, plus a full calliope band (oom-pah, drums, cymbals), brass fanfares,
 // drum rolls, a clown horn, slide whistles and a sad trombone.
 //
-// Used in two places:
+// Each sound has a recorded version (`sample`, from free CC0 recordings: see
+// docs/sound-credits.md) and this synthesised one as a fallback. Used in two
+// places:
 // - the simulator (sim.js) plays them with the Web Audio API
-// - sim/render-sounds.mjs renders them to WAV files for the DFPlayer Mini's
-//   SD card (`pnpm run render:sounds`)
+// - sim/render-sounds.mjs writes them to the DFPlayer Mini's SD card
+//   (`pnpm run render:sounds`)
 //
 // Keys are track numbers from `Sound::track()` in
 // crates/pinball-core/src/sound.rs, and `durationMs` must match
@@ -450,34 +452,42 @@ function gameOver(sampleRate) {
 
 // ---------------------------------------------------------------------------
 
-/** Every sound, by track number. `durationMs` matches `Sound::duration_ms()`. */
+/**
+ * Every sound, by track number. `durationMs` matches `Sound::duration_ms()`.
+ * `sample` is the recorded version (built by `pnpm run import:samples` from
+ * free recordings; see docs/sound-credits.md); `render` is the synthesised one,
+ * kept as a fallback and for comparison.
+ */
 export const SOUNDS = {
-  1: { name: "Pop bumper", durationMs: 150, render: popBumper },
-  2: { name: "Kicker", durationMs: 150, render: kicker },
-  3: { name: "Lane chime", durationMs: 400, render: lane },
-  4: { name: "30 points", durationMs: 600, render: thirtyPoints },
-  5: { name: "Bonus collect", durationMs: 2000, render: bonusCollect },
-  6: { name: "Special lit", durationMs: 1500, render: special },
-  7: { name: "Replay (knocker)", durationMs: 300, render: replay },
-  8: { name: "Tilt", durationMs: 1200, render: tilt },
-  9: { name: "Game start", durationMs: 3400, render: gameStart },
-  10: { name: "Player added", durationMs: 500, render: playerAdded },
-  11: { name: "Ball serve", durationMs: 700, render: ballServe },
-  12: { name: "Drain", durationMs: 1000, render: drain },
-  13: { name: "Trapdoor", durationMs: 800, render: trapdoor },
-  14: { name: "Game over", durationMs: 2600, render: gameOver },
-  21: { name: "Bonus advance 20", durationMs: 300, render: bonusAdvance(1) },
-  22: { name: "Bonus advance 30", durationMs: 300, render: bonusAdvance(2) },
-  23: { name: "Bonus advance 40", durationMs: 300, render: bonusAdvance(3) },
-  24: { name: "Bonus advance 50", durationMs: 300, render: bonusAdvance(4) },
-  25: { name: "Bonus advance 60", durationMs: 300, render: bonusAdvance(5) },
-  26: { name: "Bonus advance 70", durationMs: 300, render: bonusAdvance(6) },
-  27: { name: "Bonus advance 80", durationMs: 300, render: bonusAdvance(7) },
-  28: { name: "Bonus advance 90", durationMs: 300, render: bonusAdvance(8) },
-  29: { name: "Bonus advance 100", durationMs: 300, render: bonusAdvance(9) },
+  1: { name: "Pop bumper", durationMs: 250, sample: "samples/001.wav", render: popBumper },
+  2: { name: "Kicker", durationMs: 300, sample: "samples/002.wav", render: kicker },
+  3: { name: "Lane chime", durationMs: 800, sample: "samples/003.wav", render: lane },
+  4: { name: "30 points", durationMs: 1100, sample: "samples/004.wav", render: thirtyPoints },
+  5: { name: "Bonus collect", durationMs: 2400, sample: "samples/005.wav", render: bonusCollect },
+  6: { name: "Special lit", durationMs: 2000, sample: "samples/006.wav", render: special },
+  7: { name: "Replay (knocker)", durationMs: 400, sample: "samples/007.wav", render: replay },
+  8: { name: "Tilt", durationMs: 1200, sample: "samples/008.wav", render: tilt },
+  9: { name: "Game start", durationMs: 3600, sample: "samples/009.wav", render: gameStart },
+  10: { name: "Player added", durationMs: 1000, sample: "samples/010.wav", render: playerAdded },
+  11: { name: "Ball serve", durationMs: 800, sample: "samples/011.wav", render: ballServe },
+  12: { name: "Drain", durationMs: 1450, sample: "samples/012.wav", render: drain },
+  13: { name: "Trapdoor", durationMs: 1000, sample: "samples/013.wav", render: trapdoor },
+  14: { name: "Game over", durationMs: 4300, sample: "samples/014.wav", render: gameOver },
+  21: { name: "Bonus advance 20", durationMs: 550, sample: "samples/021.wav", render: bonusAdvance(1) },
+  22: { name: "Bonus advance 30", durationMs: 550, sample: "samples/022.wav", render: bonusAdvance(2) },
+  23: { name: "Bonus advance 40", durationMs: 550, sample: "samples/023.wav", render: bonusAdvance(3) },
+  24: { name: "Bonus advance 50", durationMs: 550, sample: "samples/024.wav", render: bonusAdvance(4) },
+  25: { name: "Bonus advance 60", durationMs: 550, sample: "samples/025.wav", render: bonusAdvance(5) },
+  26: { name: "Bonus advance 70", durationMs: 550, sample: "samples/026.wav", render: bonusAdvance(6) },
+  27: { name: "Bonus advance 80", durationMs: 550, sample: "samples/027.wav", render: bonusAdvance(7) },
+  28: { name: "Bonus advance 90", durationMs: 550, sample: "samples/028.wav", render: bonusAdvance(8) },
+  29: { name: "Bonus advance 100", durationMs: 550, sample: "samples/029.wav", render: bonusAdvance(9) },
 };
 
-/** Renders track `track` at `sampleRate`, already mastered. */
+/** Renders track `track`'s synthesised version at `sampleRate`, already mastered. */
 export function render(track, sampleRate) {
   return SOUNDS[track].render(sampleRate);
 }
+
+/** Recorded real bells for the optional bell coils (1s, 10s, 100s). */
+export const BELL_SAMPLES = ["samples/bell-1.wav", "samples/bell-10.wav", "samples/bell-100.wav"];

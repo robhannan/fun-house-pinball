@@ -113,32 +113,33 @@ impl Sound {
             Self::PopBumper | Self::Kicker => 1,
             Self::Lane | Self::BonusAdvance(_) => 2,
             Self::ThirtyPoints => 3,
-            Self::BallServe => 4,
-            Self::GameStart | Self::Drain | Self::Trapdoor => 5,
-            Self::BonusCollect | Self::Special => 6,
+            // The serve ties with the drain so it can cut the drain's tail.
+            Self::BallServe | Self::Drain | Self::Trapdoor => 5,
+            Self::GameStart | Self::BonusCollect | Self::Special => 6,
             Self::PlayerAdded | Self::Replay => 7,
             Self::Tilt => 8,
             Self::GameOver => 9,
         }
     }
 
-    /// How long the sound lasts. `sim/web/sounds.js` must match (a test checks).
+    /// How long the sound lasts: the length of its recording. `sim/web/sounds.js`
+    /// must match (a test checks).
     #[must_use]
     pub const fn duration_ms(self) -> u32 {
         match self {
-            Self::PopBumper | Self::Kicker => 150,
-            Self::Replay | Self::BonusAdvance(_) => 300,
-            Self::Lane => 400,
-            Self::PlayerAdded => 500,
-            Self::ThirtyPoints => 600,
-            Self::BallServe => 700,
-            Self::Trapdoor => 800,
-            Self::Drain => 1_000,
+            Self::PopBumper => 250,
+            Self::Kicker => 300,
+            Self::Replay => 400,
+            Self::BonusAdvance(_) => 550,
+            Self::Lane | Self::BallServe => 800,
+            Self::PlayerAdded | Self::Trapdoor => 1_000,
+            Self::ThirtyPoints => 1_100,
             Self::Tilt => 1_200,
-            Self::Special => 1_500,
-            Self::BonusCollect => 2_000,
-            Self::GameOver => 2_600,
-            Self::GameStart => 3_400,
+            Self::Drain => 1_450,
+            Self::Special => 2_000,
+            Self::BonusCollect => 2_400,
+            Self::GameStart => 3_600,
+            Self::GameOver => 4_300,
         }
     }
 }
