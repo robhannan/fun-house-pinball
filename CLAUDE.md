@@ -25,9 +25,9 @@ Mega 2560. See `README.md` for setup and `docs/hardware.md` for wiring.
   to the `sw`/`coil`/`lamp` modules. Tests check it against `COIL_KINDS`, and
   other checks build on it.
 - **Scripts are written in zx, not bash,** wherever possible: `.mjs` files that
-  `import { $ } from "zx"`, with zx pinned in `package.json`. Run them with
-  `npm ci`, then `npm run <script>`. Keep workflow `run:` steps to a single
-  `npm run` call. Shell one-liners in docs and skills are fine.
+  `import { $ } from "zx"`, with zx pinned in `package.json`. Use **pnpm**,
+  not npm: `pnpm install`, then `pnpm run <script>`. Keep workflow `run:`
+  steps to a single `pnpm run` call. Shell one-liners in docs and skills are fine.
 - **Turn failures into checks:** when a review, CI or the real machine finds a
   failure in the code or build, add a test or CI check that would catch it next
   time, wherever that's possible. Process rules, such as the PR description and
