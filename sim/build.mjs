@@ -11,6 +11,7 @@ await $`cargo build --release --locked -p pinball-sim --target wasm32-unknown-un
 await fs.ensureDir(out);
 await fs.copy(path.join(root, "target/wasm32-unknown-unknown/release/pinball_sim.wasm"), path.join(out, "pinball_sim.wasm"));
 await fs.copy(path.join(root, "docs/playfield.svg"), path.join(out, "playfield.svg"));
+await fs.copy(path.join(root, "docs/backboard.svg"), path.join(out, "backboard.svg"));
 
 console.log("Built. Run: python3 -m http.server -d sim/web 8000");
 console.log("Then open http://localhost:8000");

@@ -1,12 +1,15 @@
 // Browser front end for crates/pinball-sim. Loads the WebAssembly build and the
-// playfield SVG (both copied into generated/ by `pnpm run build:sim`), then:
+// playfield and backboard SVGs (all copied into generated/ by
+// `pnpm run build:sim`), then:
 //
 // - turns clicks and key presses into switch closures
 // - runs the simulated machine in step with real time
 // - lights lamps, flashes coils and raises flippers from the machine's outputs
+// - turns the backboard's score reels and credit window
 //
-// Parts are found by their data-switch / data-coil / data-lamp attributes. The
-// Rust tests check those attributes against playfield.rs.
+// Parts are found by their data-switch / data-coil / data-lamp attributes, and
+// reels by data-score / data-digit. The Rust tests check them against
+// playfield.rs.
 
 const PHASES = ["Attract", "Playing", "Tilted"];
 const COIL_GLOW_MS = 150; // keep short coil pulses visible
@@ -21,12 +24,14 @@ function switchIndex(label) {
 }
 
 async function load() {
-  const [wasmBytes, svgText] = await Promise.all([
+  const [wasmBytes, playfield, backboard] = await Promise.all([
     fetch("generated/pinball_sim.wasm").then((r) => r.arrayBuffer()),
     fetch("generated/playfield.svg").then((r) => r.text()),
+    fetch("generated/backboard.svg").then((r) => r.text()),
   ]);
   const { instance } = await WebAssembly.instantiate(wasmBytes, {});
-  document.getElementById("playfield").innerHTML = svgText;
+  document.getElementById("playfield").innerHTML = playfield;
+  document.getElementById("backboard").innerHTML = backboard;
   return instance.exports;
 }
 
@@ -68,7 +73,23 @@ function start(sim) {
       button.addEventListener("click", () => tap(label));
     }
   }
-  document.getElementById("reset").addEventListener("click", () => sim.sim_reset());
+  // Operator settings take effect on a power cycle, as on the real machine.
+  const powerCycle = () => {
+    const balls = Number(document.getElementById("balls").value);
+    const replays = document.getElementById("replay-mode").checked ? 1 : 0;
+    sim.sim_reset_with(balls, replays);
+  };
+  document.getElementById("reset").addEventListener("click", powerCycle);
+  document.getElementById("apply-settings").addEventListener("click", powerCycle);
+
+  // Backboard: three reels per player (hundreds, tens, units), which wrap at
+  // 1000 like the real ones, and the two-digit credit window.
+  const reels = [...document.querySelectorAll("#backboard [data-score]")].map((el) => ({
+    el,
+    player: Number(el.dataset.score),
+    place: 10 ** (2 - Number(el.dataset.digit)),
+  }));
+  const credits = document.querySelector("#backboard [data-credits]");
 
   // Trapdoor flaps: toggle by hand until the rule that opens them is known.
   for (const button of document.querySelectorAll("button[data-trapdoor-toggle]")) {
@@ -148,8 +169,17 @@ function start(sim) {
     for (const { el, mask } of flippers) el.classList.toggle("up", (coilBits & mask) !== 0);
 
     const ball = sim.sim_ball();
-    text("score", String(sim.sim_score()));
-    text("ball", ball === 0 ? "–" : String(ball));
+    for (const { el, player, place } of reels) {
+      const digit = String(Math.floor(sim.sim_score_of(player) / place) % 10);
+      if (el.textContent !== digit) el.textContent = digit;
+    }
+    const creditText = String(sim.sim_credits()).padStart(2, "0");
+    if (credits.textContent !== creditText) credits.textContent = creditText;
+
+    const player = sim.sim_current_player();
+    text("player", player === 0 ? "–" : String(player));
+    text("players", String(sim.sim_players()));
+    text("ball", ball === 0 ? "–" : `${ball} of ${sim.sim_balls_per_game()}`);
     text("replays", String(sim.sim_replays()));
     text("bonus", String(sim.sim_bonus()));
     text("phase", PHASES[sim.sim_phase()] ?? "?");
