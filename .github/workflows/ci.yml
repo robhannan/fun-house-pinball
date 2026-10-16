@@ -24,6 +24,14 @@ jobs:
       # rustup reads rust-toolchain.toml and installs the right toolchain.
       - run: rustup show active-toolchain || rustup toolchain install
       - uses: Swatinem/rust-cache@v2
+      - name: No build output or OS files committed
+        run: |
+          stray=$(git ls-files | grep -E '(^|/)\.DS_Store$|^target/|/target/|^sim/web/generated/' || true)
+          if [[ -n "$stray" ]]; then
+            echo "::error::These files shouldn't be committed:"
+            echo "$stray"
+            exit 1
+          fi
       - run: cargo fmt --all --check
       - run: cargo clippy --all-targets --locked -- -D warnings
       - run: cargo test --locked

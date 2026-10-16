@@ -1,0 +1,30 @@
+name: Branch checks
+
+# Catches pushes to a branch whose pull request has already been merged: the
+# new commits would never reach main. Start a new branch from origin/main
+# instead (CLAUDE.md, pull request rules).
+on:
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  not-merged:
+    name: Branch's PR not already merged
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for a merged PR on this branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          merged=$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state merged --json number -q '.[].number')
+          open=$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number -q '.[].number')
+          if [[ -n "$merged" && -z "$open" ]]; then
+            echo "::error::PR #$merged from '$BRANCH' is already merged, so these commits won't reach main. Start a new branch from origin/main and open a new PR."
+            exit 1
+          fi
+          echo "OK: no merged PR for '$BRANCH' without an open one."

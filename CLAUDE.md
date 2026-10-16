@@ -20,6 +20,13 @@ Mega 2560. See `README.md` for setup and `docs/hardware.md` for wiring.
   switch, coil and lamp assignments. Update `docs/hardware.md`,
   `docs/wiring-guide.md`, `docs/playfield.svg` and the pins in
   `firmware/src/main.rs` alongside it.
+- **Parts list:** add every new part to `PARTS` in `playfield.rs`, as well as
+  to the `sw`/`coil`/`lamp` modules. Tests check it against `COIL_KINDS`, and
+  other checks build on it.
+- **Turn failures into checks:** when a review, CI or the real machine finds a
+  failure, add a test or CI check that would catch it next time, wherever
+  that's possible. Existing checks: `.github/workflows/` and
+  `.github/scripts/`.
 - **Don't present guesses as facts:** feature counts and rules not confirmed on
   the real table or schematic are marked *verify* or "assumed". Keep them marked.
 
@@ -32,6 +39,8 @@ steps. The essentials:
    and look up the branch's PR state. If the PR is merged or closed, never push
    to it or edit its description. Start a new branch from `origin/main`.
 2. **One concern per branch**, each cut from `origin/main`. Don't commit to `main`.
+   Stage files by name (not `git add -A`) and check `git status --short` before
+   each commit.
 3. **Run CI's checks first:** `cargo fmt --all --check`,
    `cargo clippy --all-targets --locked -- -D warnings` and `cargo test --locked`,
    plus `cargo fmt --check` and `cargo clippy --locked -- -D warnings` in
