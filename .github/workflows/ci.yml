@@ -24,13 +24,14 @@ jobs:
       # rustup reads rust-toolchain.toml and installs the right toolchain.
       - run: rustup show active-toolchain || rustup toolchain install
       - uses: Swatinem/rust-cache@v2
-      - uses: actions/setup-node@v7
+      # Installs pnpm (version from package.json), Node.js (from .nvmrc) and
+      # the locked dependencies.
+      - uses: pnpm/setup@v3
         with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
+          cache: true
+          require-lockfile: true
       - name: No build output or OS files committed
-        run: npm run check:stray-files
+        run: pnpm run check:stray-files
       - run: cargo fmt --all --check
       - run: cargo clippy --all-targets --locked -- -D warnings
       - run: cargo test --locked

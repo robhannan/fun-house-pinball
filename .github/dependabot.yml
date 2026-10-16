@@ -7,6 +7,7 @@ updates:
     groups:
       cargo:
         patterns: ["*"]
+  # The npm ecosystem also covers pnpm (pnpm-lock.yaml).
   - package-ecosystem: npm
     directory: /
     schedule:

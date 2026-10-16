@@ -3,6 +3,7 @@
   "private": true,
   "description": "Tooling scripts for CI, written with zx",
   "type": "module",
+  "packageManager": "pnpm@12.11.2",
   "engines": {
     "node": ">=24"
   },
