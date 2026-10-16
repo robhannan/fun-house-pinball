@@ -23,6 +23,10 @@ Mega 2560. See `README.md` for setup and `docs/hardware.md` for wiring.
 - **Parts list:** add every new part to `PARTS` in `playfield.rs`, as well as
   to the `sw`/`coil`/`lamp` modules. Tests check it against `COIL_KINDS`, and
   other checks build on it.
+- **Scripts are written in zx, not bash,** wherever possible: `.mjs` files that
+  `import { $ } from "zx"`, with zx pinned in `package.json`. Run them with
+  `npm ci`, then `npm run <script>`. Keep workflow `run:` steps to a single
+  `npm run` call. Shell one-liners in docs and skills are fine.
 - **Turn failures into checks:** when a review, CI or the real machine finds a
   failure, add a test or CI check that would catch it next time, wherever
   that's possible. Existing checks: `.github/workflows/` and

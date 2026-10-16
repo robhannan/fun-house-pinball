@@ -16,15 +16,14 @@ jobs:
     name: Branch's PR not already merged
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
       - name: Check for a merged PR on this branch
         env:
           GH_TOKEN: ${{ github.token }}
           BRANCH: ${{ github.ref_name }}
-        run: |
-          merged=$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state merged --json number -q '.[].number')
-          open=$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number -q '.[].number')
-          if [[ -n "$merged" && -z "$open" ]]; then
-            echo "::error::PR #$merged from '$BRANCH' is already merged, so these commits won't reach main. Start a new branch from origin/main and open a new PR."
-            exit 1
-          fi
-          echo "OK: no merged PR for '$BRANCH' without an open one."
+        run: npm run check:merged-branch

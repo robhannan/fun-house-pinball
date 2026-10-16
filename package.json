@@ -1,0 +1,17 @@
+{
+  "name": "fun-house-pinball-scripts",
+  "private": true,
+  "description": "Tooling scripts for CI, written with zx",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "check:pr-description": "node .github/scripts/check-pr-description.mjs",
+    "check:merged-branch": "node .github/scripts/check-merged-branch.mjs",
+    "check:stray-files": "node .github/scripts/check-stray-files.mjs"
+  },
+  "devDependencies": {
+    "zx": "8.8.5"
+  }
+}
