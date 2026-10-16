@@ -17,6 +17,7 @@ driven by an Arduino Mega 2560 instead of relays and stepper units.
 └── docs
     ├── hardware.md       # design at a glance: pin map, driver boards
     ├── wiring-guide.md   # step-by-step wiring for beginners
+    ├── shopping-list.md  # parts, quantities and where to buy
     └── playfield.svg     # playfield map with switch/coil/lamp numbers
 ```
 

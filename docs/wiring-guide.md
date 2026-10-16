@@ -72,51 +72,15 @@ You only need a handful of ideas.
 
 ## 3. Shopping list
 
-Quantities cover this design with some spares. Generic parts are fine unless a
-part number is given.
+The full list, with quantities and links, is in
+[shopping-list.md](shopping-list.md). Three rules matter most:
 
-**Controller**
-- Arduino Mega 2560 (an official board or a good clone) and a USB cable
-- Screw-terminal shield for the Mega (avoids soldering to the board itself)
-
-**Switch matrix**
-- 1N4148 signal diodes, ×100 (one per playfield switch)
-- 22 AWG stranded hook-up wire in several colours
-- Pinball replacement leaf/rollover switches as needed
-
-**Output chain**
-- 74HC595 shift registers, ×12 (plus spares), each with a 16-pin DIP socket
-- 100 nF ceramic capacitors, ×12 (one per chip)
-- 10 kΩ resistors, ×10 (output-enable pull-up, and spares)
-- Stripboard or a custom PCB to mount the chips on
-
-**Coil drivers** (×12 to start, ×32 for every output)
-- A logic-level N-channel MOSFET rated for **at least twice your coil voltage**,
-  for example IRL540N (100 V). It *must* be "logic level", meaning fully on at
-  5 V on the gate.
-- 220 Ω resistor (gate) and 10 kΩ resistor (gate pull-down)
-- 1N4004 diode (flyback), one per coil winding
-- Alternatively, ready-made multi-channel MOSFET driver boards that accept
-  5 V logic inputs. These are easier for a beginner.
-
-**Lamp drivers**
-- ULN2803A driver chips, ×8 (each drives 8 lamps), each with an 18-pin socket
-- LED replacement bulbs to suit the sockets
-
-**Power**
-- A coil power supply. Choose its voltage **together with your replacement
-  coils**: the original 1956 coils were wound for AC and shouldn't be reused on DC.
-  Tell the coil supplier your supply voltage when ordering.
-- A lamp supply matched to your LED bulbs (often 6.3 V; see section 7)
-- A 9 V DC adaptor for the Arduino (or USB while developing)
-- Fuse holders and fuses for each rail (sizes in section 4)
-- 18 AWG wire for coil power, plus spade/ring crimp terminals and a crimp tool
-
-**Tools**
-- Multimeter, temperature-controlled soldering iron, solder, wire strippers,
-  flush cutters, heat-shrink tubing
-- A breadboard and jumper wires for bench testing
-- A few 5 mm LEDs with 1 kΩ resistors, for testing outputs before coils go in
+- **MOSFETs must be "logic level"** (fully on with 5 V on the gate) and rated for
+  at least twice your coil voltage, e.g. the IRL540N.
+- **Choose the coil supply voltage together with your replacement coils.** The
+  original 1956 coils were wound for AC and shouldn't be reused on DC.
+- **Buy power supplies, MOSFETs and fuses from a reputable distributor**, not a
+  marketplace: fakes are common, and these are the safety-critical parts.
 
 ---
 
