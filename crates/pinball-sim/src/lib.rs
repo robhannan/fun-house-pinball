@@ -235,8 +235,8 @@ mod exports {
 mod tests {
     use std::collections::BTreeSet;
 
-    use pinball_core::playfield::{coil, lamp, sw};
-    use pinball_core::{CoilId, LampId};
+    use pinball_core::LampId;
+    use pinball_core::playfield::{PARTS, Part, coil, sw};
 
     use super::*;
 
@@ -306,25 +306,44 @@ mod tests {
     }
 
     // The simulator page finds parts by the `data-switch`, `data-coil` and
-    // `data-lamp` attributes in `docs/playfield.svg` and `sim/web/index.html`.
-    // These tests keep them in step with `playfield.rs`: they fail if a part is
-    // missing from the page, or if the page refers to one that doesn't exist.
-    // Add new parts to the lists below as well as to the SVG.
+    // `data-lamp` attributes in `docs/playfield.svg` and `sim/web/index.html`
+    // (keyboard shortcuts live on the index.html buttons). These tests check
+    // the page against `PARTS` in `playfield.rs`, so adding a part there without
+    // drawing it, or drawing one with the wrong numbers, fails CI.
 
     const SVG: &str = include_str!("../../../docs/playfield.svg");
     const HTML: &str = include_str!("../../../sim/web/index.html");
-    // The tests below compare the page against lists of `playfield.rs`
-    // constants written out by hand, so a new constant must be added to them.
-    // Keyboard shortcuts live on the `index.html` buttons (`data-key`), so
-    // they're covered too.
 
-    fn attribute_values(attribute: &str) -> BTreeSet<String> {
-        let needle = format!("{attribute}=\"");
+    /// The I/O one page element refers to.
+    #[derive(Debug, Default)]
+    struct Element {
+        switch: Option<String>,
+        coils: Option<BTreeSet<usize>>,
+        lamp: Option<usize>,
+    }
+
+    /// Every element on the page with at least one of the attributes.
+    fn page_elements() -> Vec<Element> {
+        fn attribute<'a>(tag: &'a str, name: &str) -> Option<&'a str> {
+            let start = tag.find(&format!(" {name}=\""))? + name.len() + 3;
+            tag[start..].split('"').next()
+        }
         [SVG, HTML]
             .iter()
-            .flat_map(|doc| doc.split(needle.as_str()).skip(1))
-            .flat_map(|rest| rest.split('"').next().unwrap_or("").split_whitespace())
-            .map(str::to_owned)
+            .flat_map(|doc| doc.split('<').skip(1))
+            .map(|tag| tag.split('>').next().unwrap_or(""))
+            .map(|tag| Element {
+                switch: attribute(tag, "data-switch").map(str::to_owned),
+                coils: attribute(tag, "data-coil").map(|coils| {
+                    coils
+                        .split_whitespace()
+                        .map(|c| c.parse().expect("data-coil is a number"))
+                        .collect()
+                }),
+                lamp: attribute(tag, "data-lamp")
+                    .map(|l| l.parse().expect("data-lamp is a number")),
+            })
+            .filter(|e| e.switch.is_some() || e.coils.is_some() || e.lamp.is_some())
             .collect()
     }
 
@@ -337,65 +356,71 @@ mod tests {
         }
     }
 
-    #[test]
-    fn page_switches_match_the_playfield() {
-        let mut expected = vec![
-            sw::LEFT_FLIPPER_BUTTON,
-            sw::RIGHT_FLIPPER_BUTTON,
-            sw::START_BUTTON,
-            sw::TILT,
-            sw::SLAM_TILT,
-            sw::OUTHOLE,
-            sw::SHOOTER_LANE,
-            sw::LEFT_KICKER,
-            sw::RIGHT_KICKER,
-            sw::TOP_CENTRE_BUMPER,
-            sw::BONUS_GATE,
-        ];
-        expected.extend(sw::POP_BUMPERS);
-        expected.extend(sw::TOP_LANES);
-        expected.extend(sw::SIDE_LANES);
-        expected.extend(sw::THIRTY_POINT_ROLLOVERS);
-        expected.extend(sw::TRAPDOORS);
-        let expected: BTreeSet<_> = expected.into_iter().map(switch_label).collect();
-        assert_eq!(attribute_values("data-switch"), expected);
+    fn part_coils(part: &Part) -> BTreeSet<usize> {
+        part.coils.iter().map(|c| c.index()).collect()
+    }
+
+    /// The part an element belongs to: by its switch, else its coils, else its lamp.
+    fn part_for(element: &Element) -> Option<&'static Part> {
+        PARTS.iter().find(|part| {
+            if let Some(switch) = &element.switch {
+                part.switch.map(switch_label).as_ref() == Some(switch)
+            } else if let Some(coils) = &element.coils {
+                &part_coils(part) == coils
+            } else {
+                part.lamp.map(LampId::index) == element.lamp
+            }
+        })
     }
 
     #[test]
-    fn page_coils_match_the_playfield() {
-        let mut expected = vec![
-            coil::BALL_SERVE,
-            coil::LEFT_KICKER,
-            coil::RIGHT_KICKER,
-            coil::LEFT_FLIPPER_POWER,
-            coil::LEFT_FLIPPER_HOLD,
-            coil::RIGHT_FLIPPER_POWER,
-            coil::RIGHT_FLIPPER_HOLD,
-        ];
-        expected.extend(coil::POP_BUMPERS);
-        expected.extend(coil::TRAPDOOR_FLAPS);
-        let expected: BTreeSet<_> = expected
-            .into_iter()
-            .map(|c: CoilId| c.index().to_string())
-            .collect();
-        assert_eq!(attribute_values("data-coil"), expected);
+    fn every_page_element_matches_one_part() {
+        for element in page_elements() {
+            let part = part_for(&element)
+                .unwrap_or_else(|| panic!("{element:?} doesn't match any part in PARTS"));
+            if let Some(coils) = &element.coils {
+                assert_eq!(coils, &part_coils(part), "{}: wrong data-coil", part.name);
+            }
+            if let Some(lamp) = element.lamp {
+                assert_eq!(
+                    Some(lamp),
+                    part.lamp.map(LampId::index),
+                    "{}: wrong data-lamp",
+                    part.name
+                );
+            }
+        }
     }
 
     #[test]
-    fn page_lamps_match_the_playfield() {
-        let mut expected = vec![
-            lamp::GAME_OVER,
-            lamp::TILT,
-            lamp::SPECIAL,
-            lamp::BONUS_WHEEL_CENTRE,
-        ];
-        expected.extend(lamp::BONUS_WHEEL);
-        expected.extend(lamp::THIRTY_POINTS);
-        expected.extend(lamp::POP_BUMPERS);
-        let expected: BTreeSet<_> = expected
-            .into_iter()
-            .map(|l: LampId| l.index().to_string())
-            .collect();
-        assert_eq!(attribute_values("data-lamp"), expected);
+    fn every_part_is_on_the_page() {
+        let elements = page_elements();
+        for part in PARTS {
+            if let Some(switch) = part.switch {
+                let label = switch_label(switch);
+                assert!(
+                    elements.iter().any(|e| e.switch.as_ref() == Some(&label)),
+                    "{}: no element with data-switch=\"{label}\"",
+                    part.name
+                );
+            }
+            if !part.coils.is_empty() {
+                assert!(
+                    elements
+                        .iter()
+                        .any(|e| e.coils.as_ref() == Some(&part_coils(part))),
+                    "{}: no element with its data-coil",
+                    part.name
+                );
+            }
+            if let Some(lamp) = part.lamp {
+                assert!(
+                    elements.iter().any(|e| e.lamp == Some(lamp.index())),
+                    "{}: no element with data-lamp=\"{}\"",
+                    part.name,
+                    lamp.index()
+                );
+            }
+        }
     }
 }

@@ -70,7 +70,7 @@ cargo test --locked
 (cd firmware && cargo fmt --check && cargo clippy --locked -- -D warnings)
 ```
 
-Also run `./sim/build.sh` if it exists. It needs the WebAssembly target
+Also run `npm ci && npm run build:sim` if `sim/` exists. It needs the WebAssembly target
 (`rustup target add wasm32-unknown-unknown`).
 
 The firmware can't link without `avr-gcc`; `cargo clippy` there is enough.
