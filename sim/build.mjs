@@ -1,5 +1,5 @@
 // Builds the browser simulator into sim/web/generated/. Run with:
-//   npm run build:sim
+//   pnpm run build:sim
 import { $, fs, path } from "zx";
 
 const root = path.resolve(import.meta.dirname, "..");

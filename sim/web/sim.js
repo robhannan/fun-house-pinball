@@ -1,5 +1,5 @@
 // Browser front end for crates/pinball-sim. Loads the WebAssembly build and the
-// playfield SVG (both copied into generated/ by `npm run build:sim`), then:
+// playfield SVG (both copied into generated/ by `pnpm run build:sim`), then:
 //
 // - turns clicks and key presses into switch closures
 // - runs the simulated machine in step with real time
@@ -161,5 +161,5 @@ function start(sim) {
 
 load().then(start, (error) => {
   document.getElementById("playfield").textContent =
-    `Couldn't load the simulator (${error.message}). Run npm run build:sim, then serve sim/web/ over HTTP.`;
+    `Couldn't load the simulator (${error.message}). Run pnpm run build:sim, then serve sim/web/ over HTTP.`;
 });

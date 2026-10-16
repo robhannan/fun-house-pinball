@@ -45,8 +45,8 @@ logic compiled to WebAssembly, on the playfield map from `docs/playfield.svg`.
 There's no ball physics: click a part to roll a ball over its switch.
 
 ```sh
-npm ci                 # once, installs zx for the build script
-npm run build:sim
+pnpm install           # once, installs zx for the build script
+pnpm run build:sim
 python3 -m http.server -d sim/web 8000   # then open http://localhost:8000
 ```
 
