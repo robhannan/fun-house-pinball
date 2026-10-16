@@ -126,7 +126,7 @@ flyback diodes or allow them to be fitted. Expect roughly £5–15 per 8-channel
 
 ## 6. Lamp drivers and lamps
 
-30 lamp outputs are used, on chips 5–10: 21 on the playfield and 9 on the backboard.
+30 lamp outputs are used, on chips 5–10: 19 on the playfield and 11 on the backboard.
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|

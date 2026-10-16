@@ -94,6 +94,7 @@ pub struct Machine {
     /// Credits on the backboard's credit window (in the clown's nose).
     credits: u8,
     /// Lit position on the bonus wheel: 0 = 10 points ... 9 = 100 points.
+    /// Assumed (*verify*): shared by all players, and not reset between balls.
     bonus_step: u8,
     tilt_warnings: u8,
     serve_at: Option<Instant>,

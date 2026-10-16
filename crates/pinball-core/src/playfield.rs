@@ -248,6 +248,8 @@ const fn part(
 /// simulator's page and the docs.
 pub const PARTS: &[Part] = &[
     // Backboard
+    part("Game over lamp", None, &[], Some(lamp::GAME_OVER)),
+    part("Tilt lamp", None, &[], Some(lamp::TILT)),
     part("Player 1 up lamp", None, &[], Some(lamp::PLAYER_UP[0])),
     part("Player 2 up lamp", None, &[], Some(lamp::PLAYER_UP[1])),
     part("Player 3 up lamp", None, &[], Some(lamp::PLAYER_UP[2])),
@@ -273,8 +275,6 @@ pub const PARTS: &[Part] = &[
     part("Start button", Some(sw::START_BUTTON), &[], None),
     part("Tilt", Some(sw::TILT), &[], None),
     part("Slam tilt", Some(sw::SLAM_TILT), &[], None),
-    part("Game over lamp", None, &[], Some(lamp::GAME_OVER)),
-    part("Tilt lamp", None, &[], Some(lamp::TILT)),
     // Ball handling
     part("Outhole", Some(sw::OUTHOLE), &[coil::BALL_SERVE], None),
     part("Shooter lane", Some(sw::SHOOTER_LANE), &[], None),
