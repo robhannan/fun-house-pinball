@@ -126,11 +126,11 @@ flyback diodes or allow them to be fitted. Expect roughly £5–15 per 8-channel
 
 ## 6. Lamp drivers and lamps
 
-21 lamp outputs are used, on chips 5–8.
+30 lamp outputs are used, on chips 5–10: 21 on the playfield and 9 on the backboard.
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
-| ULN2803A Darlington driver, DIP-18 | 8 | 4 used | [AliExpress](https://www.aliexpress.com/w/wholesale-uln2803a-dip18.html) | 3–6 |
+| ULN2803A Darlington driver, DIP-18 | 8 | 6 used | [AliExpress](https://www.aliexpress.com/w/wholesale-uln2803a-dip18.html) | 3–6 |
 | DIP-18 IC sockets | 8 | | [AliExpress](https://www.aliexpress.com/w/wholesale-dip18-ic-socket.html) | 1–2 |
 | LED replacement bulbs, #44/#47 bayonet (BA9S), 6.3 V | 40 | Count the sockets on the playfield and backglass first. Warm white looks closest to the original incandescents. | [AliExpress](https://www.aliexpress.com/w/wholesale-ba9s-6.3v-led-pinball.html) | 10–20 |
 

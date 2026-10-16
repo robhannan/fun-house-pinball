@@ -17,6 +17,14 @@ and 7.
 
 ![Fun House playfield wiring reference](playfield.svg)
 
+## Backboard map
+
+The backglass lamps (player up, ball in play, game over, tilt), each player's
+three score reels, and the credit window. The score display hardware isn't
+chosen yet (issue #28).
+
+![Fun House backboard wiring reference](backboard.svg)
+
 ---
 
 ## 1. Safety first
@@ -385,6 +393,8 @@ LEDs.
 | Bonus wheel centre | 18 | 7 | Q2 |
 | "30 points" left, right | 20–21 | 7 | Q4–Q5 |
 | Pop bumper caps 1–5 | 24–28 | 8 | Q0–Q4 |
+| Backboard: player up 1–4 | 32–35 | 9 | Q0–Q3 |
+| Backboard: ball in play 1–5 (four train cars, then the dragon's head *) | 40–44 | 10 | Q0–Q4 |
 
 ---
 

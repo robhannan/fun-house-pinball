@@ -163,6 +163,26 @@ pub mod lamp {
         LampId::new(27),
         LampId::new(28),
     ];
+
+    // Backboard (see docs/backboard.svg).
+    /// The circled player numbers 1–4 on the backboard, lit for whose turn it
+    /// is.
+    pub const PLAYER_UP: [LampId; 4] = [
+        LampId::new(32),
+        LampId::new(33),
+        LampId::new(34),
+        LampId::new(35),
+    ];
+    /// The "Ball in play" train, lit for the current ball: the cars "Dragon
+    /// Wheels", "Jolly Dragon", "Dragon Fly" and "Oliver", then the dragon's
+    /// head (*verify*: the head as ball 5, and that each car has a lamp).
+    pub const BALL_IN_PLAY: [LampId; 5] = [
+        LampId::new(40),
+        LampId::new(41),
+        LampId::new(42),
+        LampId::new(43),
+        LampId::new(44),
+    ];
 }
 
 const fn pulse(max_ms: u16, recycle_ms: u16) -> CoilKind {
@@ -227,6 +247,16 @@ const fn part(
 /// above: tests check this list against `COIL_KINDS`, and against the
 /// simulator's page and the docs.
 pub const PARTS: &[Part] = &[
+    // Backboard
+    part("Player 1 up lamp", None, &[], Some(lamp::PLAYER_UP[0])),
+    part("Player 2 up lamp", None, &[], Some(lamp::PLAYER_UP[1])),
+    part("Player 3 up lamp", None, &[], Some(lamp::PLAYER_UP[2])),
+    part("Player 4 up lamp", None, &[], Some(lamp::PLAYER_UP[3])),
+    part("Ball in play 1", None, &[], Some(lamp::BALL_IN_PLAY[0])),
+    part("Ball in play 2", None, &[], Some(lamp::BALL_IN_PLAY[1])),
+    part("Ball in play 3", None, &[], Some(lamp::BALL_IN_PLAY[2])),
+    part("Ball in play 4", None, &[], Some(lamp::BALL_IN_PLAY[3])),
+    part("Ball in play 5", None, &[], Some(lamp::BALL_IN_PLAY[4])),
     // Cabinet
     part(
         "Left flipper button",

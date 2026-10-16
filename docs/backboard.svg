@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 540" width="600" height="540" font-family="Helvetica, Arial, sans-serif">
+  <title>Fun House (1956) backboard wiring reference</title>
+  <desc>Schematic, not to scale, laid out like the original backglass: four player score panels with three reels each, player-up lamps, and the "Ball in play" train. Lamp numbers match crates/pinball-core/src/playfield.rs. The data-lamp and data-score attributes drive the simulator in sim/ and are checked by its tests.</desc>
+
+  <style>
+    .title { font-size: 18px; font-weight: bold; fill: #1f2328; }
+    .sub { font-size: 11px; fill: #57606a; }
+    .label { font-size: 10px; fill: #1f2328; }
+    .glass-big { font-size: 30px; font-weight: bold; fill: #ffffff; letter-spacing: 1px; }
+    .glass { font-size: 13px; font-weight: bold; fill: #ffffff; }
+    .glass-dark { font-size: 13px; font-weight: bold; fill: #1f2328; }
+    .reel { font-size: 30px; font-weight: bold; fill: #1f2328; font-family: "Courier New", monospace; }
+    .tag { font-size: 9px; fill: #ffffff; }
+    .car { font-size: 7px; font-weight: bold; fill: #1f2328; }
+    .credits { font-size: 13px; font-weight: bold; fill: #1f2328; font-family: "Courier New", monospace; }
+    .mid { text-anchor: middle; }
+  </style>
+
+  <rect width="600" height="540" fill="#ffffff"/>
+
+  <text x="300" y="28" class="title mid">Fun House (Williams, 1956): backboard</text>
+  <text x="300" y="46" class="sub mid">Schematic, not to scale. Parts marked * are guesses: verify on the backglass.</text>
+
+  <!-- Backglass -->
+  <rect x="20" y="60" width="560" height="410" rx="6" fill="#1f4fa3" stroke="#8a6d3b" stroke-width="6"/>
+
+  <!-- Header -->
+  <rect x="40" y="78" width="96" height="44" rx="6" fill="#ffffff" stroke="#d73a49" stroke-width="2"/>
+  <text x="88" y="97" class="glass-dark mid" style="fill:#d73a49">1 to 4</text>
+  <text x="88" y="113" class="label mid">CAN PLAY</text>
+  <text x="300" y="104" class="glass-big mid">FUN HOUSE</text>
+  <text x="300" y="124" class="glass mid">4 PLAYER</text>
+  <rect x="464" y="78" width="96" height="44" rx="6" fill="#ffffff" stroke="#d73a49" stroke-width="2"/>
+  <text x="512" y="94" class="label mid" font-style="italic">Invite</text>
+  <text x="512" y="106" class="label mid" style="fill:#0969da">COMPETITION</text>
+  <text x="512" y="118" class="label mid" font-style="italic">for more Fun!</text>
+
+  <!-- Player 1 -->
+  <rect x="50" y="160" width="200" height="100" rx="40" fill="#2da44e" stroke="#ffffff" stroke-width="3"/>
+  <circle cx="150" cy="160" r="16" fill="#ffd33d" stroke="#9a6700" stroke-width="2" data-lamp="32"/>
+  <text x="150" y="166" class="glass-dark mid">1</text>
+  <g fill="#ffffff" stroke="#1f2328" stroke-width="2">
+    <rect x="89" y="180" width="36" height="46" rx="3"/>
+    <rect x="132" y="180" width="36" height="46" rx="3"/>
+    <rect x="175" y="180" width="36" height="46" rx="3"/>
+  </g>
+  <text x="107" y="214" class="reel mid" data-score="0" data-digit="0">0</text>
+  <text x="150" y="214" class="reel mid" data-score="0" data-digit="1">0</text>
+  <text x="193" y="214" class="reel mid" data-score="0" data-digit="2">0</text>
+  <text x="150" y="246" class="glass mid">1ST PLAYER</text>
+  <text x="150" y="276" class="tag mid">player up: L32 · 3 score reels</text>
+
+  <!-- Player 2 -->
+  <rect x="350" y="160" width="200" height="100" rx="40" fill="#e16f24" stroke="#ffffff" stroke-width="3"/>
+  <circle cx="450" cy="160" r="16" fill="#ffd33d" stroke="#9a6700" stroke-width="2" data-lamp="33"/>
+  <text x="450" y="166" class="glass-dark mid">2</text>
+  <g fill="#ffffff" stroke="#1f2328" stroke-width="2">
+    <rect x="389" y="180" width="36" height="46" rx="3"/>
+    <rect x="432" y="180" width="36" height="46" rx="3"/>
+    <rect x="475" y="180" width="36" height="46" rx="3"/>
+  </g>
+  <text x="407" y="214" class="reel mid" data-score="1" data-digit="0">0</text>
+  <text x="450" y="214" class="reel mid" data-score="1" data-digit="1">0</text>
+  <text x="493" y="214" class="reel mid" data-score="1" data-digit="2">0</text>
+  <text x="450" y="246" class="glass mid">2ND PLAYER</text>
+  <text x="450" y="276" class="tag mid">player up: L33 · 3 score reels</text>
+
+  <!-- Player 3 -->
+  <rect x="50" y="300" width="200" height="100" rx="40" fill="#cf222e" stroke="#ffffff" stroke-width="3"/>
+  <circle cx="150" cy="300" r="16" fill="#ffd33d" stroke="#9a6700" stroke-width="2" data-lamp="34"/>
+  <text x="150" y="306" class="glass-dark mid">3</text>
+  <g fill="#ffffff" stroke="#1f2328" stroke-width="2">
+    <rect x="89" y="320" width="36" height="46" rx="3"/>
+    <rect x="132" y="320" width="36" height="46" rx="3"/>
+    <rect x="175" y="320" width="36" height="46" rx="3"/>
+  </g>
+  <text x="107" y="354" class="reel mid" data-score="2" data-digit="0">0</text>
+  <text x="150" y="354" class="reel mid" data-score="2" data-digit="1">0</text>
+  <text x="193" y="354" class="reel mid" data-score="2" data-digit="2">0</text>
+  <text x="150" y="386" class="glass mid">3RD PLAYER</text>
+  <text x="150" y="416" class="tag mid">player up: L34 · 3 score reels</text>
+
+  <!-- Player 4 -->
+  <rect x="350" y="300" width="200" height="100" rx="40" fill="#0969da" stroke="#ffffff" stroke-width="3"/>
+  <circle cx="450" cy="300" r="16" fill="#ffd33d" stroke="#9a6700" stroke-width="2" data-lamp="35"/>
+  <text x="450" y="306" class="glass-dark mid">4</text>
+  <g fill="#ffffff" stroke="#1f2328" stroke-width="2">
+    <rect x="389" y="320" width="36" height="46" rx="3"/>
+    <rect x="432" y="320" width="36" height="46" rx="3"/>
+    <rect x="475" y="320" width="36" height="46" rx="3"/>
+  </g>
+  <text x="407" y="354" class="reel mid" data-score="3" data-digit="0">0</text>
+  <text x="450" y="354" class="reel mid" data-score="3" data-digit="1">0</text>
+  <text x="493" y="354" class="reel mid" data-score="3" data-digit="2">0</text>
+  <text x="450" y="386" class="glass mid">4TH PLAYER</text>
+  <text x="450" y="416" class="tag mid">player up: L35 · 3 score reels</text>
+
+  <!-- Centre: the clown, with the credit window in its nose -->
+  <circle cx="300" cy="182" r="36" fill="#ffffff" stroke="#cf222e" stroke-width="3"/>
+  <circle cx="287" cy="170" r="5" fill="#0969da"/>
+  <circle cx="313" cy="170" r="5" fill="#0969da"/>
+  <path d="M 282 198 Q 300 212 318 198" fill="none" stroke="#cf222e" stroke-width="3"/>
+  <rect x="285" y="176" width="30" height="18" rx="4" fill="#ffffff" stroke="#cf222e" stroke-width="3"/>
+  <text x="300" y="190" class="credits mid" data-credits="">00</text>
+  <text x="300" y="232" class="tag mid">credit window (nose)</text>
+  <rect x="255" y="240" width="90" height="20" rx="4" fill="#ffffff" stroke="#cf222e" stroke-width="2"/>
+  <text x="300" y="255" class="glass-dark mid" font-style="italic" style="fill:#cf222e">Players</text>
+
+  <!-- Game over and tilt (positions assumed) -->
+  <rect x="255" y="268" width="90" height="24" rx="4" fill="#ffd33d" stroke="#9a6700" stroke-width="2" data-lamp="0"/>
+  <text x="300" y="285" class="glass-dark mid">GAME OVER</text>
+  <rect x="270" y="300" width="60" height="24" rx="4" fill="#ffd33d" stroke="#9a6700" stroke-width="2" data-lamp="1"/>
+  <text x="300" y="317" class="glass-dark mid">TILT</text>
+  <text x="300" y="338" class="tag mid">L0 · L1 (positions *)</text>
+
+  <!-- Ball in play train: four cars, then the dragon's head (ball 5 *) -->
+  <rect x="32" y="428" width="96" height="30" rx="6" fill="#2da44e" stroke="#ffffff" stroke-width="2"/>
+  <text x="80" y="448" class="glass mid">BALL IN PLAY</text>
+  <g fill="#ffd33d" stroke="#9a6700" stroke-width="2">
+    <rect x="136" y="424" width="72" height="36" rx="5" data-lamp="40"/>
+    <rect x="214" y="424" width="72" height="36" rx="5" data-lamp="41"/>
+    <rect x="292" y="424" width="72" height="36" rx="5" data-lamp="42"/>
+    <rect x="370" y="424" width="72" height="36" rx="5" data-lamp="43"/>
+    <path d="M 452 460 L 452 432 Q 495 414 540 428 L 566 444 L 540 460 Z" data-lamp="44"/>
+  </g>
+  <text x="172" y="440" class="glass-dark mid">1</text>
+  <text x="172" y="453" class="car mid">DRAGON WHEELS</text>
+  <text x="250" y="440" class="glass-dark mid">2</text>
+  <text x="250" y="453" class="car mid">JOLLY DRAGON</text>
+  <text x="328" y="440" class="glass-dark mid">3</text>
+  <text x="328" y="453" class="car mid">DRAGON FLY</text>
+  <text x="406" y="440" class="glass-dark mid">4</text>
+  <text x="406" y="453" class="car mid">OLIVER</text>
+  <text x="500" y="442" class="glass-dark mid">5 *</text>
+  <text x="500" y="454" class="car mid">DRAGON</text>
+
+  <!-- Key -->
+  <text x="20" y="492" class="label" font-weight="bold">Key</text>
+  <text x="20" y="508" class="label">Player up: L32–L35 · Ball in play: L40–L43 (cars), L44 (dragon head *) · Game over L0 · Tilt L1</text>
+  <text x="20" y="524" class="label">Scores: 3 reels per player, 0–999; credits: 2-digit window *. The display hardware isn't chosen yet (issue #28).</text>
+</svg>

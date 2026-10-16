@@ -42,7 +42,11 @@ cargo clippy --all-targets
 
 Try the rules without any hardware. The simulator runs the real `pinball-core`
 logic compiled to WebAssembly, on the playfield map from `docs/playfield.svg`.
-There's no ball physics: click a part to roll a ball over its switch.
+There's no ball physics: click a part to roll a ball over its switch. The
+backboard from `docs/backboard.svg` sits above the playfield, with each
+player's score reels, the credit window, and the player-up and ball-in-play
+lamps. Up to 4 players, and the operator settings (3, 4 or 5 balls; replay or
+novelty) can be changed on the page.
 
 ```sh
 pnpm install           # once, installs zx for the build script

@@ -22,7 +22,7 @@ pub mod switches;
 pub mod time;
 
 pub use coils::{CoilId, CoilKind, Coils};
-pub use game::{Machine, Outputs, Phase};
+pub use game::{MAX_CREDITS, MAX_PLAYERS, Machine, Outputs, Phase, Settings};
 pub use lamps::{LampId, LampMode, Lamps};
 pub use switches::{Debouncer, SwitchEvent, SwitchId, SwitchStates};
 pub use time::Instant;

@@ -18,7 +18,7 @@ Mega 2560. See `README.md` for setup and `docs/hardware.md` for wiring.
   the watchdog, the OE pull-up and the panic handler that disables outputs.
 - **Keep the playfield map in step:** `playfield.rs` is the source of truth for
   switch, coil and lamp assignments. Update `docs/hardware.md`,
-  `docs/wiring-guide.md`, `docs/playfield.svg`, the quantities in
+  `docs/wiring-guide.md`, `docs/playfield.svg`, `docs/backboard.svg`, the quantities in
   `docs/shopping-list.md` and the pins in
   `firmware/src/main.rs` alongside it.
 - **Parts list:** add every new part to `PARTS` in `playfield.rs`, as well as

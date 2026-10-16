@@ -3,6 +3,10 @@
 //! Scores follow the original's 1950s scale (a replay at 400 points). Point
 //! values printed on the playfield are used where visible; the rest, and the
 //! bonus-wheel rules, are assumptions to check against the schematic.
+//!
+//! From the flyer: "1 to 4 can play", "adjustable to 3-4-or 5 ball play",
+//! "Novelty or Replay", and a "Multi-Tilt feature [that] permits player to
+//! continue playing in turn if one player tilts game".
 
 use crate::coils::{CoilId, Coils};
 use crate::lamps::{LampMode, Lamps};
@@ -10,8 +14,10 @@ use crate::playfield::{COIL_KINDS, coil, lamp, sw};
 use crate::switches::{Debouncer, SwitchEvent, SwitchId, SwitchStates};
 use crate::time::Instant;
 
-/// Balls per game.
-pub const BALLS_PER_GAME: u8 = 3;
+/// Most players in one game ("1 to 4 can play").
+pub const MAX_PLAYERS: usize = 4;
+/// The credit window shows two digits (*verify*).
+pub const MAX_CREDITS: u8 = 99;
 /// Tilt warnings allowed before the ball is tilted. Classic EM rules: none.
 pub const TILT_WARNINGS: u8 = 0;
 /// Consecutive matching scans before a switch change is accepted.
@@ -25,6 +31,29 @@ pub const SERVE_DELAY_MS: u32 = 1_000;
 pub const REPLAY_SCORES: [u32; 5] = [400, 600, 700, 800, 900];
 
 const FLIPPER_POWER_MS: u16 = 40;
+
+/// Operator settings, set inside the cabinet on the original.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Settings {
+    /// Balls per player: 3, 4 or 5 ("adjustable to 3-4-or 5 ball play").
+    pub balls_per_game: u8,
+    /// Replay mode awards replays; novelty mode only scores points.
+    pub replays: bool,
+}
+
+impl Settings {
+    /// As the flyer advertises it: 5-ball, replay.
+    pub const DEFAULT: Self = Self {
+        balls_per_game: 5,
+        replays: true,
+    };
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self::DEFAULT
+    }
+}
 
 /// What the machine is doing.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -53,10 +82,17 @@ pub struct Machine {
     debouncer: Debouncer,
     coils: Coils,
     lamps: Lamps,
+    settings: Settings,
     phase: Phase,
     ball: u8,
-    score: u32,
-    replays: u8,
+    /// Players in the current (or last) game; 0 before the first game.
+    players: u8,
+    /// Whose turn it is, 0-based.
+    player: u8,
+    scores: [u32; MAX_PLAYERS],
+    replays: [u8; MAX_PLAYERS],
+    /// Credits on the backboard's credit window (in the clown's nose).
+    credits: u8,
     /// Lit position on the bonus wheel: 0 = 10 points ... 9 = 100 points.
     bonus_step: u8,
     tilt_warnings: u8,
@@ -70,17 +106,32 @@ impl Default for Machine {
 }
 
 impl Machine {
-    /// A powered-up machine in attract mode.
+    /// A powered-up machine in attract mode, with the default settings.
     #[must_use]
     pub fn new() -> Self {
+        Self::with_settings(Settings::DEFAULT)
+    }
+
+    /// A powered-up machine in attract mode. `balls_per_game` is clamped to
+    /// 3–5.
+    #[must_use]
+    pub fn with_settings(settings: Settings) -> Self {
+        let settings = Settings {
+            balls_per_game: settings.balls_per_game.clamp(3, 5),
+            ..settings
+        };
         let mut machine = Self {
             debouncer: Debouncer::new(DEBOUNCE_SCANS),
             coils: Coils::new(COIL_KINDS),
             lamps: Lamps::new(),
+            settings,
             phase: Phase::Attract,
             ball: 0,
-            score: 0,
-            replays: 0,
+            players: 0,
+            player: 0,
+            scores: [0; MAX_PLAYERS],
+            replays: [0; MAX_PLAYERS],
+            credits: 0,
             bonus_step: 0,
             tilt_warnings: 0,
             serve_at: None,
@@ -101,16 +152,60 @@ impl Machine {
         self.ball
     }
 
-    /// Current score.
+    /// The operator settings in force.
     #[must_use]
-    pub const fn score(&self) -> u32 {
-        self.score
+    pub const fn settings(&self) -> Settings {
+        self.settings
     }
 
-    /// Replays earned this game.
+    /// Players in the current game (or the last one, in attract mode); 0
+    /// before the first game.
     #[must_use]
-    pub const fn replays(&self) -> u8 {
-        self.replays
+    pub const fn players(&self) -> u8 {
+        self.players
+    }
+
+    /// Whose turn it is (1-based; 0 in attract mode).
+    #[must_use]
+    pub const fn current_player(&self) -> u8 {
+        if matches!(self.phase, Phase::Attract) {
+            0
+        } else {
+            self.player + 1
+        }
+    }
+
+    /// The current player's score (in attract mode, player 1's last score).
+    #[must_use]
+    pub const fn score(&self) -> u32 {
+        self.scores[self.player as usize]
+    }
+
+    /// Player `n`'s score (0-based). Scores stay on show after the game ends,
+    /// as they did on the score reels.
+    ///
+    /// # Panics
+    ///
+    /// If `n` is 4 or more.
+    #[must_use]
+    pub const fn score_of(&self, n: usize) -> u32 {
+        self.scores[n]
+    }
+
+    /// Credits shown in the backboard's credit window: one per replay won,
+    /// kept across games, up to [`MAX_CREDITS`].
+    ///
+    /// TODO (#27): spend a credit per player once coins and credits are
+    /// wired; until then starting a game is free.
+    #[must_use]
+    pub const fn credits(&self) -> u8 {
+        self.credits
+    }
+
+    /// Replays earned this game, by all players.
+    #[must_use]
+    pub fn replays(&self) -> u8 {
+        self.replays.iter().sum()
     }
 
     /// Value of the lit bonus-wheel position.
@@ -140,6 +235,12 @@ impl Machine {
             (_, SwitchEvent::Closed(sw::SLAM_TILT)) => self.enter(Phase::Attract),
 
             (Phase::Attract, SwitchEvent::Closed(sw::START_BUTTON)) => self.start_game(now),
+            // Assumed (*verify*): players can be added while ball 1 is in play.
+            (Phase::Playing | Phase::Tilted, SwitchEvent::Closed(sw::START_BUTTON)) => {
+                if self.ball == 1 && usize::from(self.players) < MAX_PLAYERS {
+                    self.players += 1;
+                }
+            }
 
             (Phase::Playing | Phase::Tilted, SwitchEvent::Closed(sw::OUTHOLE)) => {
                 self.end_ball(now);
@@ -214,15 +315,29 @@ impl Machine {
         }
     }
 
+    /// Adds to the current player's score, awarding replays at the card's
+    /// thresholds.
     fn add_score(&mut self, points: u32) {
-        let before = self.score;
-        self.score += points;
+        let player = usize::from(self.player);
+        let before = self.scores[player];
+        self.scores[player] += points;
+        let after = self.scores[player];
         let earned = REPLAY_SCORES
             .iter()
-            .filter(|&&threshold| before < threshold && threshold <= self.score)
+            .filter(|&&threshold| before < threshold && threshold <= after)
             .count();
+        for _ in 0..earned {
+            self.award_replay();
+        }
+    }
+
+    /// A replay for the current player, unless the machine is set to novelty.
+    fn award_replay(&mut self) {
         // TODO: fire a knocker and/or drive a credit unit.
-        self.replays += earned as u8;
+        if self.settings.replays {
+            self.replays[usize::from(self.player)] += 1;
+            self.credits = (self.credits + 1).min(MAX_CREDITS);
+        }
     }
 
     /// Assumed rule: each lane advances the bonus wheel one step; reaching
@@ -250,7 +365,7 @@ impl Machine {
         self.add_score(self.bonus());
         if self.lamps.mode(lamp::SPECIAL) != LampMode::Off {
             self.lamps.set(lamp::SPECIAL, LampMode::Off);
-            self.replays += 1;
+            self.award_replay();
         }
     }
 
@@ -269,22 +384,47 @@ impl Machine {
     }
 
     fn start_game(&mut self, now: Instant) {
-        self.score = 0;
-        self.replays = 0;
+        self.scores = [0; MAX_PLAYERS];
+        self.replays = [0; MAX_PLAYERS];
         self.bonus_step = 0;
         self.ball = 1;
+        self.players = 1;
+        self.player = 0;
         self.enter(Phase::Playing);
         self.lamps.set(lamp::BONUS_WHEEL[0], LampMode::On);
         self.serve_at = Some(now);
     }
 
+    /// Passes play to the next player, and to the next ball after the last
+    /// player. A tilted ball ends here too, so a tilt only costs the tilting
+    /// player their ball ("Multi-Tilt").
     fn end_ball(&mut self, now: Instant) {
-        if self.ball >= BALLS_PER_GAME {
+        if self.player + 1 < self.players {
+            self.player += 1;
+        } else {
+            self.player = 0;
+            self.ball += 1;
+        }
+        if self.ball > self.settings.balls_per_game {
             self.enter(Phase::Attract);
         } else {
-            self.ball += 1;
             self.enter(Phase::Playing);
             self.serve_at = Some(now.plus(SERVE_DELAY_MS));
+        }
+    }
+
+    /// Player-up and ball-in-play lamps on the backboard.
+    fn update_backboard_lamps(&mut self) {
+        let playing = !matches!(self.phase, Phase::Attract);
+        for (n, &lamp) in lamp::PLAYER_UP.iter().enumerate() {
+            let on = playing && n == usize::from(self.player);
+            self.lamps
+                .set(lamp, if on { LampMode::On } else { LampMode::Off });
+        }
+        for (n, &lamp) in lamp::BALL_IN_PLAY.iter().enumerate() {
+            let on = playing && n + 1 == usize::from(self.ball);
+            self.lamps
+                .set(lamp, if on { LampMode::On } else { LampMode::Off });
         }
     }
 
@@ -293,6 +433,7 @@ impl Machine {
         match phase {
             Phase::Attract => {
                 self.ball = 0;
+                self.player = 0;
                 self.serve_at = None;
                 self.coils.set_enabled(false);
                 self.lamps.all_off();
@@ -317,6 +458,7 @@ impl Machine {
                 self.lamps.set(lamp::TILT, LampMode::On);
             }
         }
+        self.update_backboard_lamps();
     }
 }
 
@@ -402,7 +544,7 @@ mod tests {
     fn game_ends_after_last_ball_drains() {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
-        for ball in 1..=BALLS_PER_GAME {
+        for ball in 1..=Settings::DEFAULT.balls_per_game {
             assert_eq!(sim.machine.ball(), ball);
             sim.tap(sw::OUTHOLE);
             sim.run(SERVE_DELAY_MS);
@@ -509,6 +651,148 @@ mod tests {
         sim.machine.set_trapdoor(2, true);
         sim.tap(sw::OUTHOLE);
         assert!(!sim.coil_on(coil::TRAPDOOR_FLAPS[2]));
+    }
+
+    #[test]
+    fn start_during_ball_one_adds_players_up_to_four() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        for _ in 0..5 {
+            sim.tap(sw::START_BUTTON);
+        }
+        assert_eq!(sim.machine.players(), 4);
+    }
+
+    #[test]
+    fn players_can_only_be_added_during_ball_one() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::OUTHOLE);
+        assert_eq!(sim.machine.ball(), 2);
+        sim.tap(sw::START_BUTTON);
+        assert_eq!(sim.machine.players(), 1);
+    }
+
+    #[test]
+    fn players_take_turns_and_keep_their_own_scores() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::START_BUTTON);
+        assert_eq!(sim.machine.current_player(), 1);
+        sim.tap(sw::SIDE_LANES[0]);
+
+        sim.tap(sw::OUTHOLE);
+        assert_eq!((sim.machine.current_player(), sim.machine.ball()), (2, 1));
+        sim.tap(sw::SIDE_LANES[0]);
+        sim.tap(sw::SIDE_LANES[0]);
+
+        sim.tap(sw::OUTHOLE);
+        assert_eq!((sim.machine.current_player(), sim.machine.ball()), (1, 2));
+        assert_eq!(sim.machine.score_of(0), 10);
+        assert_eq!(sim.machine.score_of(1), 20);
+    }
+
+    #[test]
+    fn game_lasts_the_set_number_of_balls_for_every_player() {
+        let settings = Settings {
+            balls_per_game: 3,
+            replays: true,
+        };
+        let mut sim = Sim::new();
+        sim.machine = Machine::with_settings(settings);
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::START_BUTTON);
+        for _ in 0..(3 * 2 - 1) {
+            sim.tap(sw::OUTHOLE);
+            assert_eq!(sim.machine.phase(), Phase::Playing);
+        }
+        sim.tap(sw::OUTHOLE);
+        assert_eq!(sim.machine.phase(), Phase::Attract);
+    }
+
+    #[test]
+    fn balls_per_game_is_clamped_to_three_to_five() {
+        let settings = |balls_per_game| Settings {
+            balls_per_game,
+            replays: true,
+        };
+        assert_eq!(
+            Machine::with_settings(settings(1))
+                .settings()
+                .balls_per_game,
+            3
+        );
+        assert_eq!(
+            Machine::with_settings(settings(9))
+                .settings()
+                .balls_per_game,
+            5
+        );
+    }
+
+    #[test]
+    fn a_tilt_only_costs_the_tilting_player_their_ball() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::TILT);
+        assert_eq!(sim.machine.phase(), Phase::Tilted);
+        sim.tap(sw::OUTHOLE);
+        assert_eq!(sim.machine.phase(), Phase::Playing);
+        assert_eq!((sim.machine.current_player(), sim.machine.ball()), (2, 1));
+    }
+
+    #[test]
+    fn novelty_mode_awards_no_replays() {
+        let mut sim = Sim::new();
+        sim.machine = Machine::with_settings(Settings {
+            balls_per_game: 5,
+            replays: false,
+        });
+        sim.tap(sw::START_BUTTON);
+        for _ in 0..40 {
+            sim.tap(sw::SIDE_LANES[0]);
+        }
+        assert_eq!(sim.machine.score(), 400);
+        assert_eq!(sim.machine.replays(), 0);
+    }
+
+    #[test]
+    fn replays_add_credits_that_last_between_games() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        for _ in 0..40 {
+            sim.tap(sw::SIDE_LANES[0]);
+        }
+        assert_eq!(sim.machine.credits(), 1);
+        sim.tap(sw::SLAM_TILT);
+        sim.set(sw::SLAM_TILT, false);
+        sim.tap(sw::START_BUTTON);
+        assert_eq!(sim.machine.credits(), 1);
+        assert_eq!(sim.machine.score(), 0);
+    }
+
+    #[test]
+    fn backboard_lamps_show_player_up_and_ball_in_play() {
+        let lit = |sim: &Sim, id: crate::lamps::LampId| sim.last.lamps & (1 << id.index()) != 0;
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::START_BUTTON);
+        assert!(lit(&sim, lamp::PLAYER_UP[0]) && !lit(&sim, lamp::PLAYER_UP[1]));
+        assert!(lit(&sim, lamp::BALL_IN_PLAY[0]));
+
+        sim.tap(sw::OUTHOLE);
+        assert!(!lit(&sim, lamp::PLAYER_UP[0]) && lit(&sim, lamp::PLAYER_UP[1]));
+        sim.tap(sw::OUTHOLE);
+        assert!(lit(&sim, lamp::BALL_IN_PLAY[1]) && !lit(&sim, lamp::BALL_IN_PLAY[0]));
+
+        sim.tap(sw::SLAM_TILT);
+        assert!(
+            lamp::PLAYER_UP
+                .iter()
+                .chain(&lamp::BALL_IN_PLAY)
+                .all(|&l| !lit(&sim, l))
+        );
     }
 
     #[test]

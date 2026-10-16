@@ -5,7 +5,9 @@
 //! page in `sim/web/`. There's no ball physics: the player triggers switches by
 //! clicking parts of the playfield or using the keyboard.
 
-use pinball_core::{Instant, Machine, Outputs, Phase, SwitchId, SwitchStates};
+use pinball_core::{
+    Instant, MAX_PLAYERS, Machine, Outputs, Phase, Settings, SwitchId, SwitchStates,
+};
 
 /// How long a clicked switch stays closed, in simulated milliseconds. Long
 /// enough to get through the debouncer.
@@ -47,11 +49,17 @@ impl Default for Simulator {
 }
 
 impl Simulator {
-    /// A freshly powered-up machine.
+    /// A freshly powered-up machine with the default operator settings.
     #[must_use]
     pub fn new() -> Self {
+        Self::with_settings(Settings::DEFAULT)
+    }
+
+    /// A freshly powered-up machine with the given operator settings.
+    #[must_use]
+    pub fn with_settings(settings: Settings) -> Self {
         Self {
-            machine: Machine::new(),
+            machine: Machine::with_settings(settings),
             switches: SwitchStates::new(),
             now: Instant::from_millis(0),
             taps: Vec::new(),
@@ -128,7 +136,7 @@ impl Simulator {
 mod exports {
     use std::cell::RefCell;
 
-    use super::{Phase, Simulator, switch_from_index};
+    use super::{MAX_PLAYERS, Phase, Settings, Simulator, switch_from_index};
 
     thread_local! {
         static SIM: RefCell<Simulator> = RefCell::new(Simulator::new());
@@ -138,10 +146,21 @@ mod exports {
         SIM.with_borrow_mut(f)
     }
 
-    /// Power-cycles the machine.
+    /// Power-cycles the machine with the default operator settings.
     #[unsafe(no_mangle)]
     pub extern "C" fn sim_reset() {
         with(|sim| *sim = Simulator::new());
+    }
+
+    /// Power-cycles the machine with `balls` per game (clamped to 3–5) and
+    /// replays on (`replays != 0`) or novelty mode.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_reset_with(balls: u32, replays: u32) {
+        let settings = Settings {
+            balls_per_game: balls.min(5) as u8,
+            replays: replays != 0,
+        };
+        with(|sim| *sim = Simulator::with_settings(settings));
     }
 
     /// Holds switch `index` closed (`closed != 0`) or open.
@@ -196,10 +215,45 @@ mod exports {
         with(|sim| (sim.outputs().lamps >> 32) as u32)
     }
 
-    /// Current score.
+    /// Current player's score.
     #[unsafe(no_mangle)]
     pub extern "C" fn sim_score() -> u32 {
         with(|sim| sim.machine().score())
+    }
+
+    /// Player `n`'s score (0-based); 0 for an out-of-range `n`.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_score_of(n: u32) -> u32 {
+        let n = n as usize;
+        if n < MAX_PLAYERS {
+            with(|sim| sim.machine().score_of(n))
+        } else {
+            0
+        }
+    }
+
+    /// Players in the current (or last) game.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_players() -> u32 {
+        with(|sim| u32::from(sim.machine().players()))
+    }
+
+    /// Whose turn it is (1-based; 0 when no game is running).
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_current_player() -> u32 {
+        with(|sim| u32::from(sim.machine().current_player()))
+    }
+
+    /// Credits shown in the backboard's credit window.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_credits() -> u32 {
+        with(|sim| u32::from(sim.machine().credits()))
+    }
+
+    /// Balls per game in force.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_balls_per_game() -> u32 {
+        with(|sim| u32::from(sim.machine().settings().balls_per_game))
     }
 
     /// Current ball (0 when no game is running).
@@ -312,6 +366,7 @@ mod tests {
     // drawing it, or drawing one with the wrong numbers, fails CI.
 
     const SVG: &str = include_str!("../../../docs/playfield.svg");
+    const BACKBOARD: &str = include_str!("../../../docs/backboard.svg");
     const HTML: &str = include_str!("../../../sim/web/index.html");
 
     /// The I/O one page element refers to.
@@ -328,7 +383,7 @@ mod tests {
             let start = tag.find(&format!(" {name}=\""))? + name.len() + 3;
             tag[start..].split('"').next()
         }
-        [SVG, HTML]
+        [SVG, BACKBOARD, HTML]
             .iter()
             .flat_map(|doc| doc.split('<').skip(1))
             .map(|tag| tag.split('>').next().unwrap_or(""))
@@ -390,6 +445,27 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn backboard_has_three_score_reels_per_player_and_a_credit_window() {
+        for player in 0..MAX_PLAYERS {
+            for digit in 0..3 {
+                let reel = format!("data-score=\"{player}\" data-digit=\"{digit}\"");
+                assert_eq!(BACKBOARD.matches(&reel).count(), 1, "missing {reel}");
+            }
+        }
+        assert_eq!(BACKBOARD.matches("data-credits=").count(), 1);
+    }
+
+    #[test]
+    fn simulator_settings_reach_the_machine() {
+        let sim = Simulator::with_settings(Settings {
+            balls_per_game: 3,
+            replays: false,
+        });
+        assert_eq!(sim.machine().settings().balls_per_game, 3);
+        assert!(!sim.machine().settings().replays);
     }
 
     #[test]
