@@ -28,9 +28,9 @@ Mega 2560. See `README.md` for setup and `docs/hardware.md` for wiring.
   `npm ci`, then `npm run <script>`. Keep workflow `run:` steps to a single
   `npm run` call. Shell one-liners in docs and skills are fine.
 - **Turn failures into checks:** when a review, CI or the real machine finds a
-  failure, add a test or CI check that would catch it next time, wherever
-  that's possible. Existing checks: `.github/workflows/` and
-  `.github/scripts/`.
+  failure in the code or build, add a test or CI check that would catch it next
+  time, wherever that's possible. Process rules, such as the PR description and
+  branch hygiene, are handled by the `github-pr` skill, not CI.
 - **Don't present guesses as facts:** feature counts and rules not confirmed on
   the real table or schematic are marked *verify* or "assumed". Keep them marked.
 

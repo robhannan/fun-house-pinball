@@ -7,8 +7,6 @@
     "node": ">=24"
   },
   "scripts": {
-    "check:pr-description": "node .github/scripts/check-pr-description.mjs",
-    "check:merged-branch": "node .github/scripts/check-merged-branch.mjs",
     "check:stray-files": "node .github/scripts/check-stray-files.mjs"
   },
   "devDependencies": {
