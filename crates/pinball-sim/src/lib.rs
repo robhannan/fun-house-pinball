@@ -715,8 +715,8 @@ mod tests {
     #[test]
     fn a_pop_bumper_scores_and_kicks_the_ball_away() {
         let mut sim = served();
-        // Pop 1 is at (160, 285), radius 30. Roll the ball gently into it.
-        sim.place_ball(Vec2::new(160.0, 230.0), Vec2::new(0.0, 150.0));
+        // Pop 1 is at (160, 320), radius 30. Roll the ball gently into it.
+        sim.place_ball(Vec2::new(160.0, 265.0), Vec2::new(0.0, 150.0));
         let mut fastest: f32 = 0.0;
         for _ in 0..40 {
             run(&mut sim, 10);
@@ -732,7 +732,7 @@ mod tests {
         let mut sim = served();
         sim.set_trapdoor(1, true);
         run(&mut sim, 20);
-        sim.place_ball(Vec2::new(280.0, 370.0), Vec2::new(0.0, 100.0));
+        sim.place_ball(Vec2::new(280.0, 405.0), Vec2::new(0.0, 100.0));
         run(&mut sim, 100);
         assert!(matches!(
             sim.physics().state(),
@@ -746,10 +746,10 @@ mod tests {
     #[test]
     fn a_closed_trapdoor_lets_the_ball_roll_over() {
         let mut sim = served();
-        sim.place_ball(Vec2::new(280.0, 370.0), Vec2::new(0.0, 100.0));
+        sim.place_ball(Vec2::new(280.0, 405.0), Vec2::new(0.0, 100.0));
         run(&mut sim, 200);
         assert_eq!(sim.physics().state(), BallState::Rolling);
-        assert!(sim.physics().ball().y > 400.0);
+        assert!(sim.physics().ball().y > 435.0);
     }
 
     #[test]

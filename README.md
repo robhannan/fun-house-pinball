@@ -71,7 +71,7 @@ optional real bells.
 ```sh
 pnpm install           # once, installs zx for the build script
 pnpm run build:sim
-python3 -m http.server -d sim/web 8000   # then open http://localhost:8000
+pnpm run serve:sim     # then open http://localhost:8000
 ```
 
 Controls:

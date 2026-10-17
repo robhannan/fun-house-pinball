@@ -15,6 +15,19 @@
 import { BELL_SAMPLES, COIL_SAMPLES, SOUNDS, render } from "./sounds.js";
 
 const PHASES = ["Attract", "Playing", "Tilted", "Test"];
+
+/// WebAssembly exports this script needs; an older build lacks some of them.
+const REQUIRED_EXPORTS = [
+  "sim_advance",
+  "sim_ball_x",
+  "sim_ball_y",
+  "sim_ball_shown",
+  "sim_flipper_turn",
+  "sim_plunger",
+  "sim_plunger_pull",
+  "sim_nudge",
+  "sim_test_reports",
+];
 const COIL_GLOW_MS = 150; // keep short coil pulses visible
 
 // "C2R3" (matrix column 2, row 3) -> 19; "D1" (direct input 1) -> 65.
@@ -27,12 +40,21 @@ function switchIndex(label) {
 }
 
 async function load() {
+  // Never use cached copies: after a rebuild, the page, this script and the
+  // WebAssembly must all be from the same build.
+  const get = (file) => fetch(file, { cache: "no-store" });
   const [wasmBytes, playfield, backboard] = await Promise.all([
-    fetch("generated/pinball_sim.wasm").then((r) => r.arrayBuffer()),
-    fetch("generated/playfield.svg").then((r) => r.text()),
-    fetch("generated/backboard.svg").then((r) => r.text()),
+    get("generated/pinball_sim.wasm").then((r) => r.arrayBuffer()),
+    get("generated/playfield.svg").then((r) => r.text()),
+    get("generated/backboard.svg").then((r) => r.text()),
   ]);
   const { instance } = await WebAssembly.instantiate(wasmBytes, {});
+  const missing = REQUIRED_EXPORTS.filter((name) => typeof instance.exports[name] !== "function");
+  if (missing.length > 0) {
+    throw new Error(
+      `The simulator build is out of date (missing ${missing.join(", ")}). Run pnpm run build:sim, then reload.`,
+    );
+  }
   document.getElementById("playfield").innerHTML = playfield;
   document.getElementById("backboard").innerHTML = backboard;
   return instance.exports;
@@ -282,7 +304,7 @@ function start(sim) {
 
 load().then(start, (error) => {
   document.getElementById("playfield").textContent =
-    `Couldn't load the simulator (${error.message}). Run pnpm run build:sim, then serve sim/web/ over HTTP.`;
+    `Couldn't load the simulator: ${error.message} (Build it with pnpm run build:sim and serve it with pnpm run serve:sim.)`;
 });
 
 /**

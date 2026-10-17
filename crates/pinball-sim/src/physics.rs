@@ -209,9 +209,10 @@ fn points(text: &str) -> Vec<Vec2> {
         .collect()
 }
 
-/// The outline of an SVG path with absolute `M`, `L`, `Q` and `Z` commands,
-/// with each quadratic curve flattened into straight pieces. Returns the
-/// points and whether the path is closed.
+/// The outline of an SVG path with absolute `M`, `L`, `Q`, `A` and `Z`
+/// commands, with each curve flattened into straight pieces. Arcs must be
+/// circular and unrotated (`A r r 0 large sweep x y`). Returns the points and
+/// whether the path is closed.
 fn path_points(d: &str) -> (Vec<Vec2>, bool) {
     let mut out = Vec::new();
     let mut closed = false;
@@ -234,11 +235,52 @@ fn path_points(d: &str) -> (Vec<Vec2>, bool) {
                     out.push(start * (u * u) + control * (2.0 * u * t) + end * (t * t));
                 }
             }
+            "A" => {
+                let radius: f32 = tokens.next().and_then(|t| t.parse().ok()).unwrap_or(0.0);
+                let _ry = tokens.next();
+                let _rotation = tokens.next();
+                let large = tokens.next() == Some("1");
+                let sweep = tokens.next() == Some("1");
+                let end = take(&mut tokens);
+                let start = out.last().copied().unwrap_or(end);
+                out.extend(arc_points(start, end, radius, large, sweep));
+            }
             "Z" => closed = true,
             _ => {}
         }
     }
     (out, closed)
+}
+
+/// Points along a circular arc from `start` to `end` (excluding `start`), as
+/// SVG draws it: `sweep` is clockwise on screen, and `large` picks the longer
+/// way round.
+fn arc_points(start: Vec2, end: Vec2, radius: f32, large: bool, sweep: bool) -> Vec<Vec2> {
+    let chord = end - start;
+    let half = chord.len() / 2.0;
+    let radius = radius.max(half);
+    let mid = start + chord * 0.5;
+    // The centre is off the chord's midpoint, on the side that gives the
+    // requested direction and size.
+    let along = chord * (1.0 / chord.len().max(0.001));
+    let normal = Vec2::new(-along.y, along.x);
+    let offset = (radius * radius - half * half).max(0.0).sqrt();
+    let side = if large == sweep { -1.0 } else { 1.0 };
+    let centre = mid + normal * (offset * side);
+    let a0 = (start.y - centre.y).atan2(start.x - centre.x);
+    let a1 = (end.y - centre.y).atan2(end.x - centre.x);
+    let mut turn = a1 - a0;
+    if sweep && turn < 0.0 {
+        turn += std::f32::consts::TAU;
+    } else if !sweep && turn > 0.0 {
+        turn -= std::f32::consts::TAU;
+    }
+    (1..=32_u8)
+        .map(|i| {
+            let a = a0 + turn * f32::from(i) / 32.0;
+            centre + Vec2::new(a.cos(), a.sin()) * radius
+        })
+        .collect()
 }
 
 fn edges(points: &[Vec2], closed: bool) -> Vec<(Vec2, Vec2)> {
@@ -918,6 +960,18 @@ mod tests {
             physics.tick(0);
         }
         assert!(!physics.tick(0).is_closed(sw::POP_BUMPERS[0]));
+    }
+
+    #[test]
+    fn a_half_circle_arc_goes_over_the_top() {
+        let (p, _) = path_points("M 40 330 A 260 260 0 0 1 560 330");
+        assert_eq!(p.len(), 33);
+        let top = p.iter().fold(f32::MAX, |m, q| m.min(q.y));
+        assert!((top - 70.0).abs() < 0.5, "top {top}");
+        for q in &p {
+            let r = (*q - Vec2::new(300.0, 330.0)).len();
+            assert!((r - 260.0).abs() < 0.01, "{q:?}");
+        }
     }
 
     #[test]
