@@ -221,6 +221,8 @@ Current assignments, from `playfield.rs`:
 | Shooter lane | 0 (D22) | 1 (D31) |
 | Left kicker | 1 (D23) | 0 (D30) |
 | Right kicker | 1 (D23) | 1 (D31) |
+| Left side kicker (under the lower-left pop bumper) | 1 (D23) | 2 (D32) |
+| Right side kicker (under the lower-right pop bumper) | 1 (D23) | 3 (D33) |
 | Pop bumper: top left | 2 (D24) | 0 (D30) |
 | Pop bumper: top centre | 2 (D24) | 1 (D31) |
 | Pop bumper: top right | 2 (D24) | 2 (D32) |
@@ -367,6 +369,7 @@ a long time**, so:
 | *Optional:* bell for the 1s | 15 | 2 | Q7 (7) |
 | *Optional:* bells for the 10s, 100s | 16–17 | 3 | Q0–Q1 (15, 1) |
 | Top bumper ("10 when lit") | 18 | 3 | Q2 (2) |
+| Side kickers: left, right | 19–20 | 3 | Q3–Q4 (3–4) |
 
 ### 7c. Lamp drivers
 

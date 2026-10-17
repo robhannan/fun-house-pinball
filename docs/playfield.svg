@@ -148,6 +148,16 @@
   <polygon points="280,458 300,490 260,490" fill="#ffd33d" stroke="#9a6700" stroke-width="2" data-lamp="2"/>
   <text x="280" y="508" class="tag mid">Special when lit: L2</text>
 
+  <!-- Side kickers: striped, under the lower pop bumpers -->
+  <g fill="#f6c6cb" stroke="#1f2328" stroke-width="3" stroke-linejoin="round">
+    <polygon points="58,592 58,752 120,598" data-switch="C1R2" data-coil="19"/>
+    <polygon points="502,592 502,752 440,598" data-switch="C1R3" data-coil="20"/>
+  </g>
+  <text x="96" y="700" class="label">Left side kicker</text>
+  <text x="96" y="713" class="tag">C1·R2 · coil 19</text>
+  <text x="464" y="700" class="label end">Right side kicker</text>
+  <text x="464" y="713" class="tag end">C1·R3 · coil 20</text>
+
   <!-- Lower pop bumpers: red, "1 point" -->
   <g fill="#ffaba8" stroke="#86181d" stroke-width="2">
     <circle cx="90" cy="580" r="28" data-switch="C2R3" data-coil="6" data-lamp="27"/>
@@ -157,8 +167,8 @@
   <text x="90" y="590" class="tag mid">1 point</text>
   <text x="470" y="577" class="label mid">Pop 5</text>
   <text x="470" y="590" class="tag mid">1 point</text>
-  <text x="90" y="623" class="tag mid">C2·R3 · coil 6 · L27</text>
-  <text x="470" y="623" class="tag mid">C2·R4 · coil 7 · L28</text>
+  <text x="124" y="560" class="tag">C2·R3 · coil 6 · L27</text>
+  <text x="436" y="560" class="tag end">C2·R4 · coil 7 · L28</text>
 
   <!-- Bonus wheel (lamps only) -->
   <circle cx="280" cy="640" r="100" fill="#ffd8d3" stroke="#d73a49" stroke-width="2"/>

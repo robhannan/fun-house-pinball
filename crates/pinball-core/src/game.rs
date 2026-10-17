@@ -313,6 +313,15 @@ impl Machine {
                 kick(&mut self.coils, coil::RIGHT_KICKER);
                 self.add_score(1);
             }
+            // Assumed (*verify*): 1 point, like the kickers above the flippers.
+            sw::LEFT_SIDE_KICKER => {
+                kick(&mut self.coils, coil::LEFT_SIDE_KICKER);
+                self.add_score(1);
+            }
+            sw::RIGHT_SIDE_KICKER => {
+                kick(&mut self.coils, coil::RIGHT_SIDE_KICKER);
+                self.add_score(1);
+            }
             sw::TOP_BUMPER => {
                 kick(&mut self.coils, coil::TOP_BUMPER);
                 self.sound.request(Sound::PopBumper);
@@ -774,6 +783,17 @@ mod tests {
         sim.machine.lamps.set(lamp::TOP_BUMPER, LampMode::On);
         sim.tap(sw::TOP_BUMPER);
         assert_eq!(sim.machine.score(), 11);
+    }
+
+    #[test]
+    fn the_side_kickers_kick_and_score() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::LEFT_SIDE_KICKER);
+        assert!(sim.coil_on(coil::LEFT_SIDE_KICKER));
+        sim.tap(sw::RIGHT_SIDE_KICKER);
+        assert!(sim.coil_on(coil::RIGHT_SIDE_KICKER));
+        assert_eq!(sim.machine.score(), 2);
     }
 
     #[test]

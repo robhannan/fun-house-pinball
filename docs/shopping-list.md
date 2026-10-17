@@ -8,9 +8,9 @@ Everything needed to build the controller described in the
 
 | | Estimate |
 |---|---|
-| **Everything** | **£535–995** |
-| Without tools (if you already have them) | £465–845 |
-| Electronics only (sections 1–8, no pinball parts or tools) | £265–475 |
+| **Everything** | **£560–1,035** |
+| Without tools (if you already have them) | £490–885 |
+| Electronics only (sections 1–8, no pinball parts or tools) | £270–485 |
 
 These are rough **estimates in GBP, as of October 2026**, to help with budgeting.
 
@@ -80,7 +80,7 @@ the numbers.
 
 ## 3. Switch matrix
 
-The map has 19 matrix switches, including the three trapdoors in the
+The map has 21 matrix switches, including the three trapdoors in the
 "Scores Bonus" box, plus 5 direct switches.
 
 | Item | Qty | Notes | Link | Est. £ |
@@ -106,17 +106,17 @@ The map has 19 matrix switches, including the three trapdoors in the
 
 ## 5. Coil drivers
 
-16 coil outputs are used: ball serve, 2 kickers, 6 pop bumpers, 2 × 2 flipper
+18 coil outputs are used: ball serve, 4 kickers, 6 pop bumpers, 2 × 2 flipper
 windings and 3 trapdoor flaps, plus 3 for the optional bells.
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
-| 🛡️ IRL540N logic-level N-channel MOSFET | 20 | Must be **logic level** (the "L" in IRL). Rated 100 V, suitable for coil supplies up to about 50 V. | [Mouser](https://www.mouser.co.uk/c/?q=IRL540N) | 20–30 |
+| 🛡️ IRL540N logic-level N-channel MOSFET | 25 | Must be **logic level** (the "L" in IRL). Rated 100 V, suitable for coil supplies up to about 50 V. | [Mouser](https://www.mouser.co.uk/c/?q=IRL540N) | 25–38 |
 | 1N4004 diodes | 100 | Flyback diode, one per coil winding, unless the coil already has one | [AliExpress](https://www.aliexpress.com/w/wholesale-1n4004-diode.html) | 1–3 |
 | 2-pin 5.08 mm PCB screw terminals | 40 | Coil wires to the driver board | [AliExpress](https://www.aliexpress.com/w/wholesale-5.08mm-pcb-screw-terminal-2-pin.html) | 3–6 |
 | 220 Ω and 10 kΩ resistors | — | In the resistor kit from section 2 | — | — |
 
-**Section estimate: £24–39**
+**Section estimate: £29–47**
 
 **Easier alternative:** ready-made multi-channel MOSFET driver boards that take
 5 V logic inputs replace the MOSFETs, resistors and screw terminals above. Check
@@ -206,7 +206,7 @@ of the old parts.
 
 | Item | Qty | Notes | Est. £ |
 |---|---|---|---|
-| Kicker coils | 2 | DC, at your coil voltage | 20–30 |
+| Kicker coils | 4 | DC, at your coil voltage | 40–60 |
 | Pop bumper coils | 6 | DC, at your coil voltage | 60–90 |
 | Ball serve coil and mechanism | 1 | Only if replacing the manual ball lift | 25–60 |
 | Dual-wound flipper coils | 2 | DC, at your coil voltage; ask for the lug layout | 22–30 |
@@ -214,4 +214,4 @@ of the old parts.
 | *Optional:* bells with coils | 0–3 | Not needed now. For the authentic 1950s scoring sound later (wiring guide section 7e). | varies |
 | Flipper rebuild kits, rubber rings, pop bumper caps | As needed | | 40–100 |
 
-**Section estimate: £197–370**
+**Section estimate: £217–400**
