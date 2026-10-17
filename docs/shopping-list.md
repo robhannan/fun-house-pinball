@@ -81,15 +81,16 @@ the numbers.
 ## 3. Switch matrix
 
 The map has 25 matrix switches, including the three trapdoors in the
-"Scores Bonus" box, plus 5 direct switches.
+"Scores Bonus" box, plus 6 direct switches.
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
 | 1N4148 signal diodes | 100 | One per matrix switch, plus plenty spare | [AliExpress](https://www.aliexpress.com/w/wholesale-1n4148-diode.html) | 1–2 |
 | Playfield switches (leaf, rollover, pop bumper skirt) | As needed | Reuse the originals where they're good; buy matching replacements from a pinball specialist | Pinball specialist | varies |
 | Flipper and start button leaf switches | As needed | As above | Pinball specialist | varies |
+| Momentary push button, panel mount | 1 | The test button, inside the coin door | [AliExpress](https://www.aliexpress.com/w/wholesale-12mm-momentary-push-button.html) | 1–2 |
 
-**Section estimate: £1–2, plus switches**
+**Section estimate: £2–4, plus switches**
 
 ## 4. Output chain (74HC595 shift registers)
 

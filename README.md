@@ -116,6 +116,23 @@ cargo run --release   # builds, flashes via ravedude, opens a 57600 baud console
 
 If more than one serial port is present, set `RAVEDUDE_PORT=/dev/cu.usbmodemXXXX`.
 
+### Test mode
+
+For bringing the machine up one part at a time. Press the **test button**
+(inside the coin door) in attract mode, then press it again to move on:
+
+1. **Switches:** close any switch to hear a bell, light that part's lamp, and
+   see which switch it was.
+2. **Coils:** the flipper buttons choose a coil, and Start fires it once at its
+   normal pulse length. Nothing else can fire.
+3. **Lamps:** the flipper buttons light the lamps one at a time, and Start
+   lights them all.
+
+A fourth press (or the slam tilt) goes back to attract mode. Each step prints a
+line on the USB console that `cargo run` opens, such as
+`switch C2 R3 closed: Pop bumper 4 (lower left)`. The simulator has the same
+test button and shows the same lines.
+
 `firmware/rust-toolchain.toml` pins the nightly that
 [avr-hal](https://github.com/Rahix/avr-hal) currently supports. When bumping
 avr-hal, bump the toolchain to match its `rust-toolchain.toml`.
@@ -125,7 +142,6 @@ avr-hal, bump the toolchain to match its `rust-toolchain.toml`.
 - [ ] Check the features in `crates/pinball-core/src/playfield.rs` (taken from a
       photo) against the real playfield; counts marked *verify* are guesses
 - [ ] Confirm the scoring and bonus-wheel rules against the original schematic
-- [ ] Multi-player support (the instruction card prices per player)
 - [ ] Choose driver boards and confirm coil voltages and pulse times
 - [ ] Decide on a score display (backglass lamps, reels or LED digits)
 - [x] Sound: recorded effects, mixed by a WAV Trigger (wire and test on the machine)

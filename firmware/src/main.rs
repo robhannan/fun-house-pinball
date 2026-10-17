@@ -15,9 +15,10 @@ use arduino_hal::spi;
 use pinball_core::sound::{
     WAV_TRIGGER_GAIN_DB, wav_trigger_amp, wav_trigger_gain, wav_trigger_play, wav_trigger_stop,
 };
+use pinball_core::test_mode::describe;
 use pinball_core::{Instant, Machine, Outputs, SwitchStates};
 
-use io::{OutputChain, SoundOut, SwitchScanner};
+use io::{ConsoleOut, OutputChain, SoundOut, SwitchScanner};
 
 /// The WAV Trigger indexes its SD card at power-on before it accepts commands.
 const SOUND_STARTUP_MS: u32 = 2_000;
@@ -109,6 +110,9 @@ fn main() -> ! {
     unsafe { avr_device::interrupt::enable() };
 
     ufmt::uwriteln!(&mut serial, "Fun House controller ready\r").unwrap_infallible();
+    // From here on, the USB serial port only gets queued, non-blocking output:
+    // test-mode reports (57600 baud, CR LF line endings).
+    let mut console = ConsoleOut::new(serial);
 
     let mut machine = Machine::new();
     let mut raw = SwitchStates::new();
@@ -117,8 +121,9 @@ fn main() -> ! {
     loop {
         let now = clock::now();
         if now == last_tick {
-            // Keep the sound board's serial port busy while waiting.
+            // Keep the serial ports busy while waiting.
             sound.poll();
+            console.poll();
             continue;
         }
         last_tick = now;
@@ -143,6 +148,11 @@ fn main() -> ! {
             sound_ready = true;
         }
         sound.poll();
+
+        for report in frame.reports.iter() {
+            console.send_line(describe(report).as_bytes());
+        }
+        console.poll();
 
         watchdog.feed();
     }

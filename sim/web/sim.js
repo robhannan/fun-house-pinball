@@ -14,7 +14,7 @@
 
 import { BELL_SAMPLES, COIL_SAMPLES, SOUNDS, render } from "./sounds.js";
 
-const PHASES = ["Attract", "Playing", "Tilted"];
+const PHASES = ["Attract", "Playing", "Tilted", "Test"];
 const COIL_GLOW_MS = 150; // keep short coil pulses visible
 
 // "C2R3" (matrix column 2, row 3) -> 19; "D1" (direct input 1) -> 65.
@@ -145,6 +145,7 @@ function start(sim) {
 
   const audio = soundPlayer();
 
+  let testReports = 0;
   const text = (id, value) => {
     const el = document.getElementById(id);
     if (el.textContent !== value) el.textContent = value;
@@ -207,6 +208,21 @@ function start(sim) {
     text("replays", String(sim.sim_replays()));
     text("bonus", String(sim.sim_bonus()));
     text("phase", PHASES[sim.sim_phase()] ?? "?");
+
+    // Test-mode reports: the controller's serial console, newest first.
+    const reports = sim.sim_test_reports();
+    if (reports !== testReports) {
+      testReports = reports;
+      const lines = [];
+      for (let n = 0; ; n++) {
+        const len = sim.sim_test_line_len(n);
+        if (len === 0) break;
+        let line = "";
+        for (let i = 0; i < len; i++) line += String.fromCharCode(sim.sim_test_line_byte(n, i));
+        lines.push(line);
+      }
+      text("test-log", lines.join("\n") || "–");
+    }
 
     requestAnimationFrame(frame);
   }
