@@ -38,11 +38,6 @@
   <text x="512" y="214" class="tag end">Jack-in-the-box kicker</text>
   <text x="512" y="225" class="tag end">C1·R5 · coil 22</text>
 
-  <!-- Guide rails lining the side walls (drawn only: the walls stop the ball) -->
-  <g stroke="#8b949e" stroke-width="6" stroke-linecap="round">
-    <line x1="52" y1="262" x2="52" y2="335"/>
-    <line x1="508" y1="262" x2="508" y2="335"/>
-  </g>
 
   <!-- Top rubbers: "advance bonus when lit" -->
   <g fill="#f6c6cb" stroke="#d73a49" stroke-width="3" stroke-linejoin="round">

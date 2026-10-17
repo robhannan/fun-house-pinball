@@ -24,7 +24,7 @@
 use std::ops::{Add, Mul, Neg, Sub};
 
 use pinball_core::playfield::{coil, sw};
-use pinball_core::{SwitchId, SwitchStates};
+use pinball_core::{Instant, SwitchId, SwitchStates};
 
 use crate::switch_from_index;
 
@@ -533,7 +533,7 @@ pub enum BallState {
     /// time.
     Underneath {
         /// When it reaches the outhole.
-        until_ms: u32,
+        until: Instant,
     },
     /// Resting in the outhole, waiting to be served.
     InOuthole,
@@ -550,13 +550,14 @@ pub struct Physics {
     flipper_turn: Vec<f32>,
     flipper_speed: Vec<f32>,
     /// When the plunger was pulled back, if it's held.
-    plunger_from: Option<u32>,
-    now_ms: u32,
+    plunger_from: Option<Instant>,
+    /// The physics clock, which wraps like the machine's.
+    now: Instant,
     prev_coils: u32,
     /// When the ball last touched each solid.
-    touched_ms: Vec<Option<u32>>,
+    touched: Vec<Option<Instant>>,
     /// Each switch the ball is holding closed, until when.
-    closed_until: Vec<u32>,
+    closed_until: Vec<Option<Instant>>,
 }
 
 impl Default for Physics {
@@ -578,10 +579,10 @@ impl Physics {
             flipper_turn: vec![0.0; flippers],
             flipper_speed: vec![0.0; flippers],
             plunger_from: None,
-            now_ms: 0,
+            now: Instant::from_millis(0),
             prev_coils: 0,
-            touched_ms: vec![None; solids],
-            closed_until: vec![0; pinball_core::switches::SWITCH_COUNT],
+            touched: vec![None; solids],
+            closed_until: vec![None; pinball_core::switches::SWITCH_COUNT],
             table,
         }
     }
@@ -618,10 +619,7 @@ impl Physics {
     #[must_use]
     pub fn plunger_pull(&self) -> f32 {
         self.plunger_from.map_or(0.0, |from| {
-            let held = self
-                .now_ms
-                .saturating_sub(from)
-                .min(u32::from(PLUNGER_FULL_MS));
+            let held = self.now.since(from).min(u32::from(PLUNGER_FULL_MS));
             let held = u16::try_from(held).unwrap_or(PLUNGER_FULL_MS);
             f32::from(held) / f32::from(PLUNGER_FULL_MS)
         })
@@ -639,7 +637,7 @@ impl Physics {
     /// it's in the shooter lane, harder the longer it was pulled.
     pub fn plunger(&mut self, pulled: bool) {
         if pulled {
-            self.plunger_from.get_or_insert(self.now_ms);
+            self.plunger_from.get_or_insert(self.now);
         } else if self.plunger_from.is_some() {
             let pull = self.plunger_pull();
             self.plunger_from = None;
@@ -652,7 +650,11 @@ impl Physics {
     /// Bumps the table: a small shove up and to one side.
     pub fn nudge(&mut self) {
         if self.state == BallState::Rolling {
-            let side = if self.now_ms % 2 == 0 { 1.0 } else { -1.0 };
+            let side = if self.now.as_millis() % 2 == 0 {
+                1.0
+            } else {
+                -1.0
+            };
             self.vel = self.vel + Vec2::new(120.0 * side, -180.0);
         }
     }
@@ -667,12 +669,14 @@ impl Physics {
     /// Runs one 1 ms machine tick with the coil outputs from the last tick,
     /// and returns the switches the ball is closing.
     pub fn tick(&mut self, coils: u32) -> SwitchStates {
-        self.now_ms += 1;
+        self.now = self.now.plus(1);
         let fired = coils & !self.prev_coils;
         self.prev_coils = coils;
 
-        // The ball-serve coil kicks a waiting ball up to the shooter lane.
-        if fired & (1 << coil::BALL_SERVE.index()) != 0 && self.state == BallState::InOuthole {
+        // The ball-serve coil puts the ball in the shooter lane. Normally it's
+        // waiting in the outhole; if the player ended a ball by hand while it
+        // was still rolling, it comes back to the shooter lane all the same.
+        if fired & (1 << coil::BALL_SERVE.index()) != 0 {
             self.place(self.table.shooter_rest, Vec2::default());
         }
 
@@ -682,8 +686,7 @@ impl Physics {
                 let Some((c, speed)) = solid.kick else {
                     continue;
                 };
-                let recent = self.touched_ms[i]
-                    .is_some_and(|t| self.now_ms.saturating_sub(t) <= KICK_WINDOW_MS);
+                let recent = self.touched[i].is_some_and(|t| self.now.since(t) <= KICK_WINDOW_MS);
                 if fired & (1 << c) != 0
                     && recent
                     && solid.shape.distance(self.pos) <= BALL_RADIUS + 8.0
@@ -706,7 +709,7 @@ impl Physics {
         }
 
         match self.state {
-            BallState::Underneath { until_ms } if self.now_ms >= until_ms => {
+            BallState::Underneath { until } if self.now.reached(until) => {
                 self.state = BallState::InOuthole;
                 self.pos = self.table.outhole;
             }
@@ -744,7 +747,7 @@ impl Physics {
             let (q, thickness) = self.table.solids[i].shape.closest(self.pos);
             let bounce = self.table.solids[i].bounce;
             if self.collide(q, thickness, bounce, Vec2::default()) {
-                self.touched_ms[i] = Some(self.now_ms);
+                self.touched[i] = Some(self.now);
                 if let Some(s) = self.table.solids[i].switch {
                     self.close(s);
                 }
@@ -813,7 +816,7 @@ impl Physics {
             let inside = p.x > t.min.x && p.x < t.max.x && p.y > t.min.y && p.y < t.max.y;
             if inside && coils & (1 << t.flap) != 0 {
                 self.state = BallState::Underneath {
-                    until_ms: self.now_ms + UNDER_PLAYFIELD_MS,
+                    until: self.now.plus(UNDER_PLAYFIELD_MS),
                 };
                 let s = t.switch;
                 self.close(s);
@@ -829,28 +832,39 @@ impl Physics {
         }
     }
 
-    fn close(&mut self, switch: SwitchId) {
-        let until = self.now_ms + MIN_CLOSED_MS;
+    /// Holds `switch` closed for at least `ms` from now.
+    fn close_for(&mut self, switch: SwitchId, ms: u32) {
+        let until = self.now.plus(ms);
         let slot = &mut self.closed_until[switch.index()];
-        *slot = (*slot).max(until);
+        if !slot.is_some_and(|held| held.reached(until)) {
+            *slot = Some(until);
+        }
+    }
+
+    fn close(&mut self, switch: SwitchId) {
+        self.close_for(switch, MIN_CLOSED_MS);
     }
 
     fn switches(&mut self) -> SwitchStates {
         let mut states = SwitchStates::new();
         if self.state == BallState::Rolling {
-            for r in &self.table.rollovers {
+            for i in 0..self.table.rollovers.len() {
+                let r = &self.table.rollovers[i];
                 if r.shape.distance(self.pos) < BALL_RADIUS {
-                    let until = self.now_ms + 1;
-                    let slot = &mut self.closed_until[r.switch.index()];
-                    *slot = (*slot).max(until);
+                    let s = r.switch;
+                    self.close_for(s, 1);
                 }
             }
         }
-        for (i, &until) in self.closed_until.iter().enumerate() {
-            if until > self.now_ms {
-                if let Some(id) = switch_from_index(i as u32) {
-                    states.set(id, true);
+        let now = self.now;
+        for (i, slot) in self.closed_until.iter_mut().enumerate() {
+            match *slot {
+                Some(until) if !now.reached(until) => {
+                    if let Some(id) = switch_from_index(i as u32) {
+                        states.set(id, true);
+                    }
                 }
+                _ => *slot = None,
             }
         }
         if self.state == BallState::InOuthole {
@@ -890,6 +904,20 @@ mod tests {
         // centre post and six apron walls.
         let walls = t.solids.iter().filter(|s| s.switch.is_none()).count();
         assert_eq!(walls, 14);
+    }
+
+    #[test]
+    fn switches_still_open_when_the_clock_wraps_round() {
+        let mut physics = Physics {
+            now: Instant::from_millis(u32::MAX - 3),
+            ..Physics::default()
+        };
+        physics.close(sw::POP_BUMPERS[0]);
+        assert!(physics.tick(0).is_closed(sw::POP_BUMPERS[0]));
+        for _ in 0..MIN_CLOSED_MS {
+            physics.tick(0);
+        }
+        assert!(!physics.tick(0).is_closed(sw::POP_BUMPERS[0]));
     }
 
     #[test]

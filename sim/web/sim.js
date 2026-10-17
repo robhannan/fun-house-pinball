@@ -65,30 +65,30 @@ function start(sim) {
   ballEl.setAttribute("stroke-width", "2");
   svg.appendChild(ballEl);
 
-  // The plunger: hold to pull back, let go to launch.
-  const plungerButton = document.getElementById("plunger");
+  // Ball controls that aren't switches, by their buttons' data-action: the
+  // plunger (hold to pull back, let go to launch) and the nudge.
   const pullMeter = document.getElementById("plunger-pull");
-  const plunger = (pulled) => {
-    sim.sim_plunger(pulled ? 1 : 0);
-    plungerButton.classList.toggle("pressed", pulled);
+  const actions = {
+    plunger: (down) => sim.sim_plunger(down ? 1 : 0),
+    nudge: (down) => down && sim.sim_nudge(),
   };
-  plungerButton.addEventListener("pointerdown", () => plunger(true));
-  plungerButton.addEventListener("pointerup", () => plunger(false));
-  plungerButton.addEventListener("pointerleave", () => plunger(false));
-  document.getElementById("nudge").addEventListener("click", () => sim.sim_nudge());
-  addEventListener("keydown", (event) => {
-    if (event.ctrlKey || event.metaKey || event.altKey) return;
-    if (event.key === " ") {
-      event.preventDefault();
-      if (!event.repeat) plunger(true);
-    } else if (event.key.toLowerCase() === "n" && !event.repeat) {
-      sim.sim_nudge();
+  for (const button of document.querySelectorAll("button[data-action]")) {
+    const act = actions[button.dataset.action];
+    if (button.hasAttribute("data-hold")) {
+      const release = () => {
+        act(false);
+        button.classList.remove("pressed");
+      };
+      button.addEventListener("pointerdown", () => {
+        act(true);
+        button.classList.add("pressed");
+      });
+      button.addEventListener("pointerup", release);
+      button.addEventListener("pointerleave", release);
+    } else {
+      button.addEventListener("click", () => act(true));
     }
-  });
-  addEventListener("keyup", (event) => {
-    if (event.key === " ") plunger(false);
-  });
-  addEventListener("blur", () => plunger(false));
+  }
 
   const press = (label, closed) => sim.sim_set_switch(switchIndex(label), closed ? 1 : 0);
   const tap = (label) => sim.sim_tap(switchIndex(label));
@@ -152,6 +152,9 @@ function start(sim) {
   const keys = new Map(
     [...document.querySelectorAll("button[data-key]")].map((button) => [button.dataset.key, button]),
   );
+  // A button either works a switch or does an action.
+  const hold = (button, down) =>
+    button.dataset.action ? actions[button.dataset.action](down) : press(button.dataset.switch, down);
   const held = new Set();
   const keyButton = (event) =>
     event.ctrlKey || event.metaKey || event.altKey ? undefined : keys.get(event.key.toLowerCase());
@@ -162,15 +165,17 @@ function start(sim) {
     event.preventDefault();
     if (event.repeat) return;
     if (button.hasAttribute("data-hold")) {
-      press(button.dataset.switch, true);
+      hold(button, true);
       held.add(button);
+    } else if (button.dataset.action) {
+      actions[button.dataset.action](true);
     } else {
       tap(button.dataset.switch);
     }
     button.classList.add("pressed");
   });
   const release = (button) => {
-    if (held.delete(button)) press(button.dataset.switch, false);
+    if (held.delete(button)) hold(button, false);
     button.classList.remove("pressed");
   };
   addEventListener("keyup", (event) => {

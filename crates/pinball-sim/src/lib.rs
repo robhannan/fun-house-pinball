@@ -697,6 +697,22 @@ mod tests {
     }
 
     #[test]
+    fn ending_a_ball_by_hand_brings_the_ball_back_to_the_plunger() {
+        let mut sim = served();
+        plunge(&mut sim, 900);
+        run(&mut sim, 1_000);
+        assert!(!sim.physics().ready_to_plunge());
+        sim.tap(sw::OUTHOLE);
+        run(&mut sim, 1_500);
+        assert_eq!(sim.machine().ball(), 2);
+        assert!(
+            sim.physics().ready_to_plunge(),
+            "{:?}",
+            sim.physics().ball()
+        );
+    }
+
+    #[test]
     fn a_pop_bumper_scores_and_kicks_the_ball_away() {
         let mut sim = served();
         // Pop 1 is at (160, 285), radius 30. Roll the ball gently into it.

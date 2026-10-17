@@ -81,7 +81,8 @@ Controls:
 - <kbd>Z</kbd> / <kbd>M</kbd>: hold the left / right flipper
 - <kbd>N</kbd>: nudge the table
 - <kbd>T</kbd>: tilt
-- <kbd>D</kbd>: end the ball by hand (closes the outhole switch)
+- <kbd>D</kbd>: end the ball by hand (closes the outhole switch); the ball comes
+  back to the plunger
 
 The ball physics (`crates/pinball-sim/src/physics.rs`) reads its geometry from
 the same map: parts by their `data-switch`, `data-coil` and `data-flipper`
