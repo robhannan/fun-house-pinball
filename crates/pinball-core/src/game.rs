@@ -16,6 +16,7 @@
 use crate::attract::AttractShow;
 use crate::bells::BellRinger;
 use crate::coils::{CoilId, Coils};
+use crate::flaps::{FLAP_COUNT, FlapTrim};
 use crate::lamps::{LampId, LampMode, Lamps};
 use crate::playfield::{COIL_KINDS, PARTS, coil, lamp, sw};
 use crate::sound::{Sound, SoundScheduler, Sounds};
@@ -108,6 +109,8 @@ pub struct Outputs {
     pub stop_sounds: Sounds,
     /// In test mode, what just happened, for the firmware to print.
     pub reports: TestReports,
+    /// Where each trapdoor flap's servo should point, in degrees.
+    pub flap_angles: [u8; FLAP_COUNT],
 }
 
 /// The whole machine: switch filtering, rules, coils and lamps.
@@ -149,6 +152,12 @@ pub struct Machine {
     test_lamp: Option<LampId>,
     /// Test reports waiting for the next [`Outputs`].
     reports: TestReports,
+    /// Which trapdoor flaps are open: bit `n` is flap `n`.
+    flaps_open: u8,
+    /// Each flap's closed and open servo angles.
+    flap_trim: FlapTrim,
+    /// Test mode's chosen flap, and whether it's at its open position.
+    test_flap: (usize, bool),
 }
 
 impl Default for Machine {
@@ -196,6 +205,9 @@ impl Machine {
             test_coil: test_mode::first_coil(),
             test_lamp: None,
             reports: TestReports::new(),
+            flaps_open: 0,
+            flap_trim: FlapTrim::DEFAULT,
+            test_flap: (0, false),
         };
         machine.enter(Phase::Attract);
         machine
@@ -294,7 +306,40 @@ impl Machine {
             sounds: self.sound.next(now),
             stop_sounds: self.sound.take_stops(),
             reports: core::mem::take(&mut self.reports),
+            flap_angles: self.flap_angles(),
         }
+    }
+
+    /// Where each flap's servo should point: its open or closed angle, or in
+    /// test mode's flaps stage, the position being set.
+    fn flap_angles(&self) -> [u8; FLAP_COUNT] {
+        let mut angles = [0; FLAP_COUNT];
+        for (n, angle) in angles.iter_mut().enumerate() {
+            let open = if self.phase == Phase::Test(TestStage::Flaps) {
+                self.test_flap == (n, true)
+            } else {
+                self.trapdoor_open(n)
+            };
+            *angle = self.flap_trim.angle(n, open);
+        }
+        angles
+    }
+
+    /// Whether trapdoor `n` (0–2, left to right) is open.
+    #[must_use]
+    pub const fn trapdoor_open(&self, n: usize) -> bool {
+        n < FLAP_COUNT && self.flaps_open & (1 << n) != 0
+    }
+
+    /// Each flap's closed and open servo angles.
+    #[must_use]
+    pub const fn flap_trim(&self) -> FlapTrim {
+        self.flap_trim
+    }
+
+    /// Sets each flap's closed and open servo angles, as saved in the EEPROM.
+    pub fn set_flap_trim(&mut self, trim: FlapTrim) {
+        self.flap_trim = trim;
     }
 
     fn on_switch(&mut self, event: SwitchEvent, now: Instant) {
@@ -432,15 +477,19 @@ impl Machine {
     /// If `n` is not 0, 1 or 2.
     pub fn set_trapdoor(&mut self, n: usize, open: bool) {
         if self.phase == Phase::Playing {
-            self.coils.hold(coil::TRAPDOOR_FLAPS[n], open);
+            if open {
+                self.flaps_open |= 1 << n;
+            } else {
+                self.flaps_open &= !(1 << n);
+            }
             let mode = if open { LampMode::On } else { LampMode::Off };
             self.lamps.set(lamp::TRAPDOORS[n], mode);
         }
     }
 
     fn close_trapdoors(&mut self) {
-        for (flap, lamp) in coil::TRAPDOOR_FLAPS.into_iter().zip(lamp::TRAPDOORS) {
-            self.coils.hold(flap, false);
+        self.flaps_open = 0;
+        for lamp in lamp::TRAPDOORS {
             self.lamps.set(lamp, LampMode::Off);
         }
     }
@@ -644,7 +693,30 @@ impl Machine {
                 }
                 _ => {}
             },
-            TestStage::Coils | TestStage::Lamps => {}
+            TestStage::Flaps if closed => match id {
+                sw::LEFT_FLIPPER_BUTTON | sw::RIGHT_FLIPPER_BUTTON => {
+                    let (n, open) = self.test_flap;
+                    let step = if id == sw::RIGHT_FLIPPER_BUTTON {
+                        1
+                    } else {
+                        -1
+                    };
+                    self.flap_trim.nudge(n, open, step);
+                    self.report_test_flap();
+                }
+                sw::START_BUTTON => {
+                    // Flap 1 closed, flap 1 open, flap 2 closed, and so on.
+                    let (n, open) = self.test_flap;
+                    self.test_flap = if open {
+                        ((n + 1) % FLAP_COUNT, false)
+                    } else {
+                        (n, true)
+                    };
+                    self.report_test_flap();
+                }
+                _ => {}
+            },
+            TestStage::Coils | TestStage::Flaps | TestStage::Lamps => {}
         }
     }
 
@@ -656,6 +728,15 @@ impl Machine {
         }
         self.test_coil = id;
         self.reports.push(TestReport::Coil { id, fired: None });
+    }
+
+    fn report_test_flap(&mut self) {
+        let (n, open) = self.test_flap;
+        self.reports.push(TestReport::Flap {
+            n: u8::try_from(n).unwrap_or(0),
+            open,
+            angle: self.flap_trim.angle(n, open),
+        });
     }
 
     /// Lights one lamp on its own for test mode.
@@ -728,6 +809,7 @@ impl Machine {
                 self.player = 0;
                 self.serve_at = None;
                 self.coils.set_enabled(false);
+                self.flaps_open = 0;
                 self.lamps.all_off();
                 self.lamps.set(lamp::GAME_OVER, LampMode::On);
             }
@@ -758,9 +840,14 @@ impl Machine {
                 // Coil power only while testing coils, and nothing fires
                 // until Start is pressed.
                 self.coils.set_enabled(false);
+                self.flaps_open = 0;
                 self.reports.push(TestReport::Stage(stage));
                 match stage {
                     TestStage::Switches => {}
+                    TestStage::Flaps => {
+                        self.test_flap = (0, false);
+                        self.report_test_flap();
+                    }
                     TestStage::Coils => {
                         self.coils.set_enabled(true);
                         self.choose_test_coil(test_mode::first_coil());
@@ -779,7 +866,7 @@ impl Machine {
                 // the ball can still be served once this one drains.
                 self.coils.set_enabled(false);
                 self.coils.set_enabled(true);
-                // That dropped the flaps; turn their lamps off to match.
+                // And shut the flaps.
                 self.close_trapdoors();
                 self.lamps.set(lamp::TILT, LampMode::On);
                 self.sound.request(Sound::Tilt);
@@ -846,6 +933,11 @@ mod tests {
             self.tap(sw::TRAPDOORS[n]);
         }
 
+        /// Whether trapdoor flap `n`'s servo is at its open angle.
+        fn flap_open(&self, n: usize) -> bool {
+            self.last.flap_angles[n] == self.machine.flap_trim().angle(n, true)
+        }
+
         fn coil_on(&self, id: CoilId) -> bool {
             self.last.coils & (1 << id.index()) != 0
         }
@@ -868,6 +960,7 @@ mod tests {
         let stages = [
             TestReport::Stage(TestStage::Switches),
             TestReport::Stage(TestStage::Coils),
+            TestReport::Stage(TestStage::Flaps),
             TestReport::Stage(TestStage::Lamps),
         ];
         for (n, stage) in stages.into_iter().enumerate() {
@@ -972,14 +1065,14 @@ mod tests {
         sim.tap(sw::TEST_BUTTON);
         while !matches!(
             sim.reports.last(),
-            Some(TestReport::Coil { id, .. }) if *id == coil::TRAPDOOR_FLAPS[0]
+            Some(TestReport::Coil { id, .. }) if *id == coil::LEFT_FLIPPER_HOLD
         ) {
             sim.tap(sw::RIGHT_FLIPPER_BUTTON);
         }
         sim.tap(sw::START_BUTTON);
-        assert!(sim.coil_on(coil::TRAPDOOR_FLAPS[0]));
+        assert!(sim.coil_on(coil::LEFT_FLIPPER_HOLD));
         sim.run(u32::from(HOLD_TEST_MS));
-        assert!(!sim.coil_on(coil::TRAPDOOR_FLAPS[0]));
+        assert!(!sim.coil_on(coil::LEFT_FLIPPER_HOLD));
     }
 
     #[test]
@@ -999,9 +1092,9 @@ mod tests {
     #[test]
     fn lamp_test_steps_through_lamps_and_lights_them_all() {
         let mut sim = Sim::new();
-        sim.tap(sw::TEST_BUTTON);
-        sim.tap(sw::TEST_BUTTON);
-        sim.tap(sw::TEST_BUTTON);
+        for _ in 0..4 {
+            sim.tap(sw::TEST_BUTTON);
+        }
         assert_eq!(sim.last.lamps, 1 << lamp::GAME_OVER.index());
         sim.tap(sw::RIGHT_FLIPPER_BUTTON);
         assert_eq!(sim.last.lamps, 1 << lamp::TILT.index());
@@ -1205,7 +1298,7 @@ mod tests {
         sim.tap(sw::START_BUTTON);
         sim.machine.set_trapdoor(1, true);
         sim.tap(sw::TILT);
-        assert!(!sim.coil_on(coil::TRAPDOOR_FLAPS[1]));
+        assert!(!sim.flap_open(1));
         assert_eq!(sim.last.lamps & (1 << lamp::TRAPDOORS[1].index()), 0);
     }
 
@@ -1355,15 +1448,81 @@ mod tests {
     }
 
     #[test]
+    fn flap_servos_use_the_trimmed_angles() {
+        let mut sim = Sim::new();
+        let mut trim = FlapTrim::DEFAULT;
+        trim.nudge(1, true, -10);
+        sim.machine.set_flap_trim(trim);
+        sim.tap(sw::START_BUTTON);
+        assert_eq!(sim.last.flap_angles, [90, 90, 90]);
+        sim.machine.set_trapdoor(1, true);
+        sim.run(1);
+        assert_eq!(sim.last.flap_angles, [90, 35, 90]);
+        assert!(sim.machine.trapdoor_open(1));
+    }
+
+    #[test]
+    fn the_flaps_stage_moves_each_flap_and_trims_it() {
+        let mut sim = Sim::new();
+        sim.tap(sw::TEST_BUTTON);
+        sim.tap(sw::TEST_BUTTON);
+        let reports = reports_during(&mut sim, |s| s.tap(sw::TEST_BUTTON));
+        assert_eq!(
+            reports,
+            [
+                TestReport::Stage(TestStage::Flaps),
+                TestReport::Flap {
+                    n: 0,
+                    open: false,
+                    angle: 90
+                }
+            ]
+        );
+        assert_eq!(sim.last.coils, 0, "coil power is off");
+        // Start moves flap 1 to its open position.
+        sim.tap(sw::START_BUTTON);
+        assert_eq!(sim.last.flap_angles, [45, 90, 90]);
+        // The flippers trim that position.
+        sim.tap(sw::RIGHT_FLIPPER_BUTTON);
+        sim.tap(sw::RIGHT_FLIPPER_BUTTON);
+        let reports = reports_during(&mut sim, |s| s.tap(sw::LEFT_FLIPPER_BUTTON));
+        assert_eq!(
+            reports,
+            [TestReport::Flap {
+                n: 0,
+                open: true,
+                angle: 46
+            }]
+        );
+        assert_eq!(sim.last.flap_angles, [46, 90, 90]);
+        // Then flap 2 closed, flap 2 open, and on round to flap 1 again.
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::LEFT_FLIPPER_BUTTON);
+        assert_eq!(sim.last.flap_angles, [90, 89, 90]);
+        for _ in 0..4 {
+            sim.tap(sw::START_BUTTON);
+        }
+        // Back to flap 1 closed; flap 2 keeps its trimmed closed angle.
+        assert_eq!(sim.last.flap_angles, [90, 89, 90]);
+        // The trims stay after test mode, for the firmware to save.
+        sim.tap(sw::TEST_BUTTON);
+        sim.tap(sw::TEST_BUTTON);
+        assert_eq!(sim.machine.phase(), Phase::Attract);
+        assert_eq!(sim.machine.flap_trim().angle(0, true), 46);
+        assert_eq!(sim.machine.flap_trim().angle(1, false), 89);
+        assert_eq!(sim.last.flap_angles, [90, 89, 90], "all closed");
+    }
+
+    #[test]
     fn trapdoor_flap_stays_open_until_a_ball_drops_through() {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
         sim.machine.set_trapdoor(1, true);
         sim.run(5_000);
-        assert!(sim.coil_on(coil::TRAPDOOR_FLAPS[1]));
+        assert!(sim.flap_open(1));
 
         sim.tap(sw::TRAPDOORS[1]);
-        assert!(!sim.coil_on(coil::TRAPDOOR_FLAPS[1]));
+        assert!(!sim.flap_open(1));
         // The ball isn't over until it reaches the outhole.
         assert_eq!(sim.machine.ball(), 1);
         sim.tap(sw::OUTHOLE);
@@ -1376,10 +1535,10 @@ mod tests {
         sim.tap(sw::START_BUTTON);
         sim.machine.set_trapdoor(0, true);
         sim.tap(sw::TILT);
-        assert!(!sim.coil_on(coil::TRAPDOOR_FLAPS[0]));
+        assert!(!sim.flap_open(0));
         sim.machine.set_trapdoor(0, true);
         sim.run(5);
-        assert!(!sim.coil_on(coil::TRAPDOOR_FLAPS[0]));
+        assert!(!sim.flap_open(0));
     }
 
     #[test]
@@ -1388,7 +1547,7 @@ mod tests {
         sim.tap(sw::START_BUTTON);
         sim.machine.set_trapdoor(2, true);
         sim.tap(sw::OUTHOLE);
-        assert!(!sim.coil_on(coil::TRAPDOOR_FLAPS[2]));
+        assert!(!sim.flap_open(2));
     }
 
     #[test]

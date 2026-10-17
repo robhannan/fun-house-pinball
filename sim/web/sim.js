@@ -27,6 +27,7 @@ const REQUIRED_EXPORTS = [
   "sim_plunger_pull",
   "sim_nudge",
   "sim_test_reports",
+  "sim_trapdoor_open",
 ];
 const COIL_GLOW_MS = 150; // keep short coil pulses visible
 
@@ -76,6 +77,9 @@ function start(sim) {
     const p = el.getAttribute("d").match(/-?[\d.]+/g).map(Number);
     return { el, n: el.dataset.flipper === "left" ? 0 : 1, pivot: [(p[0] + p[6]) / 2, (p[1] + p[7]) / 2] };
   });
+
+  // The trapdoors glow while their flaps are open.
+  const trapdoors = [...document.querySelectorAll("#playfield [data-trapdoor]")];
 
   // The ball, drawn on top of the playfield.
   const svg = document.querySelector("#playfield svg");
@@ -162,11 +166,7 @@ function start(sim) {
   // Trapdoor flaps: toggle by hand until the rule that opens them is known.
   for (const button of document.querySelectorAll("button[data-trapdoor-toggle]")) {
     const n = Number(button.dataset.trapdoorToggle);
-    const coil = Number(document.querySelector(`[data-trapdoor="${n}"]`).dataset.coil);
-    button.addEventListener("click", () => {
-      const open = (sim.sim_coils() >>> coil) & 1;
-      sim.sim_set_trapdoor(n, open ? 0 : 1);
-    });
+    button.addEventListener("click", () => sim.sim_set_trapdoor(n, sim.sim_trapdoor_open(n) ? 0 : 1));
   }
 
   // Keyboard shortcuts come from the buttons' data-key attributes, so the
@@ -256,6 +256,7 @@ function start(sim) {
       const degrees = (sim.sim_flipper_turn(n) * 180) / Math.PI;
       el.setAttribute("transform", `rotate(${degrees.toFixed(2)} ${pivot[0]} ${pivot[1]})`);
     }
+    for (const el of trapdoors) el.classList.toggle("open", sim.sim_trapdoor_open(Number(el.dataset.trapdoor)) === 1);
     ballEl.setAttribute("cx", sim.sim_ball_x().toFixed(1));
     ballEl.setAttribute("cy", sim.sim_ball_y().toFixed(1));
     ballEl.style.display = sim.sim_ball_shown() ? "" : "none";

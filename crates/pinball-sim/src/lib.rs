@@ -192,7 +192,10 @@ impl Simulator {
             });
             // The ball moves with last tick's coils, then the machine sees
             // both the player's switches and the ball's.
-            let ball = self.physics.tick(self.outputs.coils);
+            let open_flaps = (0..3)
+                .filter(|&n| self.machine.trapdoor_open(n))
+                .fold(0, |bits, n| bits | (1 << n));
+            let ball = self.physics.tick(self.outputs.coils, open_flaps);
             let mut switches = self.switches;
             for index in 0..pinball_core::switches::SWITCH_COUNT as u32 {
                 if let Some(id) = switch_from_index(index)
@@ -270,6 +273,12 @@ mod exports {
         if let Some(id) = switch_from_index(index) {
             with(|sim| sim.tap(id));
         }
+    }
+
+    /// 1 if trapdoor `n` (0–2) is open.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_trapdoor_open(n: u32) -> u32 {
+        with(|sim| u32::from(sim.machine().trapdoor_open(n as usize)))
     }
 
     /// Opens (`open != 0`) or closes trapdoor `n`.
@@ -530,7 +539,7 @@ mod tests {
             [
                 "switch C4 R0 opened: Side lane 1",
                 "switch C4 R0 closed: Side lane 1",
-                "TEST 1/3 switches: close any switch. Test button: next",
+                "TEST 1/4 switches: close any switch. Test button: next",
             ]
         );
         assert_eq!(sim.test_reports(), 3);
@@ -801,7 +810,8 @@ mod tests {
         sim.set_trapdoor(1, true);
         sim.set_trapdoor(7, true); // ignored
         sim.advance(10);
-        assert_eq!(sim.outputs().coils, 1 << coil::TRAPDOOR_FLAPS[1].index());
+        let open: Vec<_> = (0..3).map(|n| sim.machine().trapdoor_open(n)).collect();
+        assert_eq!(open, [false, true, false]);
     }
 
     #[test]

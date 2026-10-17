@@ -8,9 +8,9 @@ Everything needed to build the controller described in the
 
 | | Estimate |
 |---|---|
-| **Everything** | **£580–1,065** |
-| Without tools (if you already have them) | £510–915 |
-| Electronics only (sections 1–8, no pinball parts or tools) | £270–485 |
+| **Everything** | **£575–1,060** |
+| Without tools (if you already have them) | £505–910 |
+| Electronics only (sections 1–8, no pinball parts or tools) | £295–540 |
 
 These are rough **estimates in GBP, as of October 2026**, to help with budgeting.
 
@@ -107,8 +107,9 @@ The map has 25 matrix switches, including the three trapdoors in the
 
 ## 5. Coil drivers
 
-20 coil outputs are used: ball serve, 6 kickers, 6 pop bumpers, 2 × 2 flipper
-windings and 3 trapdoor flaps, plus 3 for the optional bells.
+17 coil outputs are used: ball serve, 6 kickers, 6 pop bumpers and 2 × 2
+flipper windings, plus 3 for the optional bells. The trapdoor flaps use servos
+instead (section 6c).
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
@@ -151,6 +152,27 @@ once; see the [wiring guide](wiring-guide.md#7d-sound-wav-trigger).
 | 1 kΩ resistor | — | In the resistor kit from section 2 | — | — |
 
 **Section estimate: £58–86**
+
+## 6c. Trapdoor flaps
+
+The trapdoors are rebuilt with a hobby servo turning each flap; see the
+[wiring guide](wiring-guide.md#7f-trapdoor-flaps-servos).
+
+| Item | Qty | Notes | Link | Est. £ |
+|---|---|---|---|---|
+| MG90S metal-gear micro servo | 4 | One per flap, plus a spare. Metal gears survive a ball landing on the flap. | [AliExpress](https://www.aliexpress.com/w/wholesale-mg90s-servo.html) | 8–14 |
+| 🛡️ 5 V 3 A DC adaptor, enclosed plug-in type | 1 | For the servos only; not the Arduino's 5 V. Choose an enclosed plug-in adaptor, **not** an open-frame supply with bare mains terminals, and have the electrician fit it with the others (wiring guide section 4). | [AliExpress](https://www.aliexpress.com/w/wholesale-5v-3a-power-adapter.html) | 5–9 |
+| Inline fuse holder and 3 A fuse | 1 | For the servo rail's + lead | [AliExpress](https://www.aliexpress.com/w/wholesale-inline-fuse-holder-5x20.html) | 1–3 |
+| 1000 µF 10 V electrolytic capacitor | 1 | Across the servo supply, near the servos | [AliExpress](https://www.aliexpress.com/w/wholesale-1000uf-10v-capacitor.html) | 1–2 |
+| Servo extension leads, 30–50 cm | 3 | From under the playfield to the Arduino | [AliExpress](https://www.aliexpress.com/w/wholesale-servo-extension-cable.html) | 2–4 |
+| Lever microswitches (KW11 type) | 5 | One in each trapdoor's chute, plus spares | [AliExpress](https://www.aliexpress.com/w/wholesale-kw11-micro-switch-lever.html) | 2–4 |
+| 1.5 mm aluminium sheet | 1 small sheet | The flaps | [AliExpress](https://www.aliexpress.com/w/wholesale-1.5mm-aluminium-sheet.html) | 5–10 |
+| 2 mm steel rod and shaft collars | 1 set | Hinge pins | [AliExpress](https://www.aliexpress.com/w/wholesale-2mm-steel-rod-shaft-collar.html) | 3–5 |
+
+Servo brackets and chutes can be 3D-printed in PETG (or by a printing service)
+or bent from sheet metal.
+
+**Section estimate: £27–51**
 
 ## 7. Power
 
@@ -211,8 +233,7 @@ of the old parts.
 | Pop bumper coils | 6 | DC, at your coil voltage | 60–90 |
 | Ball serve coil and mechanism | 1 | Only if replacing the manual ball lift | 25–60 |
 | Dual-wound flipper coils | 2 | DC, at your coil voltage; ask for the lug layout | 22–30 |
-| Trapdoor flap coils | 3 | **Continuous-duty**, DC, at your coil voltage | 30–60 |
 | *Optional:* bells with coils | 0–3 | Not needed now. For the authentic 1950s scoring sound later (wiring guide section 7e). | varies |
 | Flipper rebuild kits, rubber rings, pop bumper caps | As needed | | 40–100 |
 
-**Section estimate: £237–430**
+**Section estimate: £207–370**

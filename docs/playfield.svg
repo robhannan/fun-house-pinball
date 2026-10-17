@@ -100,12 +100,12 @@
   <rect x="190" y="391" width="180" height="74" rx="4" fill="#ffffff" stroke="#d73a49" stroke-width="3"/>
   <text x="280" y="403" class="tag mid">TRAP DOOR OPEN WHEN LITE IS LIT</text>
   <g fill="#1f2328">
-    <rect x="215" y="411" width="30" height="30" rx="2" data-switch="C4R5" data-coil="12" data-trapdoor="0"/>
-    <rect x="265" y="411" width="30" height="30" rx="2" data-switch="C4R6" data-coil="13" data-trapdoor="1"/>
-    <rect x="315" y="411" width="30" height="30" rx="2" data-switch="C4R7" data-coil="14" data-trapdoor="2"/>
+    <rect x="215" y="411" width="30" height="30" rx="2" data-switch="C4R5" data-trapdoor="0"/>
+    <rect x="265" y="411" width="30" height="30" rx="2" data-switch="C4R6" data-trapdoor="1"/>
+    <rect x="315" y="411" width="30" height="30" rx="2" data-switch="C4R7" data-trapdoor="2"/>
   </g>
   <text x="280" y="458" class="label mid">SCORES BONUS</text>
-  <text x="280" y="479" class="tag mid">Trapdoors 1–3: C4·R5–R7 · flaps: coils 12–14 · lamps L3–L5</text>
+  <text x="280" y="479" class="tag mid">Trapdoors 1–3: C4·R5–R7 · flap servos on D5, D2, D3 · lamps L3–L5</text>
 
   <!-- "10 points" lanes, two either side of the box -->
   <g stroke="#8a6d3b" stroke-width="3">
@@ -250,7 +250,7 @@
     <circle cx="8" cy="56" r="6" fill="#c9d1d9" stroke="#57606a"/>
     <text x="22" y="60" class="label">Rollover switch (top lanes: slots)</text>
     <rect x="1" y="70" width="14" height="10" rx="2" fill="#1f2328"/>
-    <text x="22" y="80" class="label">Trapdoor (switch + flap coil)</text>
+    <text x="22" y="80" class="label">Trapdoor (switch + flap servo)</text>
     <rect x="1" y="90" width="14" height="10" fill="#f6c6cb" stroke="#d73a49" stroke-width="2"/>
     <text x="22" y="100" class="label">Rubber switch</text>
     <text x="270" y="20" class="label">C2·R0 = switch matrix column 2, row 0</text>

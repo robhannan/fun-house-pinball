@@ -8,17 +8,23 @@
 
 mod clock;
 mod io;
+mod servo;
 
 use arduino_hal::hal::wdt;
 use arduino_hal::prelude::*;
 use arduino_hal::spi;
+use pinball_core::flaps::FlapTrim;
 use pinball_core::sound::{
     WAV_TRIGGER_GAIN_DB, wav_trigger_amp, wav_trigger_gain, wav_trigger_play, wav_trigger_stop,
 };
 use pinball_core::test_mode::describe;
-use pinball_core::{Instant, Machine, Outputs, SwitchStates};
+use pinball_core::{Instant, Machine, Outputs, Phase, SwitchStates};
 
 use io::{ConsoleOut, OutputChain, SoundOut, SwitchScanner};
+use servo::FlapServos;
+
+/// Where the trapdoor flaps' trimmed angles are kept in the EEPROM.
+const FLAP_TRIM_ADDRESS: u16 = 0;
 
 /// The WAV Trigger indexes its SD card at power-on before it accepts commands.
 const SOUND_STARTUP_MS: u32 = 2_000;
@@ -115,6 +121,26 @@ fn main() -> ! {
     let mut console = ConsoleOut::new(serial);
 
     let mut machine = Machine::new();
+
+    // The trapdoor flaps' angles, as last set in test mode. Blank or corrupt
+    // EEPROM gives the defaults.
+    let mut eeprom = arduino_hal::Eeprom::new(dp.EEPROM);
+    let mut stored = [0xFF; FlapTrim::BYTES];
+    let _ = eeprom.read(FLAP_TRIM_ADDRESS, &mut stored);
+    let mut saved_trim = FlapTrim::from_bytes(&stored);
+    machine.set_flap_trim(saved_trim);
+
+    // Trapdoor flap servos on Timer 3 (see `servo.rs`), starting closed.
+    let mut flaps = FlapServos::new(
+        dp.TC3,
+        [
+            pins.d5.into_output().downgrade(),
+            pins.d2.into_output().downgrade(),
+            pins.d3.into_output().downgrade(),
+        ],
+        [0, 1, 2].map(|n| saved_trim.angle(n, false)),
+    );
+
     let mut raw = SwitchStates::new();
     let mut last_tick = clock::now();
 
@@ -131,6 +157,31 @@ fn main() -> ! {
         switches.scan(&mut raw);
         let frame = machine.tick(now, &raw);
         outputs.write(&frame);
+        flaps.set(frame.flap_angles);
+
+        // Save new flap angles once test mode is left. Writing the EEPROM
+        // takes about 3.4 ms a byte, but only happens in attract mode, with
+        // coil power off, and well inside the watchdog's 64 ms.
+        let trim = machine.flap_trim();
+        if trim != saved_trim && machine.phase() == Phase::Attract {
+            let bytes = trim.to_bytes();
+            for (offset, &byte) in (FLAP_TRIM_ADDRESS..).zip(&bytes) {
+                if eeprom.read_byte(offset) != byte {
+                    // The EEPROM's two-step write must not be interrupted, or
+                    // the byte is silently dropped. This holds off the 1 ms
+                    // clock for one byte's write, which only delays a tick.
+                    avr_device::interrupt::free(|_| eeprom.write_byte(offset, byte));
+                }
+            }
+            let mut check = [0; FlapTrim::BYTES];
+            let _ = eeprom.read(FLAP_TRIM_ADDRESS, &mut check);
+            saved_trim = trim;
+            console.send_line(if check == bytes {
+                b"flap angles saved"
+            } else {
+                b"flap angles NOT saved: EEPROM write failed"
+            });
+        }
 
         if sound_ready {
             for effect in frame.stop_sounds.iter() {

@@ -8,7 +8,10 @@
 //! 2. **Coils:** the flipper buttons choose a coil and Start fires it once, at
 //!    its normal pulse length (holding coils get [`HOLD_TEST_MS`]). Only the
 //!    chosen coil can fire, and only when Start is pressed.
-//! 3. **Lamps:** the flipper buttons step through the lamps one at a time, and
+//! 3. **Flaps:** Start steps through each trapdoor flap's closed and open
+//!    positions, moving the flap there, and the flipper buttons trim that
+//!    angle a degree at a time (see [`crate::flaps`]). Coil power is off.
+//! 4. **Lamps:** the flipper buttons step through the lamps one at a time, and
 //!    Start switches between every lamp at once and one at a time again.
 //!    Coil power is off.
 //!
@@ -31,6 +34,8 @@ pub enum TestStage {
     Switches,
     /// Choose a coil with the flipper buttons and fire it with Start.
     Coils,
+    /// Set each trapdoor flap's closed and open servo angles.
+    Flaps,
     /// Step through the lamps with the flipper buttons.
     Lamps,
 }
@@ -41,7 +46,8 @@ impl TestStage {
     pub const fn next(self) -> Option<Self> {
         match self {
             Self::Switches => Some(Self::Coils),
-            Self::Coils => Some(Self::Lamps),
+            Self::Coils => Some(Self::Flaps),
+            Self::Flaps => Some(Self::Lamps),
             Self::Lamps => None,
         }
     }
@@ -66,6 +72,16 @@ pub enum TestReport {
         /// `None` when just chosen; otherwise whether the pulse started (it
         /// doesn't while the coil is still recycling from the last one).
         fired: Option<bool>,
+    },
+    /// A trapdoor flap was moved to its closed or open position, or that
+    /// position's angle was trimmed.
+    Flap {
+        /// Which flap, 0–2 left to right.
+        n: u8,
+        /// Whether it's the open position (rather than closed).
+        open: bool,
+        /// The servo angle, in degrees.
+        angle: u8,
     },
     /// A lamp was chosen and is lit on its own.
     Lamp(LampId),
@@ -266,13 +282,16 @@ pub fn describe(report: TestReport) -> ReportText {
     let mut text = ReportText::new();
     match report {
         TestReport::Stage(TestStage::Switches) => {
-            text.push("TEST 1/3 switches: close any switch. Test button: next");
+            text.push("TEST 1/4 switches: close any switch. Test button: next");
         }
         TestReport::Stage(TestStage::Coils) => {
-            text.push("TEST 2/3 coils: flippers choose, Start fires. Test button: next");
+            text.push("TEST 2/4 coils: flippers choose, Start fires. Test button: next");
+        }
+        TestReport::Stage(TestStage::Flaps) => {
+            text.push("TEST 3/4 flaps: Start picks, flippers trim. Test button: next");
         }
         TestReport::Stage(TestStage::Lamps) => {
-            text.push("TEST 3/3 lamps: flippers choose, Start: all. Test button: exit");
+            text.push("TEST 4/4 lamps: flippers choose, Start: all. Test button: exit");
         }
         TestReport::Switch { id, closed } => {
             text.push("switch ");
@@ -289,6 +308,13 @@ pub fn describe(report: TestReport) -> ReportText {
                 Some(true) => " - fired",
                 Some(false) => " - recycling, try again",
             });
+        }
+        TestReport::Flap { n, open, angle } => {
+            text.push("trapdoor ");
+            text.push_number(usize::from(n) + 1);
+            text.push(if open { " open: " } else { " closed: " });
+            text.push_number(usize::from(angle));
+            text.push(" deg (flippers trim, Start: next)");
         }
         TestReport::Lamp(id) => {
             text.push("lamp ");
@@ -386,7 +412,17 @@ mod tests {
     #[test]
     fn every_report_fits_on_one_line() {
         let mut reports = vec![TestReport::AllLamps(true), TestReport::Done];
-        for stage in [TestStage::Switches, TestStage::Coils, TestStage::Lamps] {
+        reports.push(TestReport::Flap {
+            n: 2,
+            open: false,
+            angle: 180,
+        });
+        for stage in [
+            TestStage::Switches,
+            TestStage::Coils,
+            TestStage::Flaps,
+            TestStage::Lamps,
+        ] {
             reports.push(TestReport::Stage(stage));
         }
         for part in PARTS {

@@ -136,10 +136,13 @@ For bringing the machine up one part at a time. Press the **test button**
    see which switch it was.
 2. **Coils:** the flipper buttons choose a coil, and Start fires it once at its
    normal pulse length. Nothing else can fire.
-3. **Lamps:** the flipper buttons light the lamps one at a time, and Start
+3. **Flaps:** Start moves each trapdoor flap's servo to its closed and open
+   positions in turn, and the flipper buttons trim that angle a degree at a
+   time. The angles are saved in the EEPROM when test mode ends.
+4. **Lamps:** the flipper buttons light the lamps one at a time, and Start
    lights them all.
 
-A fourth press (or the slam tilt) goes back to attract mode. Each step prints a
+A fifth press (or the slam tilt) goes back to attract mode. Each step prints a
 line on the USB console that `cargo run` opens, such as
 `switch C2 R3 closed: Pop bumper 4 (lower left)`. The simulator has the same
 test button and shows the same lines.

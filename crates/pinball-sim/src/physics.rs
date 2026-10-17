@@ -11,7 +11,7 @@
 //!   kicks the ball away
 //! * a polygon with only a switch is a rubber that closes its switch on contact
 //! * a circle or rectangle with only a switch is a rollover the ball runs over
-//! * `data-trapdoor` swallows the ball while its flap coil is on
+//! * `data-trapdoor` swallows the ball while its flap is open
 //! * `data-flipper` rises while either of its coils is on
 //! * the outhole switch's circle catches a drained ball, and the ball-serve
 //!   coil moves it to the shooter lane
@@ -406,6 +406,7 @@ struct Trapdoor {
     min: Vec2,
     max: Vec2,
     switch: SwitchId,
+    /// Which flap, 0–2 left to right.
     flap: usize,
 }
 
@@ -505,7 +506,10 @@ impl Table {
                     min: Vec2::new(x, y),
                     max: Vec2::new(x + tag.num("width"), y + tag.num("height")),
                     switch: switch.unwrap_or(sw::TRAPDOORS[0]),
-                    flap: coils.first().copied().unwrap_or(0),
+                    flap: tag
+                        .get("data-trapdoor")
+                        .and_then(|n| n.parse().ok())
+                        .unwrap_or(0),
                 });
             } else if switch == Some(sw::OUTHOLE) {
                 if let Shape::Circle { centre, .. } = shape {
@@ -708,9 +712,10 @@ impl Physics {
         self.state = BallState::Rolling;
     }
 
-    /// Runs one 1 ms machine tick with the coil outputs from the last tick,
-    /// and returns the switches the ball is closing.
-    pub fn tick(&mut self, coils: u32) -> SwitchStates {
+    /// Runs one 1 ms machine tick with the coil outputs and open trapdoor
+    /// flaps (bit `n` = flap `n`) from the last tick, and returns the switches
+    /// the ball is closing.
+    pub fn tick(&mut self, coils: u32, open_flaps: u8) -> SwitchStates {
         self.now = self.now.plus(1);
         let fired = coils & !self.prev_coils;
         self.prev_coils = coils;
@@ -755,7 +760,7 @@ impl Physics {
                 self.state = BallState::InOuthole;
                 self.pos = self.table.outhole;
             }
-            BallState::Rolling => self.check_holes(coils),
+            BallState::Rolling => self.check_holes(open_flaps),
             _ => {}
         }
         self.switches()
@@ -852,11 +857,11 @@ impl Physics {
         true
     }
 
-    fn check_holes(&mut self, coils: u32) {
+    fn check_holes(&mut self, open_flaps: u8) {
         let p = self.pos;
         for t in &self.table.trapdoors {
             let inside = p.x > t.min.x && p.x < t.max.x && p.y > t.min.y && p.y < t.max.y;
-            if inside && coils & (1 << t.flap) != 0 {
+            if inside && open_flaps & (1 << t.flap) != 0 {
                 self.state = BallState::Underneath {
                     until: self.now.plus(UNDER_PLAYFIELD_MS),
                 };
@@ -955,11 +960,11 @@ mod tests {
             ..Physics::default()
         };
         physics.close(sw::POP_BUMPERS[0]);
-        assert!(physics.tick(0).is_closed(sw::POP_BUMPERS[0]));
+        assert!(physics.tick(0, 0).is_closed(sw::POP_BUMPERS[0]));
         for _ in 0..MIN_CLOSED_MS {
-            physics.tick(0);
+            physics.tick(0, 0);
         }
-        assert!(!physics.tick(0).is_closed(sw::POP_BUMPERS[0]));
+        assert!(!physics.tick(0, 0).is_closed(sw::POP_BUMPERS[0]));
     }
 
     #[test]
