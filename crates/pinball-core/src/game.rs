@@ -122,6 +122,9 @@ pub struct Machine {
     /// The current player's score when this ball was served, which a tilt
     /// takes them back to.
     ball_start_score: u32,
+    /// Each player's highest score this game. Replays are paid against this,
+    /// so a threshold crossed again after a tilt doesn't pay twice.
+    best_scores: [u32; MAX_PLAYERS],
     replays: [u8; MAX_PLAYERS],
     /// Credits on the backboard's credit window (in the clown's nose).
     credits: u8,
@@ -169,6 +172,7 @@ impl Machine {
             player: 0,
             scores: [0; MAX_PLAYERS],
             ball_start_score: 0,
+            best_scores: [0; MAX_PLAYERS],
             replays: [0; MAX_PLAYERS],
             credits: 0,
             bonus_step: 0,
@@ -450,9 +454,10 @@ impl Machine {
             self.bells.score(points);
         }
         let player = usize::from(self.player);
-        let before = self.scores[player];
+        let before = self.best_scores[player];
         self.scores[player] += points;
         let after = self.scores[player];
+        self.best_scores[player] = before.max(after);
         let earned = REPLAY_SCORES
             .iter()
             .filter(|&&threshold| before < threshold && threshold <= after)
@@ -548,6 +553,7 @@ impl Machine {
         }
         self.scores = [0; MAX_PLAYERS];
         self.replays = [0; MAX_PLAYERS];
+        self.best_scores = [0; MAX_PLAYERS];
         self.bonus_step = 0;
         self.ball = 1;
         self.players = 1;
@@ -975,11 +981,33 @@ mod tests {
                 sim.tap(sw::SIDE_LANES[0]);
             }
             sim.tap(sw::SLAM_TILT);
-            sim.set(sw::SLAM_TILT, false);
         }
         // Five replays a game for eight games would be 40.
-        assert_eq!(sim.machine.credits(), MAX_CREDITS);
-        assert_eq!(MAX_CREDITS, 30);
+        assert_eq!(sim.machine.credits(), 30);
+    }
+
+    #[test]
+    fn a_replay_isnt_paid_twice_after_a_tilt() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        for _ in 0..49 {
+            sim.tap(sw::SIDE_LANES[0]);
+        }
+        sim.tap(sw::OUTHOLE);
+        sim.tap(sw::SIDE_LANES[0]);
+        assert_eq!(sim.machine.replays(), 1);
+        sim.tap(sw::TILT);
+        assert_eq!(sim.machine.score(), 490);
+        sim.tap(sw::OUTHOLE);
+        // Back past 500 on the next ball: no second replay for it.
+        sim.tap(sw::SIDE_LANES[0]);
+        assert_eq!(sim.machine.score(), 500);
+        assert_eq!((sim.machine.replays(), sim.machine.credits()), (1, 1));
+        // But 600 still pays.
+        for _ in 0..10 {
+            sim.tap(sw::SIDE_LANES[0]);
+        }
+        assert_eq!(sim.machine.replays(), 2);
     }
 
     #[test]
