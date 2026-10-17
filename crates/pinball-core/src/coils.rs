@@ -85,7 +85,8 @@ impl Coils {
     }
 
     /// Fires `id` for `ms` milliseconds, clamped to the coil's limit. Returns
-    /// whether the pulse actually started.
+    /// whether the pulse actually started. A pulse that's still running isn't
+    /// restarted, so repeated calls can't stretch it past the limit.
     pub fn pulse(&mut self, id: CoilId, ms: u16, now: Instant) -> bool {
         let i = id.index();
         let ms = match self.kinds[i] {
@@ -93,7 +94,11 @@ impl Coils {
             CoilKind::Pulse { max_ms, .. } => ms.min(max_ms),
             CoilKind::Hold => ms,
         };
-        if !self.enabled || ms == 0 || !now.reached(self.ready_at[i]) {
+        if !self.enabled
+            || ms == 0
+            || !now.reached(self.ready_at[i])
+            || self.pulse_until[i].is_some_and(|end| !now.reached(end))
+        {
             return false;
         }
         self.pulse_until[i] = Some(now.plus(u32::from(ms)));
@@ -171,6 +176,17 @@ mod tests {
         let _ = c.outputs(at(20));
         assert!(!c.pulse(SLING, 20, at(30)));
         assert!(c.pulse(SLING, 20, at(70)));
+    }
+
+    #[test]
+    fn a_running_pulse_cannot_be_stretched() {
+        let mut c = coils();
+        assert!(c.pulse(SLING, 20, at(0)));
+        // Re-firing half way through used to restart the pulse, leaving the
+        // coil on for 35 ms against a 20 ms limit.
+        assert!(!c.pulse(SLING, 20, at(15)));
+        assert_eq!(c.outputs(at(19)), 1);
+        assert_eq!(c.outputs(at(20)), 0);
     }
 
     #[test]

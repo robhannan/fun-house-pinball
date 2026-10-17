@@ -130,8 +130,15 @@
           <button data-switch="D3" data-key="t">Tilt <kbd>T</kbd></button>
           <button data-switch="D4">Slam tilt</button>
           <button data-switch="C0R0" data-key="d">Drain <kbd>D</kbd></button>
+          <button data-switch="D5">Test (coin door)</button>
           <button id="reset">Power cycle</button>
         </div>
+      </section>
+
+      <section>
+        <h2>Test mode</h2>
+        <p>Press <b>Test</b> in attract mode. Each press moves on a stage: switches, then coils (flippers choose, Start fires), then lamps (flippers choose, Start lights them all), then back to attract mode. These are the lines the controller prints on its USB serial port, newest first.</p>
+        <pre id="test-log" style="margin: 8px 0 0; white-space: pre-wrap; font-size: 12px; min-height: 3em;">–</pre>
       </section>
 
       <section>

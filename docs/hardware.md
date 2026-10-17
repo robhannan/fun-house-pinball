@@ -16,7 +16,7 @@ is mature.
 |---|---|---|
 | Switch matrix columns (strobes) | D22–D29 | Driven low one at a time |
 | Switch matrix rows (returns) | D30–D37 | Internal pull-ups, active low |
-| Direct switches | D38–D45 | Flipper buttons, start, tilt, slam tilt (active low) |
+| Direct switches | D38–D45 | Flipper buttons, start, tilt, slam tilt, test button (active low) |
 | Shift-register data / clock | D51 (MOSI), D52 (SCK) | Hardware SPI |
 | Shift-register latch | D49 | |
 | Shift-register output enable | D48 | **External 10k pull-up to 5V**, so outputs stay off at reset |

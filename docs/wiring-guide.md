@@ -179,7 +179,8 @@ pull-up does the rest.
 | 2 | 40 | Start button |
 | 3 | 41 | Tilt (plumb bob) |
 | 4 | 42 | Slam tilt |
-| 5–7 | 43–45 | Spare |
+| 5 | 43 | Test button, inside the coin door (any momentary push button) |
+| 6–7 | 44–45 | Spare |
 
 ### The switch matrix (playfield switches)
 
@@ -512,8 +513,11 @@ to look. **Keep the coil supply switched off until step 6.**
 
 1. **Arduino alone, over USB.** Flash the firmware with `cd firmware && cargo run --release`.
    The console should print `Fun House controller ready`.
-2. **Direct switches.** Wire the start and flipper buttons (section 6).
-   Check each with the multimeter: continuity to ground when pressed.
+2. **Direct switches.** Wire the start, flipper and test buttons (section 6).
+   Check each with the multimeter: continuity to ground when pressed. Then
+   press the test button: the console prints `TEST 1/3 switches`, and every
+   switch you press from then on prints its name. That's **test mode**, and
+   the rest of these steps use it (see the README).
 3. **One shift register and test LEDs.** Build chip 1 only, on a breadboard. Put
    an LED with a 1 kΩ resistor from Q0, Q1 and Q2 to ground:
    - Press start: Q0 (ball serve) should give a very short blink.
@@ -527,11 +531,17 @@ to look. **Keep the coil supply switched off until step 6.**
 4. **The rest of the chain.** Add the other chips one at a time, checking that
    the test LEDs still behave and that nothing lights at power-on.
 5. **Matrix switches.** Wire and diode-test each one with power off (section 6).
+   Then, in test mode's switch stage, close each switch by hand and check the
+   console names the right part. A wrong name means a swapped row or column
+   wire; nothing at all means a missing or backwards diode.
 6. **The first coil.** Connect **one** MOSFET circuit and **one** coil, ideally a
-   kicker. Switch on the coil supply with a hand near the plug. Close the kicker
-   switch by hand: you should get one short, sharp kick. If the coil buzzes or
-   stays on, cut the power and recheck the flyback diode and MOSFET wiring.
-7. **The remaining coils, one by one**, then the lamps.
+   kicker. Switch on the coil supply with a hand near the plug. Press the test
+   button twice for the coil stage, choose the kicker with the flipper buttons
+   (the console names each coil), and press Start: you should get one short,
+   sharp kick. If the coil buzzes or stays on, cut the power and recheck the
+   flyback diode and MOSFET wiring.
+7. **The remaining coils, one by one**, in the same way, then the lamps in test
+   mode's lamp stage (the flipper buttons step through them by name).
 8. **Sound.** Wire the WAV Trigger and its speaker, and prepare the SD card
    (section 7d). Power on and wait 2 seconds, then press start: you should hear
    the calliope march.

@@ -17,9 +17,10 @@ use crate::attract::AttractShow;
 use crate::bells::BellRinger;
 use crate::coils::{CoilId, Coils};
 use crate::lamps::{LampId, LampMode, Lamps};
-use crate::playfield::{COIL_KINDS, coil, lamp, sw};
+use crate::playfield::{COIL_KINDS, PARTS, coil, lamp, sw};
 use crate::sound::{Sound, SoundScheduler, Sounds};
 use crate::switches::{Debouncer, SwitchEvent, SwitchId, SwitchStates};
+use crate::test_mode::{self, HOLD_TEST_MS, TestReport, TestReports, TestStage};
 use crate::time::Instant;
 
 /// Most players in one game ("1 to 4 can play").
@@ -90,6 +91,8 @@ pub enum Phase {
     /// The current ball was tilted: flippers and playfield coils are dead
     /// until it drains.
     Tilted,
+    /// Operator test mode (see [`crate::test_mode`]).
+    Test(TestStage),
 }
 
 /// Everything the firmware must drive for this tick.
@@ -103,6 +106,8 @@ pub struct Outputs {
     pub sounds: Sounds,
     /// The sounds to stop now, such as the attract music when a game starts.
     pub stop_sounds: Sounds,
+    /// In test mode, what just happened, for the firmware to print.
+    pub reports: TestReports,
 }
 
 /// The whole machine: switch filtering, rules, coils and lamps.
@@ -138,6 +143,12 @@ pub struct Machine {
     show: AttractShow,
     /// When the attract music starts; set when attract mode is first ticked.
     music_at: Option<Instant>,
+    /// Test mode's chosen coil.
+    test_coil: CoilId,
+    /// Test mode's chosen lamp, or `None` while every lamp is on.
+    test_lamp: Option<LampId>,
+    /// Test reports waiting for the next [`Outputs`].
+    reports: TestReports,
 }
 
 impl Default for Machine {
@@ -182,6 +193,9 @@ impl Machine {
             bells: BellRinger::new(),
             show: AttractShow::new(),
             music_at: None,
+            test_coil: test_mode::first_coil(),
+            test_lamp: None,
+            reports: TestReports::new(),
         };
         machine.enter(Phase::Attract);
         machine
@@ -279,11 +293,15 @@ impl Machine {
             lamps: self.lamps.frame(now),
             sounds: self.sound.next(now),
             stop_sounds: self.sound.take_stops(),
+            reports: core::mem::take(&mut self.reports),
         }
     }
 
     fn on_switch(&mut self, event: SwitchEvent, now: Instant) {
         match (self.phase, event) {
+            // Test mode handles every switch itself, the slam tilt included.
+            (Phase::Test(stage), event) => self.on_test_switch(stage, event, now),
+
             (_, SwitchEvent::Closed(sw::SLAM_TILT)) => {
                 let was_playing = self.phase != Phase::Attract;
                 self.enter(Phase::Attract);
@@ -292,6 +310,10 @@ impl Machine {
                 }
             }
 
+            (Phase::Attract, SwitchEvent::Closed(sw::TEST_BUTTON)) => {
+                self.stop_show();
+                self.enter(Phase::Test(TestStage::Switches));
+            }
             (Phase::Attract, SwitchEvent::Closed(sw::START_BUTTON)) => self.start_game(now),
             // Assumed (*verify*): players can be added while ball 1 is in play.
             (Phase::Playing | Phase::Tilted, SwitchEvent::Closed(sw::START_BUTTON)) => {
@@ -546,11 +568,106 @@ impl Machine {
         }
     }
 
-    fn start_game(&mut self, now: Instant) {
+    /// Stops the attract light show and its music, if they're running.
+    fn stop_show(&mut self) {
         if self.show.is_running() {
             self.show.stop(&mut self.lamps);
             self.sound.stop(Sound::AttractMusic);
         }
+    }
+
+    /// Test mode: see [`crate::test_mode`] for what each stage does.
+    fn on_test_switch(&mut self, stage: TestStage, event: SwitchEvent, now: Instant) {
+        let (id, closed) = match event {
+            SwitchEvent::Closed(id) => (id, true),
+            SwitchEvent::Opened(id) => (id, false),
+        };
+        if closed && id == sw::TEST_BUTTON {
+            if let Some(next) = stage.next() {
+                self.enter(Phase::Test(next));
+                return;
+            }
+        }
+        // The test button after the last stage, or the slam tilt, leaves.
+        if closed && (id == sw::TEST_BUTTON || id == sw::SLAM_TILT) {
+            self.enter(Phase::Attract);
+            self.reports.push(TestReport::Done);
+            return;
+        }
+        match stage {
+            TestStage::Switches => {
+                if id == sw::TEST_BUTTON {
+                    return;
+                }
+                if closed {
+                    self.sound.request(Sound::Lane);
+                }
+                // Light the part's own lamp while its switch is held.
+                if let Some(lamp) = test_mode::part_with_switch(id).and_then(|p| p.lamp) {
+                    let mode = if closed { LampMode::On } else { LampMode::Off };
+                    self.lamps.set(lamp, mode);
+                }
+                self.reports.push(TestReport::Switch { id, closed });
+            }
+            TestStage::Coils if closed => match id {
+                sw::LEFT_FLIPPER_BUTTON | sw::RIGHT_FLIPPER_BUTTON => {
+                    let forward = id == sw::RIGHT_FLIPPER_BUTTON;
+                    self.choose_test_coil(test_mode::step_coil(self.test_coil, forward));
+                }
+                sw::START_BUTTON => {
+                    // Pulse coils are clamped to their own limit.
+                    let fired = self.coils.pulse(self.test_coil, HOLD_TEST_MS, now);
+                    self.reports.push(TestReport::Coil {
+                        id: self.test_coil,
+                        fired: Some(fired),
+                    });
+                }
+                _ => {}
+            },
+            TestStage::Lamps if closed => match id {
+                sw::LEFT_FLIPPER_BUTTON | sw::RIGHT_FLIPPER_BUTTON => {
+                    let forward = id == sw::RIGHT_FLIPPER_BUTTON;
+                    let from = self.test_lamp.unwrap_or_else(test_mode::first_lamp);
+                    self.choose_test_lamp(test_mode::step_lamp(from, forward));
+                }
+                sw::START_BUTTON => {
+                    let all_on = self.test_lamp.is_some();
+                    self.reports.push(TestReport::AllLamps(all_on));
+                    if all_on {
+                        for lamp in PARTS.iter().filter_map(|p| p.lamp) {
+                            self.lamps.set(lamp, LampMode::On);
+                        }
+                        self.test_lamp = None;
+                    } else {
+                        self.choose_test_lamp(test_mode::first_lamp());
+                    }
+                }
+                _ => {}
+            },
+            TestStage::Coils | TestStage::Lamps => {}
+        }
+    }
+
+    /// Chooses the coil for test mode, lighting its part's lamp if it has one.
+    fn choose_test_coil(&mut self, id: CoilId) {
+        self.lamps.all_off();
+        if let Some(lamp) = test_mode::part_with_coil(id).and_then(|p| p.lamp) {
+            self.lamps.set(lamp, LampMode::On);
+        }
+        self.test_coil = id;
+        self.reports.push(TestReport::Coil { id, fired: None });
+    }
+
+    /// Lights one lamp on its own for test mode.
+    fn choose_test_lamp(&mut self, id: LampId) {
+        self.lamps.all_off();
+        self.lamps.set(id, LampMode::On);
+        self.test_lamp = Some(id);
+        self.reports.push(TestReport::Lamp(id));
+    }
+
+    fn start_game(&mut self, now: Instant) {
+        self.stop_show();
         self.scores = [0; MAX_PLAYERS];
         self.replays = [0; MAX_PLAYERS];
         self.best_scores = [0; MAX_PLAYERS];
@@ -588,7 +705,7 @@ impl Machine {
 
     /// Player-up and ball-in-play lamps on the backboard.
     fn update_backboard_lamps(&mut self) {
-        let playing = !matches!(self.phase, Phase::Attract);
+        let playing = matches!(self.phase, Phase::Playing | Phase::Tilted);
         for (n, &lamp) in lamp::PLAYER_UP.iter().enumerate() {
             let on = playing && n == usize::from(self.player);
             self.lamps
@@ -634,6 +751,25 @@ impl Machine {
                     self.lamps.set(advance, LampMode::On);
                 }
             }
+            Phase::Test(stage) => {
+                self.bells.clear();
+                self.serve_at = None;
+                self.lamps.all_off();
+                // Coil power only while testing coils, and nothing fires
+                // until Start is pressed.
+                self.coils.set_enabled(false);
+                self.reports.push(TestReport::Stage(stage));
+                match stage {
+                    TestStage::Switches => {}
+                    TestStage::Coils => {
+                        self.coils.set_enabled(true);
+                        self.choose_test_coil(test_mode::first_coil());
+                    }
+                    TestStage::Lamps => {
+                        self.choose_test_lamp(test_mode::first_lamp());
+                    }
+                }
+            }
             Phase::Tilted => {
                 self.bells.clear();
                 // "Loses score of ball in play". Assumed (*verify*): replays
@@ -665,6 +801,8 @@ mod tests {
         now: u32,
         last: Outputs,
         sounds: Vec<Sound>,
+        stops: Vec<Sound>,
+        reports: Vec<TestReport>,
     }
 
     impl Sim {
@@ -675,6 +813,8 @@ mod tests {
                 now: 0,
                 last: Outputs::default(),
                 sounds: Vec::new(),
+                stops: Vec::new(),
+                reports: Vec::new(),
             }
         }
 
@@ -685,6 +825,8 @@ mod tests {
                     .machine
                     .tick(Instant::from_millis(self.now), &self.switches);
                 self.sounds.extend(self.last.sounds.iter());
+                self.stops.extend(self.last.stop_sounds.iter());
+                self.reports.extend(self.last.reports.iter());
             }
         }
 
@@ -707,6 +849,208 @@ mod tests {
         fn coil_on(&self, id: CoilId) -> bool {
             self.last.coils & (1 << id.index()) != 0
         }
+    }
+
+    /// Every test report made while running `f`.
+    fn reports_during(sim: &mut Sim, f: impl FnOnce(&mut Sim)) -> Vec<TestReport> {
+        sim.reports.clear();
+        f(sim);
+        std::mem::take(&mut sim.reports)
+    }
+
+    fn lamp_on(sim: &Sim, id: LampId) -> bool {
+        sim.last.lamps & (1 << id.index()) != 0
+    }
+
+    #[test]
+    fn the_test_button_steps_through_the_stages_and_back() {
+        let mut sim = Sim::new();
+        let stages = [
+            TestReport::Stage(TestStage::Switches),
+            TestReport::Stage(TestStage::Coils),
+            TestReport::Stage(TestStage::Lamps),
+        ];
+        for (n, stage) in stages.into_iter().enumerate() {
+            let reports = reports_during(&mut sim, |s| s.tap(sw::TEST_BUTTON));
+            assert_eq!(reports[0], stage, "press {n}");
+        }
+        assert_eq!(
+            reports_during(&mut sim, |s| s.tap(sw::TEST_BUTTON)),
+            [TestReport::Done]
+        );
+        assert_eq!(sim.machine.phase(), Phase::Attract);
+        assert!(lamp_on(&sim, lamp::GAME_OVER));
+    }
+
+    #[test]
+    fn the_test_button_does_nothing_during_a_game() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::TEST_BUTTON);
+        assert_eq!(sim.machine.phase(), Phase::Playing);
+    }
+
+    #[test]
+    fn switch_test_reports_switches_and_lights_their_lamps() {
+        let mut sim = Sim::new();
+        sim.tap(sw::TEST_BUTTON);
+        sim.set(sw::POP_BUMPERS[3], true);
+        assert!(lamp_on(&sim, lamp::POP_BUMPERS[3]));
+        // Nothing fires and nothing scores.
+        assert_eq!(sim.last.coils, 0);
+        let reports = reports_during(&mut sim, |s| s.set(sw::POP_BUMPERS[3], false));
+        assert_eq!(
+            reports,
+            [TestReport::Switch {
+                id: sw::POP_BUMPERS[3],
+                closed: false
+            }]
+        );
+        assert!(!lamp_on(&sim, lamp::POP_BUMPERS[3]));
+        // Start and the flippers are just switches here too.
+        let reports = reports_during(&mut sim, |s| s.tap(sw::START_BUTTON));
+        assert_eq!(reports.len(), 2);
+        assert!(matches!(sim.machine.phase(), Phase::Test(_)));
+        sim.run(100);
+        assert!(sounds_during(&mut sim, |s| s.tap(sw::OUTHOLE)).contains(&Sound::Lane));
+    }
+
+    #[test]
+    fn coil_test_fires_only_the_chosen_coil_when_start_is_pressed() {
+        let mut sim = Sim::new();
+        sim.tap(sw::TEST_BUTTON);
+        let reports = reports_during(&mut sim, |s| s.tap(sw::TEST_BUTTON));
+        assert_eq!(
+            reports[1],
+            TestReport::Coil {
+                id: coil::BALL_SERVE,
+                fired: None
+            }
+        );
+        // The flippers choose; they don't flip.
+        sim.set(sw::RIGHT_FLIPPER_BUTTON, true);
+        assert_eq!(sim.last.coils, 0);
+        sim.set(sw::RIGHT_FLIPPER_BUTTON, false);
+        sim.tap(sw::RIGHT_FLIPPER_BUTTON);
+        let reports = reports_during(&mut sim, |s| s.tap(sw::START_BUTTON));
+        assert_eq!(
+            reports,
+            [TestReport::Coil {
+                id: coil::RIGHT_KICKER,
+                fired: Some(true)
+            }]
+        );
+        assert_eq!(sim.last.coils, 1 << coil::RIGHT_KICKER.index());
+        // Too soon to fire again, and it says so.
+        let reports = reports_during(&mut sim, |s| s.tap(sw::START_BUTTON));
+        assert_eq!(
+            reports,
+            [TestReport::Coil {
+                id: coil::RIGHT_KICKER,
+                fired: Some(false)
+            }]
+        );
+        sim.run(200);
+        assert_eq!(sim.last.coils, 0);
+        // Back past the first coil wraps round to the last.
+        sim.tap(sw::LEFT_FLIPPER_BUTTON);
+        sim.tap(sw::LEFT_FLIPPER_BUTTON);
+        let reports = reports_during(&mut sim, |s| s.tap(sw::LEFT_FLIPPER_BUTTON));
+        assert_eq!(
+            reports,
+            [TestReport::Coil {
+                id: coil::RIGHT_TOP_KICKER,
+                fired: None
+            }]
+        );
+    }
+
+    #[test]
+    fn coil_test_holds_a_holding_coil_only_briefly() {
+        let mut sim = Sim::new();
+        sim.tap(sw::TEST_BUTTON);
+        sim.tap(sw::TEST_BUTTON);
+        while !matches!(
+            sim.reports.last(),
+            Some(TestReport::Coil { id, .. }) if *id == coil::TRAPDOOR_FLAPS[0]
+        ) {
+            sim.tap(sw::RIGHT_FLIPPER_BUTTON);
+        }
+        sim.tap(sw::START_BUTTON);
+        assert!(sim.coil_on(coil::TRAPDOOR_FLAPS[0]));
+        sim.run(u32::from(HOLD_TEST_MS));
+        assert!(!sim.coil_on(coil::TRAPDOOR_FLAPS[0]));
+    }
+
+    #[test]
+    fn coil_test_lights_the_chosen_parts_lamp() {
+        let mut sim = Sim::new();
+        sim.tap(sw::TEST_BUTTON);
+        sim.tap(sw::TEST_BUTTON);
+        while !matches!(
+            sim.reports.last(),
+            Some(TestReport::Coil { id, .. }) if *id == coil::POP_BUMPERS[0]
+        ) {
+            sim.tap(sw::RIGHT_FLIPPER_BUTTON);
+        }
+        assert_eq!(sim.last.lamps, 1 << lamp::POP_BUMPERS[0].index());
+    }
+
+    #[test]
+    fn lamp_test_steps_through_lamps_and_lights_them_all() {
+        let mut sim = Sim::new();
+        sim.tap(sw::TEST_BUTTON);
+        sim.tap(sw::TEST_BUTTON);
+        sim.tap(sw::TEST_BUTTON);
+        assert_eq!(sim.last.lamps, 1 << lamp::GAME_OVER.index());
+        sim.tap(sw::RIGHT_FLIPPER_BUTTON);
+        assert_eq!(sim.last.lamps, 1 << lamp::TILT.index());
+        assert_eq!(sim.last.coils, 0);
+        assert_eq!(
+            reports_during(&mut sim, |s| s.tap(sw::START_BUTTON)),
+            [TestReport::AllLamps(true)]
+        );
+        assert_eq!(sim.last.coils, 0);
+        let all: u64 = PARTS
+            .iter()
+            .filter_map(|p| p.lamp)
+            .map(|l| 1 << l.index())
+            .sum();
+        assert_eq!(sim.last.lamps, all);
+        sim.tap(sw::START_BUTTON);
+        assert_eq!(sim.last.lamps, 1 << lamp::GAME_OVER.index());
+    }
+
+    #[test]
+    fn slam_tilt_leaves_test_mode_with_the_coils_off() {
+        let mut sim = Sim::new();
+        sim.tap(sw::TEST_BUTTON);
+        sim.tap(sw::TEST_BUTTON);
+        sim.tap(sw::START_BUTTON);
+        let mut reports = Vec::new();
+        let sounds = sounds_during(&mut sim, |s| {
+            reports = reports_during(s, |s| s.tap(sw::SLAM_TILT));
+        });
+        assert_eq!(reports, [TestReport::Done]);
+        assert!(!sounds.contains(&Sound::GameOver), "{sounds:?}");
+        assert_eq!(sim.machine.phase(), Phase::Attract);
+        assert_eq!(sim.last.coils, 0);
+    }
+
+    #[test]
+    fn test_mode_stops_the_attract_show() {
+        let mut sim = Sim::new();
+        sim.run(MUSIC_DELAY_MS + 100);
+        assert!(sim.sounds.contains(&Sound::AttractMusic));
+        sim.stops.clear();
+        sim.tap(sw::TEST_BUTTON);
+        assert_eq!(sim.stops, [Sound::AttractMusic]);
+        assert_eq!(sim.last.lamps, 0, "only test mode's own lamps");
+        // And it doesn't come back while testing.
+        sim.sounds.clear();
+        sim.run(MUSIC_DELAY_MS * 2);
+        assert!(!sim.sounds.contains(&Sound::AttractMusic));
+        assert!(matches!(sim.machine.phase(), Phase::Test(_)));
     }
 
     #[test]

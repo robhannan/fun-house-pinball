@@ -23,6 +23,7 @@ pub mod music_beats;
 pub mod playfield;
 pub mod sound;
 pub mod switches;
+pub mod test_mode;
 pub mod time;
 
 pub use coils::{CoilId, CoilKind, Coils};

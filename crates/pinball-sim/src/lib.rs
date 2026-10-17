@@ -44,7 +44,15 @@ pub struct Simulator {
     sounds: std::collections::VecDeque<Sound>,
     /// Sounds to stop, oldest first.
     stops: std::collections::VecDeque<Sound>,
+    /// The latest test-mode reports as text, newest first, as the firmware
+    /// prints them on its serial console.
+    test_log: std::collections::VecDeque<String>,
+    /// How many test reports there have been, so the page knows to redraw.
+    test_reports: u32,
 }
+
+/// Test-mode lines kept for the page.
+pub const TEST_LOG_LINES: usize = 8;
 
 impl Default for Simulator {
     fn default() -> Self {
@@ -71,7 +79,20 @@ impl Simulator {
             coils_seen: 0,
             sounds: std::collections::VecDeque::new(),
             stops: std::collections::VecDeque::new(),
+            test_log: std::collections::VecDeque::new(),
+            test_reports: 0,
         }
+    }
+
+    /// The latest test-mode report lines, newest first.
+    pub fn test_log(&self) -> impl Iterator<Item = &str> {
+        self.test_log.iter().map(String::as_str)
+    }
+
+    /// How many test-mode reports there have been.
+    #[must_use]
+    pub const fn test_reports(&self) -> u32 {
+        self.test_reports
     }
 
     /// The game state, for reading score, ball, phase and so on.
@@ -144,6 +165,12 @@ impl Simulator {
             self.coils_seen |= self.outputs.coils;
             self.sounds.extend(self.outputs.sounds.iter());
             self.stops.extend(self.outputs.stop_sounds.iter());
+            for report in self.outputs.reports.iter() {
+                let line = pinball_core::test_mode::describe(report);
+                self.test_log.push_front(line.as_str().to_owned());
+                self.test_log.truncate(TEST_LOG_LINES);
+                self.test_reports = self.test_reports.wrapping_add(1);
+            }
         }
     }
 }
@@ -325,6 +352,36 @@ mod exports {
             Phase::Attract => 0,
             Phase::Playing => 1,
             Phase::Tilted => 2,
+            Phase::Test(_) => 3,
+        })
+    }
+
+    /// How many test-mode reports there have been; redraw the log when it
+    /// changes.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_test_reports() -> u32 {
+        with(|sim| sim.test_reports())
+    }
+
+    /// Length in bytes of test-mode log line `n` (0 = newest), or 0.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_test_line_len(n: u32) -> u32 {
+        with(|sim| {
+            sim.test_log()
+                .nth(n as usize)
+                .map_or(0, |line| line.len() as u32)
+        })
+    }
+
+    /// Byte `i` of test-mode log line `n` (0 = newest), or 0. The lines are
+    /// plain ASCII.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_test_line_byte(n: u32, i: u32) -> u32 {
+        with(|sim| {
+            sim.test_log()
+                .nth(n as usize)
+                .and_then(|line| line.as_bytes().get(i as usize))
+                .map_or(0, |&b| u32::from(b))
         })
     }
 }
@@ -363,6 +420,25 @@ mod tests {
         sim.set_switch(sw::LEFT_FLIPPER_BUTTON, false);
         sim.advance(10);
         assert_eq!(sim.outputs().coils & hold, 0);
+    }
+
+    #[test]
+    fn test_mode_reports_reach_the_page_newest_first() {
+        let mut sim = Simulator::new();
+        sim.tap(pinball_core::playfield::sw::TEST_BUTTON);
+        sim.advance(100);
+        sim.tap(pinball_core::playfield::sw::OUTHOLE);
+        sim.advance(100);
+        let lines: Vec<_> = sim.test_log().collect();
+        assert_eq!(
+            lines,
+            [
+                "switch C0 R0 opened: Outhole",
+                "switch C0 R0 closed: Outhole",
+                "TEST 1/3 switches: close any switch. Test button: next",
+            ]
+        );
+        assert_eq!(sim.test_reports(), 3);
     }
 
     #[test]

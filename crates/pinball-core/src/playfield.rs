@@ -46,6 +46,8 @@ pub mod sw {
     pub const TILT: SwitchId = SwitchId::direct(3);
     /// Slam tilt (coin door / cabinet). Ends the game immediately.
     pub const SLAM_TILT: SwitchId = SwitchId::direct(4);
+    /// Operator test button, inside the coin door (see `crate::test_mode`).
+    pub const TEST_BUTTON: SwitchId = SwitchId::direct(5);
 
     // Ball handling.
     /// Outhole: a drained ball rests here.
@@ -325,6 +327,7 @@ pub const PARTS: &[Part] = &[
     part("Start button", Some(sw::START_BUTTON), &[], None),
     part("Tilt", Some(sw::TILT), &[], None),
     part("Slam tilt", Some(sw::SLAM_TILT), &[], None),
+    part("Test button", Some(sw::TEST_BUTTON), &[], None),
     // Ball handling
     part("Outhole", Some(sw::OUTHOLE), &[coil::BALL_SERVE], None),
     part("Shooter lane", Some(sw::SHOOTER_LANE), &[], None),
