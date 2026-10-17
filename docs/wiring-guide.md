@@ -226,15 +226,12 @@ Current assignments, from `playfield.rs`:
 | Pop bumper: top right | 2 (D24) | 2 (D32) |
 | Pop bumper: lower left | 2 (D24) | 3 (D33) |
 | Pop bumper: lower right | 2 (D24) | 4 (D34) |
-| Top lanes 1–4 (left to right) | 3 (D25) | 0–3 (D30–D33) |
-| Top centre red bumper | 3 (D25) | 4 (D34) |
-| Side "10 points" lanes 1–4 (left to right) | 4 (D26) | 0–3 (D30–D33) |
-| "Scores Bonus" gate | 4 (D26) | 4 (D34) |
-| Trapdoors 1–3 under the gate (left to right) | 4 (D26) | 5–7 (D35–D37) |
-| "30 points" rollover: left | 5 (D27) | 0 (D30) |
-| "30 points" rollover: right | 5 (D27) | 1 (D31) |
+| Top bumper ("10 when lit") | 2 (D24) | 5 (D35) |
+| Top striped rubbers: left, right (*verify* that they're switches) | 3 (D25) | 0–1 (D30–D31) |
+| "10 points" lanes 1–4 (left to right) | 4 (D26) | 0–3 (D30–D33) |
+| Trapdoors 1–3 in the "Scores Bonus" box (left to right) | 4 (D26) | 5–7 (D35–D37) |
 
-Columns 6–7 and any unused positions are free for new switches. Add them to
+Columns 5–7 and any unused positions are free for new switches. Add them to
 `playfield.rs` and this table together.
 
 **Testing a matrix switch with power off:** set the multimeter to diode test.
@@ -345,7 +342,7 @@ Confirm which lug is which with the coil's datasheet or supplier. The power
 winding has the *lower* resistance; measure it with the multimeter's Ω setting,
 power off.
 
-**Trapdoor flaps** (the three trapdoors under the "Scores Bonus" gate) use the
+**Trapdoor flaps** (the three trapdoors in the "Scores Bonus" box) use the
 same single-coil MOSFET circuit. Unlike a kicker, a flap can be **held open for
 a long time**, so:
 
@@ -369,6 +366,7 @@ a long time**, so:
 | Trapdoor flaps 1–3 (left to right) | 12–14 | 2 | Q4–Q6 (4–6) |
 | *Optional:* bell for the 1s | 15 | 2 | Q7 (7) |
 | *Optional:* bells for the 10s, 100s | 16–17 | 3 | Q0–Q1 (15, 1) |
+| Top bumper ("10 when lit") | 18 | 3 | Q2 (2) |
 
 ### 7c. Lamp drivers
 
@@ -402,11 +400,15 @@ LEDs.
 | Game over | 0 | 5 | Q0 |
 | Tilt | 1 | 5 | Q1 |
 | Special when lit | 2 | 5 | Q2 |
+| Trapdoor lamps 1–3 ("trap door open when lite is lit") | 3–5 | 5 | Q3–Q5 |
+| "Advance bonus" by the top rubbers: left, right | 6–7 | 5 | Q6–Q7 |
 | Bonus wheel 10–80 | 8–15 | 6 | Q0–Q7 |
 | Bonus wheel 90, 100 | 16–17 | 7 | Q0–Q1 |
 | Bonus wheel centre | 18 | 7 | Q2 |
-| "30 points" left, right | 20–21 | 7 | Q4–Q5 |
+| "30 points" below lanes 1–4 | 20–23 | 7 | Q4–Q7 |
 | Pop bumper caps 1–5 | 24–28 | 8 | Q0–Q4 |
+| Top bumper cap | 29 | 8 | Q5 |
+| "Advance bonus" below the lanes: left, right | 30–31 | 8 | Q6–Q7 |
 | Backboard: player up 1–4 | 32–35 | 9 | Q0–Q3 |
 | Backboard: ball in play 1–5 (four train cars, then the dragon's head *) | 40–44 | 10 | Q0–Q4 |
 

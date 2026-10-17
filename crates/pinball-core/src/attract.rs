@@ -5,9 +5,9 @@
 //! the music in the same tick, so the two never drift apart.
 //!
 //! The music is built from 16-beat phrases, so the show changes pattern every
-//! phrase: a chase round the bonus wheel, pop bumpers and train; everything
-//! flashing; the two sides see-sawing; and the lamps filling up. The first beat
-//! of each phrase also flashes the special.
+//! phrase: a chase round the bonus wheel, pop bumpers, lanes and train;
+//! everything flashing; the two sides see-sawing; and the lamps filling up. The
+//! first beat of each phrase also flashes the special and the top bumper.
 
 use crate::lamps::{LampId, LampMode, Lamps};
 use crate::music_beats::{ATTRACT_MUSIC_BEATS_MS, ATTRACT_MUSIC_MS};
@@ -19,7 +19,7 @@ const PHRASE: usize = 16;
 
 /// Every lamp the show uses, so they can all be cleared afterwards. Bits in a
 /// [`Pattern`] index this list.
-const SHOW_LAMPS: [LampId; 28] = [
+const SHOW_LAMPS: [LampId; 38] = [
     lamp::BONUS_WHEEL[0],
     lamp::BONUS_WHEEL[1],
     lamp::BONUS_WHEEL[2],
@@ -34,11 +34,21 @@ const SHOW_LAMPS: [LampId; 28] = [
     lamp::SPECIAL,
     lamp::THIRTY_POINTS[0],
     lamp::THIRTY_POINTS[1],
+    lamp::THIRTY_POINTS[2],
+    lamp::THIRTY_POINTS[3],
     lamp::POP_BUMPERS[0],
     lamp::POP_BUMPERS[1],
     lamp::POP_BUMPERS[2],
     lamp::POP_BUMPERS[3],
     lamp::POP_BUMPERS[4],
+    lamp::TOP_BUMPER,
+    lamp::TRAPDOORS[0],
+    lamp::TRAPDOORS[1],
+    lamp::TRAPDOORS[2],
+    lamp::TOP_ADVANCE_BONUS[0],
+    lamp::TOP_ADVANCE_BONUS[1],
+    lamp::LANE_ADVANCE_BONUS[0],
+    lamp::LANE_ADVANCE_BONUS[1],
     lamp::PLAYER_UP[0],
     lamp::PLAYER_UP[1],
     lamp::PLAYER_UP[2],
@@ -55,22 +65,31 @@ const WHEEL: usize = 0;
 const CENTRE: usize = 10;
 const SPECIAL: usize = 11;
 const THIRTY: usize = 12;
-const POPS: usize = 14;
-const PLAYERS: usize = 19;
-const TRAIN: usize = 23;
+const POPS: usize = 16;
+const TOP_BUMPER: usize = 21;
+const TRAPDOORS: usize = 22;
+/// The top-left, top-right, lower-left and lower-right "advance bonus" lamps.
+const ADVANCE: usize = 25;
+const PLAYERS: usize = 29;
+const TRAIN: usize = 33;
 const TRAIN_CARS: usize = 5;
 
 /// Which of [`SHOW_LAMPS`] are lit: bit `n` is `SHOW_LAMPS[n]`.
-type Pattern = u32;
+type Pattern = u64;
 
 const fn bit(index: usize) -> Pattern {
     1 << index
 }
 
 /// Lamps on the centre line, which belong to neither side in the see-saw: the
-/// bonus wheel's 10 (top) and 60 (bottom), the top-centre pop bumper and the
-/// middle train car.
-const CENTRE_LINE: Pattern = bit(WHEEL) | bit(WHEEL + 5) | bit(POPS + 1) | bit(TRAIN + 2);
+/// bonus wheel's 10 (top) and 60 (bottom), the top bumper, the top-centre pop
+/// bumper, the middle trapdoor and the middle train car.
+const CENTRE_LINE: Pattern = bit(WHEEL)
+    | bit(WHEEL + 5)
+    | bit(TOP_BUMPER)
+    | bit(POPS + 1)
+    | bit(TRAPDOORS + 1)
+    | bit(TRAIN + 2);
 
 /// Lamps on the left of the playfield and backboard, for the see-saw. The
 /// bonus wheel runs clockwise from 10 at the top, so 70–100 are on the left.
@@ -79,8 +98,12 @@ const LEFT: Pattern = bit(WHEEL + 6)
     | bit(WHEEL + 8)
     | bit(WHEEL + 9)
     | bit(THIRTY)
+    | bit(THIRTY + 1)
     | bit(POPS)
     | bit(POPS + 3)
+    | bit(TRAPDOORS)
+    | bit(ADVANCE)
+    | bit(ADVANCE + 2)
     | bit(PLAYERS)
     | bit(PLAYERS + 2)
     | bit(TRAIN)
@@ -93,14 +116,17 @@ const fn pattern(beat: usize) -> Pattern {
     let step = beat % PHRASE;
     let mut lit = match (beat / PHRASE) % 4 {
         // Chase: two lamps opposite each other round the wheel, the pop
-        // bumpers in turn, the train running along, the player numbers.
+        // bumpers, lanes, trapdoors and "advance bonus" lamps in turn, the
+        // train running along, the player numbers.
         0 => {
             bit(WHEEL + beat % 10)
                 | bit(WHEEL + (beat + 5) % 10)
                 | bit(POPS + beat % 5)
+                | bit(THIRTY + beat % 4)
+                | bit(TRAPDOORS + beat % 3)
+                | bit(ADVANCE + beat % 4)
                 | bit(TRAIN + beat % TRAIN_CARS)
                 | bit(PLAYERS + beat % 4)
-                | bit(THIRTY + beat % 2)
         }
         // Flash: everything on with the beat, off in between.
         1 => {
@@ -141,7 +167,7 @@ const fn pattern(beat: usize) -> Pattern {
     };
     // Accent the first beat of every phrase.
     if step == 0 {
-        lit |= bit(SPECIAL) | bit(CENTRE);
+        lit |= bit(SPECIAL) | bit(CENTRE) | bit(TOP_BUMPER);
     }
     lit
 }

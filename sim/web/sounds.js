@@ -452,6 +452,7 @@ export const COIL_SAMPLES = {
   7: "samples/coil-pop.wav",
   8: "samples/coil-flipper.wav",
   10: "samples/coil-flipper.wav",
+  18: "samples/coil-pop.wav",
 };
 
 /** Recorded real bells for the optional bell coils (1s, 10s, 100s). */

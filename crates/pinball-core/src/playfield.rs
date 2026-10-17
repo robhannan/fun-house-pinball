@@ -5,18 +5,22 @@
 //! Keep this file the single source of truth and update `docs/hardware.md`
 //! alongside it.
 //!
-//! The feature list comes from a photo of a restored table. Counts marked
-//! *verify* are best guesses from that photo; check them against the real
+//! The feature list comes from photos of restored tables. Anything marked
+//! *verify* is a best guess from those photos; check it against the real
 //! playfield and schematic.
 //!
 //! Playfield, top to bottom:
 //!
-//! * top lanes either side of a red centre bumper
-//! * three pop bumpers across the top
-//! * "10 points" side lanes and the centre "Scores Bonus" gate, with three
-//!   coil-driven trapdoors beneath it
-//! * "30 points when lit" rollovers, left and right
-//! * two lower pop bumpers, one each side
+//! * a "10 when lit" pop bumper at the top centre, with a candy-striped rubber
+//!   either side ("advance bonus when lit"), and passive jack-in-the-box
+//!   rebounds in the top corners
+//! * three "1 point" pop bumpers across the top
+//! * the "Scores Bonus" box: three coil-driven trapdoors, each with a lamp
+//!   above it ("trap door open when lite is lit")
+//! * four "10 points" lanes, two either side of the box, each with a
+//!   "30 points when lit" lamp below it, and an "advance bonus when lit" lamp
+//!   below each pair
+//! * two lower "1 point" pop bumpers, one each side
 //! * the 10–100 bonus wheel (lamps only), with "Special when lit" above it
 //! * two kicking rubbers above two inward-facing flippers, no outlanes, and a
 //!   centre post above the outhole
@@ -53,8 +57,8 @@ pub mod sw {
     /// Right kicking rubber, above the right flipper.
     pub const RIGHT_KICKER: SwitchId = SwitchId::matrix(1, 1);
 
-    /// Pop bumper skirt switches: three across the top (left, centre, right),
-    /// then the lower left and lower right.
+    /// "1 point" pop bumper skirt switches: three across the top (left,
+    /// centre, right), then the lower left and lower right.
     pub const POP_BUMPERS: [SwitchId; 5] = [
         SwitchId::matrix(2, 0),
         SwitchId::matrix(2, 1),
@@ -62,37 +66,29 @@ pub mod sw {
         SwitchId::matrix(2, 3),
         SwitchId::matrix(2, 4),
     ];
+    /// The "10 when lit" pop bumper at the top centre.
+    pub const TOP_BUMPER: SwitchId = SwitchId::matrix(2, 5);
 
-    /// Top lanes, left to right (*verify*: count and whether the outer corner
-    /// units are lanes).
-    pub const TOP_LANES: [SwitchId; 4] = [
-        SwitchId::matrix(3, 0),
-        SwitchId::matrix(3, 1),
-        SwitchId::matrix(3, 2),
-        SwitchId::matrix(3, 3),
-    ];
-    /// Red bumper at the top centre (*verify*: passive bumper or target).
-    pub const TOP_CENTRE_BUMPER: SwitchId = SwitchId::matrix(3, 4);
+    /// The candy-striped rubbers either side of the top bumper, left then
+    /// right, marked "advance bonus when lit" (*verify*: that the rubber is a
+    /// switch, rather than the lanes beside it).
+    pub const TOP_REBOUNDS: [SwitchId; 2] = [SwitchId::matrix(3, 0), SwitchId::matrix(3, 1)];
 
-    /// "10 points" side lanes, left to right (*verify* count).
+    /// "10 points" lanes, two either side of the "Scores Bonus" box, left to
+    /// right.
     pub const SIDE_LANES: [SwitchId; 4] = [
         SwitchId::matrix(4, 0),
         SwitchId::matrix(4, 1),
         SwitchId::matrix(4, 2),
         SwitchId::matrix(4, 3),
     ];
-    /// "Scores Bonus" gate in the centre.
-    pub const BONUS_GATE: SwitchId = SwitchId::matrix(4, 4);
-    /// The three trapdoors under the "Scores Bonus" gate, left to right. Each
+    /// The three trapdoors in the "Scores Bonus" box, left to right. Each
     /// closes when a ball drops through its open flap.
     pub const TRAPDOORS: [SwitchId; 3] = [
         SwitchId::matrix(4, 5),
         SwitchId::matrix(4, 6),
         SwitchId::matrix(4, 7),
     ];
-    /// "30 points when lit" rollovers, left then right.
-    pub const THIRTY_POINT_ROLLOVERS: [SwitchId; 2] =
-        [SwitchId::matrix(5, 0), SwitchId::matrix(5, 1)];
 }
 
 /// Coil driver assignments.
@@ -106,7 +102,7 @@ pub mod coil {
     pub const LEFT_KICKER: CoilId = CoilId::new(1);
     /// Right kicking rubber.
     pub const RIGHT_KICKER: CoilId = CoilId::new(2);
-    /// Pop bumpers, matching [`super::sw::POP_BUMPERS`].
+    /// "1 point" pop bumpers, matching [`super::sw::POP_BUMPERS`].
     pub const POP_BUMPERS: [CoilId; 5] = [
         CoilId::new(3),
         CoilId::new(4),
@@ -122,13 +118,15 @@ pub mod coil {
     pub const RIGHT_FLIPPER_POWER: CoilId = CoilId::new(10);
     /// Right flipper hold winding.
     pub const RIGHT_FLIPPER_HOLD: CoilId = CoilId::new(11);
-    /// Trapdoor flaps under the "Scores Bonus" gate, matching
+    /// Trapdoor flaps in the "Scores Bonus" box, matching
     /// [`super::sw::TRAPDOORS`]. Assumed (*verify*): energised = flap open,
     /// so every flap closes whenever coil power is cut.
     pub const TRAPDOOR_FLAPS: [CoilId; 3] = [CoilId::new(12), CoilId::new(13), CoilId::new(14)];
     /// Optional real bells for the 1s, 10s and 100s, rung by scoring (see
     /// `crate::bells`). Not fitted yet: only used when `Settings::bells` is on.
     pub const BELLS: [CoilId; 3] = [CoilId::new(15), CoilId::new(16), CoilId::new(17)];
+    /// The "10 when lit" pop bumper at the top centre.
+    pub const TOP_BUMPER: CoilId = CoilId::new(18);
 }
 
 /// Lamp assignments.
@@ -141,6 +139,12 @@ pub mod lamp {
     pub const TILT: LampId = LampId::new(1);
     /// "Special when lit", above the bonus wheel.
     pub const SPECIAL: LampId = LampId::new(2);
+    /// "Trap door open when lite is lit": one above each trapdoor, matching
+    /// [`super::sw::TRAPDOORS`].
+    pub const TRAPDOORS: [LampId; 3] = [LampId::new(3), LampId::new(4), LampId::new(5)];
+    /// "Advance bonus when lit" by the top rubbers, matching
+    /// [`super::sw::TOP_REBOUNDS`].
+    pub const TOP_ADVANCE_BONUS: [LampId; 2] = [LampId::new(6), LampId::new(7)];
     /// The bonus wheel: 10, 20, ... 100 points.
     pub const BONUS_WHEEL: [LampId; 10] = [
         LampId::new(8),
@@ -156,9 +160,15 @@ pub mod lamp {
     ];
     /// "10 points when lit" in the centre of the bonus wheel.
     pub const BONUS_WHEEL_CENTRE: LampId = LampId::new(18);
-    /// "30 points when lit", matching [`super::sw::THIRTY_POINT_ROLLOVERS`].
-    pub const THIRTY_POINTS: [LampId; 2] = [LampId::new(20), LampId::new(21)];
-    /// Pop bumper caps, matching [`super::sw::POP_BUMPERS`].
+    /// "30 points when lit": one below each lane, matching
+    /// [`super::sw::SIDE_LANES`].
+    pub const THIRTY_POINTS: [LampId; 4] = [
+        LampId::new(20),
+        LampId::new(21),
+        LampId::new(22),
+        LampId::new(23),
+    ];
+    /// "1 point" pop bumper caps, matching [`super::sw::POP_BUMPERS`].
     pub const POP_BUMPERS: [LampId; 5] = [
         LampId::new(24),
         LampId::new(25),
@@ -166,6 +176,11 @@ pub mod lamp {
         LampId::new(27),
         LampId::new(28),
     ];
+    /// The "10 when lit" pop bumper's cap.
+    pub const TOP_BUMPER: LampId = LampId::new(29);
+    /// "Advance bonus when lit" below the left pair of lanes, then the right
+    /// pair.
+    pub const LANE_ADVANCE_BONUS: [LampId; 2] = [LampId::new(30), LampId::new(31)];
 
     // Backboard (see docs/backboard.svg).
     /// The circled player numbers 1–4 on the backboard, lit for whose turn it
@@ -205,6 +220,7 @@ pub const COIL_KINDS: [CoilKind; COIL_COUNT] = {
         k[coil::POP_BUMPERS[i].index()] = pulse(20, 60);
         i += 1;
     }
+    k[coil::TOP_BUMPER.index()] = pulse(20, 60);
     k[coil::LEFT_FLIPPER_POWER.index()] = pulse(40, 0);
     k[coil::LEFT_FLIPPER_HOLD.index()] = CoilKind::Hold;
     k[coil::RIGHT_FLIPPER_POWER.index()] = pulse(40, 0);
@@ -344,50 +360,68 @@ pub const PARTS: &[Part] = &[
         &[coil::POP_BUMPERS[4]],
         Some(lamp::POP_BUMPERS[4]),
     ),
+    part(
+        "Top bumper (10 when lit)",
+        Some(sw::TOP_BUMPER),
+        &[coil::TOP_BUMPER],
+        Some(lamp::TOP_BUMPER),
+    ),
     // Upper playfield
-    part("Top lane 1", Some(sw::TOP_LANES[0]), &[], None),
-    part("Top lane 2", Some(sw::TOP_LANES[1]), &[], None),
-    part("Top lane 3", Some(sw::TOP_LANES[2]), &[], None),
-    part("Top lane 4", Some(sw::TOP_LANES[3]), &[], None),
-    part("Top centre bumper", Some(sw::TOP_CENTRE_BUMPER), &[], None),
+    part("Top rubber (left)", Some(sw::TOP_REBOUNDS[0]), &[], None),
+    part("Top rubber (right)", Some(sw::TOP_REBOUNDS[1]), &[], None),
+    part(
+        "Advance bonus lamp (top left)",
+        None,
+        &[],
+        Some(lamp::TOP_ADVANCE_BONUS[0]),
+    ),
+    part(
+        "Advance bonus lamp (top right)",
+        None,
+        &[],
+        Some(lamp::TOP_ADVANCE_BONUS[1]),
+    ),
     part("Side lane 1", Some(sw::SIDE_LANES[0]), &[], None),
     part("Side lane 2", Some(sw::SIDE_LANES[1]), &[], None),
     part("Side lane 3", Some(sw::SIDE_LANES[2]), &[], None),
     part("Side lane 4", Some(sw::SIDE_LANES[3]), &[], None),
-    part("Scores Bonus gate", Some(sw::BONUS_GATE), &[], None),
     part(
         "Trapdoor 1",
         Some(sw::TRAPDOORS[0]),
         &[coil::TRAPDOOR_FLAPS[0]],
-        None,
+        Some(lamp::TRAPDOORS[0]),
     ),
     part(
         "Trapdoor 2",
         Some(sw::TRAPDOORS[1]),
         &[coil::TRAPDOOR_FLAPS[1]],
-        None,
+        Some(lamp::TRAPDOORS[1]),
     ),
     part(
         "Trapdoor 3",
         Some(sw::TRAPDOORS[2]),
         &[coil::TRAPDOOR_FLAPS[2]],
-        None,
+        Some(lamp::TRAPDOORS[2]),
     ),
     // Optional bells (not fitted yet)
     part("Bell: 1s (optional)", None, &[coil::BELLS[0]], None),
     part("Bell: 10s (optional)", None, &[coil::BELLS[1]], None),
     part("Bell: 100s (optional)", None, &[coil::BELLS[2]], None),
+    part("30 points lamp 1", None, &[], Some(lamp::THIRTY_POINTS[0])),
+    part("30 points lamp 2", None, &[], Some(lamp::THIRTY_POINTS[1])),
+    part("30 points lamp 3", None, &[], Some(lamp::THIRTY_POINTS[2])),
+    part("30 points lamp 4", None, &[], Some(lamp::THIRTY_POINTS[3])),
     part(
-        "30 points rollover (left)",
-        Some(sw::THIRTY_POINT_ROLLOVERS[0]),
+        "Advance bonus lamp (lower left)",
+        None,
         &[],
-        Some(lamp::THIRTY_POINTS[0]),
+        Some(lamp::LANE_ADVANCE_BONUS[0]),
     ),
     part(
-        "30 points rollover (right)",
-        Some(sw::THIRTY_POINT_ROLLOVERS[1]),
+        "Advance bonus lamp (lower right)",
+        None,
         &[],
-        Some(lamp::THIRTY_POINTS[1]),
+        Some(lamp::LANE_ADVANCE_BONUS[1]),
     ),
     part("Special when lit", None, &[], Some(lamp::SPECIAL)),
     // Bonus wheel

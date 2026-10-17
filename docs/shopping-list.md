@@ -8,9 +8,9 @@ Everything needed to build the controller described in the
 
 | | Estimate |
 |---|---|
-| **Everything** | **£520–975** |
-| Without tools (if you already have them) | £455–825 |
-| Electronics only (sections 1–8, no pinball parts or tools) | £265–470 |
+| **Everything** | **£535–995** |
+| Without tools (if you already have them) | £465–845 |
+| Electronics only (sections 1–8, no pinball parts or tools) | £265–475 |
 
 These are rough **estimates in GBP, as of October 2026**, to help with budgeting.
 
@@ -80,8 +80,8 @@ the numbers.
 
 ## 3. Switch matrix
 
-The map has 21 matrix switches, 24 with the three trapdoors under the
-"Scores Bonus" gate, plus 5 direct switches.
+The map has 19 matrix switches, including the three trapdoors in the
+"Scores Bonus" box, plus 5 direct switches.
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
@@ -106,8 +106,8 @@ The map has 21 matrix switches, 24 with the three trapdoors under the
 
 ## 5. Coil drivers
 
-15 coil outputs are used: ball serve, 2 kickers, 5 pop bumpers, 2 × 2 flipper
-windings and 3 trapdoor flaps.
+16 coil outputs are used: ball serve, 2 kickers, 6 pop bumpers, 2 × 2 flipper
+windings and 3 trapdoor flaps, plus 3 for the optional bells.
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
@@ -126,15 +126,15 @@ flyback diodes or allow them to be fitted. Expect roughly £5–15 per 8-channel
 
 ## 6. Lamp drivers and lamps
 
-30 lamp outputs are used, on chips 5–10: 19 on the playfield and 11 on the backboard.
+40 lamp outputs are used, on chips 5–10: 29 on the playfield and 11 on the backboard.
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
 | ULN2803A Darlington driver, DIP-18 | 8 | 6 used | [AliExpress](https://www.aliexpress.com/w/wholesale-uln2803a-dip18.html) | 3–6 |
 | DIP-18 IC sockets | 8 | | [AliExpress](https://www.aliexpress.com/w/wholesale-dip18-ic-socket.html) | 1–2 |
-| LED replacement bulbs, #44/#47 bayonet (BA9S), 6.3 V | 40 | Count the sockets on the playfield and backglass first. Warm white looks closest to the original incandescents. | [AliExpress](https://www.aliexpress.com/w/wholesale-ba9s-6.3v-led-pinball.html) | 10–20 |
+| LED replacement bulbs, #44/#47 bayonet (BA9S), 6.3 V | 50 | Count the sockets on the playfield and backglass first. Warm white looks closest to the original incandescents. | [AliExpress](https://www.aliexpress.com/w/wholesale-ba9s-6.3v-led-pinball.html) | 12–25 |
 
-**Section estimate: £14–28**
+**Section estimate: £16–33**
 
 ## 6b. Sound
 
@@ -207,11 +207,11 @@ of the old parts.
 | Item | Qty | Notes | Est. £ |
 |---|---|---|---|
 | Kicker coils | 2 | DC, at your coil voltage | 20–30 |
-| Pop bumper coils | 5 | DC, at your coil voltage | 50–75 |
+| Pop bumper coils | 6 | DC, at your coil voltage | 60–90 |
 | Ball serve coil and mechanism | 1 | Only if replacing the manual ball lift | 25–60 |
 | Dual-wound flipper coils | 2 | DC, at your coil voltage; ask for the lug layout | 22–30 |
 | Trapdoor flap coils | 3 | **Continuous-duty**, DC, at your coil voltage | 30–60 |
 | *Optional:* bells with coils | 0–3 | Not needed now. For the authentic 1950s scoring sound later (wiring guide section 7e). | varies |
 | Flipper rebuild kits, rubber rings, pop bumper caps | As needed | | 40–100 |
 
-**Section estimate: £187–355**
+**Section estimate: £197–370**

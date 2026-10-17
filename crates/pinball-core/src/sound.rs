@@ -28,12 +28,13 @@ pub enum Sound {
     PopBumper,
     /// A lane or rollover: a bell.
     Lane,
-    /// A lit "30 points" rollover: three rising bells.
+    /// A lane with its "30 points" lamp lit: three rising bells.
     ThirtyPoints,
     /// The bonus wheel moved to position `n` (1 = 20 points ... 9 = 100): a bell
     /// that climbs with the wheel.
     BonusAdvance(u8),
-    /// The "Scores Bonus" gate collected the bonus: drum roll and cymbal crash.
+    /// A trapdoor in the "Scores Bonus" box collected the bonus: drum roll and
+    /// cymbal crash.
     BonusCollect,
     /// "Special when lit" lit up: a calliope fanfare.
     Special,
