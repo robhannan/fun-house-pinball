@@ -59,6 +59,11 @@ Mega 2560. See `README.md` for setup and `docs/hardware.md` for wiring.
   and `sim/web/index.html`. When adding a part, add it to `PARTS` and give its
   page element matching attributes; the simulator's tests check the page
   against `PARTS`. Keep simulator-only code out of `pinball-core`.
+  - The ball physics (`crates/pinball-sim/src/physics.rs`) takes its geometry
+    from `docs/playfield.svg` too: `data-wall` for walls and posts, `data-gate`
+    for the one-way shooter gate. When moving or adding anything solid, leave
+    a ball's width (20 px) wherever the ball should pass, and run the slow trap
+    search: `cargo test -p pinball-sim --release -- --ignored`.
 - **Don't present guesses as facts:** feature counts and rules not confirmed on
   the real table or schematic are marked *verify* or "assumed". Keep them marked.
 

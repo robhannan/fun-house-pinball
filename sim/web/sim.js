@@ -15,6 +15,19 @@
 import { BELL_SAMPLES, COIL_SAMPLES, SOUNDS, render } from "./sounds.js";
 
 const PHASES = ["Attract", "Playing", "Tilted", "Test"];
+
+/// WebAssembly exports this script needs; an older build lacks some of them.
+const REQUIRED_EXPORTS = [
+  "sim_advance",
+  "sim_ball_x",
+  "sim_ball_y",
+  "sim_ball_shown",
+  "sim_flipper_turn",
+  "sim_plunger",
+  "sim_plunger_pull",
+  "sim_nudge",
+  "sim_test_reports",
+];
 const COIL_GLOW_MS = 150; // keep short coil pulses visible
 
 // "C2R3" (matrix column 2, row 3) -> 19; "D1" (direct input 1) -> 65.
@@ -27,12 +40,21 @@ function switchIndex(label) {
 }
 
 async function load() {
+  // Never use cached copies: after a rebuild, the page, this script and the
+  // WebAssembly must all be from the same build.
+  const get = (file) => fetch(file, { cache: "no-store" });
   const [wasmBytes, playfield, backboard] = await Promise.all([
-    fetch("generated/pinball_sim.wasm").then((r) => r.arrayBuffer()),
-    fetch("generated/playfield.svg").then((r) => r.text()),
-    fetch("generated/backboard.svg").then((r) => r.text()),
+    get("generated/pinball_sim.wasm").then((r) => r.arrayBuffer()),
+    get("generated/playfield.svg").then((r) => r.text()),
+    get("generated/backboard.svg").then((r) => r.text()),
   ]);
   const { instance } = await WebAssembly.instantiate(wasmBytes, {});
+  const missing = REQUIRED_EXPORTS.filter((name) => typeof instance.exports[name] !== "function");
+  if (missing.length > 0) {
+    throw new Error(
+      `The simulator build is out of date (missing ${missing.join(", ")}). Run pnpm run build:sim, then reload.`,
+    );
+  }
   document.getElementById("playfield").innerHTML = playfield;
   document.getElementById("backboard").innerHTML = backboard;
   return instance.exports;
@@ -48,7 +70,47 @@ function start(sim) {
     mask: el.dataset.coil.split(" ").reduce((m, c) => m | (1 << Number(c)), 0),
     lastOn: -Infinity,
   }));
-  const flippers = coils.filter(({ el }) => el.dataset.flipper);
+  const flippers = [...document.querySelectorAll("#playfield [data-flipper]")].map((el) => {
+    // Turn about the pivot: the middle of the base end (the first and last
+    // points of the path), as the physics does.
+    const p = el.getAttribute("d").match(/-?[\d.]+/g).map(Number);
+    return { el, n: el.dataset.flipper === "left" ? 0 : 1, pivot: [(p[0] + p[6]) / 2, (p[1] + p[7]) / 2] };
+  });
+
+  // The ball, drawn on top of the playfield.
+  const svg = document.querySelector("#playfield svg");
+  const ballEl = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  ballEl.id = "sim-ball";
+  ballEl.setAttribute("r", "10");
+  ballEl.setAttribute("fill", "#b8c0c8");
+  ballEl.setAttribute("stroke", "#4b535b");
+  ballEl.setAttribute("stroke-width", "2");
+  svg.appendChild(ballEl);
+
+  // Ball controls that aren't switches, by their buttons' data-action: the
+  // plunger (hold to pull back, let go to launch) and the nudge.
+  const pullMeter = document.getElementById("plunger-pull");
+  const actions = {
+    plunger: (down) => sim.sim_plunger(down ? 1 : 0),
+    nudge: (down) => down && sim.sim_nudge(),
+  };
+  for (const button of document.querySelectorAll("button[data-action]")) {
+    const act = actions[button.dataset.action];
+    if (button.hasAttribute("data-hold")) {
+      const release = () => {
+        act(false);
+        button.classList.remove("pressed");
+      };
+      button.addEventListener("pointerdown", () => {
+        act(true);
+        button.classList.add("pressed");
+      });
+      button.addEventListener("pointerup", release);
+      button.addEventListener("pointerleave", release);
+    } else {
+      button.addEventListener("click", () => act(true));
+    }
+  }
 
   const press = (label, closed) => sim.sim_set_switch(switchIndex(label), closed ? 1 : 0);
   const tap = (label) => sim.sim_tap(switchIndex(label));
@@ -112,6 +174,9 @@ function start(sim) {
   const keys = new Map(
     [...document.querySelectorAll("button[data-key]")].map((button) => [button.dataset.key, button]),
   );
+  // A button either works a switch or does an action.
+  const hold = (button, down) =>
+    button.dataset.action ? actions[button.dataset.action](down) : press(button.dataset.switch, down);
   const held = new Set();
   const keyButton = (event) =>
     event.ctrlKey || event.metaKey || event.altKey ? undefined : keys.get(event.key.toLowerCase());
@@ -122,15 +187,17 @@ function start(sim) {
     event.preventDefault();
     if (event.repeat) return;
     if (button.hasAttribute("data-hold")) {
-      press(button.dataset.switch, true);
+      hold(button, true);
       held.add(button);
+    } else if (button.dataset.action) {
+      actions[button.dataset.action](true);
     } else {
       tap(button.dataset.switch);
     }
     button.classList.add("pressed");
   });
   const release = (button) => {
-    if (held.delete(button)) press(button.dataset.switch, false);
+    if (held.delete(button)) hold(button, false);
     button.classList.remove("pressed");
   };
   addEventListener("keyup", (event) => {
@@ -161,7 +228,6 @@ function start(sim) {
     carry -= ms;
     if (ms > 0) sim.sim_advance(ms);
 
-    const coilBits = sim.sim_coils() >>> 0;
     const coilsSeen = sim.sim_coils_seen() >>> 0;
     const lampLow = sim.sim_lamps_low() >>> 0;
     const lampHigh = sim.sim_lamps_high() >>> 0;
@@ -186,7 +252,14 @@ function start(sim) {
         coil.el.classList.toggle("firing", now - coil.lastOn < COIL_GLOW_MS);
       }
     }
-    for (const { el, mask } of flippers) el.classList.toggle("up", (coilBits & mask) !== 0);
+    for (const { el, n, pivot } of flippers) {
+      const degrees = (sim.sim_flipper_turn(n) * 180) / Math.PI;
+      el.setAttribute("transform", `rotate(${degrees.toFixed(2)} ${pivot[0]} ${pivot[1]})`);
+    }
+    ballEl.setAttribute("cx", sim.sim_ball_x().toFixed(1));
+    ballEl.setAttribute("cy", sim.sim_ball_y().toFixed(1));
+    ballEl.style.display = sim.sim_ball_shown() ? "" : "none";
+    pullMeter.style.width = `${Math.round(sim.sim_plunger_pull() * 100)}%`;
 
     for (let track = sim.sim_take_stop(); track !== 0; track = sim.sim_take_stop()) audio.stop(track);
     for (let sound = sim.sim_take_sound(); sound !== 0; sound = sim.sim_take_sound()) {
@@ -231,7 +304,7 @@ function start(sim) {
 
 load().then(start, (error) => {
   document.getElementById("playfield").textContent =
-    `Couldn't load the simulator (${error.message}). Run pnpm run build:sim, then serve sim/web/ over HTTP.`;
+    `Couldn't load the simulator: ${error.message} (Build it with pnpm run build:sim and serve it with pnpm run serve:sim.)`;
 });
 
 /**

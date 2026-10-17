@@ -42,7 +42,11 @@ cargo clippy --all-targets
 
 Try the rules without any hardware. The simulator runs the real `pinball-core`
 logic compiled to WebAssembly, on the playfield map from `docs/playfield.svg`.
-There's no ball physics: click a part to roll a ball over its switch. The
+A simulated ball rolls down the sloped playfield: launch it with the plunger,
+and keep it alive with the flippers. It closes the switches it touches, and the
+real rules fire the coils that kick it, so pop bumpers, kickers, flippers,
+trapdoors and the ball serve all work as they would on the machine. You can
+also click any part to close its switch by hand. The
 backboard from `docs/backboard.svg` sits above the playfield, with each
 player's score reels, the credit window, and the player-up and ball-in-play
 lamps. Up to 4 players, and the operator settings (3, 4 or 5 balls; replay or
@@ -67,15 +71,22 @@ optional real bells.
 ```sh
 pnpm install           # once, installs zx for the build script
 pnpm run build:sim
-python3 -m http.server -d sim/web 8000   # then open http://localhost:8000
+pnpm run serve:sim     # then open http://localhost:8000
 ```
 
 Controls:
 
 - <kbd>Enter</kbd>: start
+- <kbd>Space</kbd>: hold to pull the plunger back, let go to launch
 - <kbd>Z</kbd> / <kbd>M</kbd>: hold the left / right flipper
+- <kbd>N</kbd>: nudge the table
 - <kbd>T</kbd>: tilt
-- <kbd>D</kbd>: drain
+- <kbd>D</kbd>: end the ball by hand (closes the outhole switch); the ball comes
+  back to the plunger
+
+The ball physics (`crates/pinball-sim/src/physics.rs`) reads its geometry from
+the same map: parts by their `data-switch`, `data-coil` and `data-flipper`
+attributes, and walls and posts by `data-wall`.
 
 ### Sound on the machine
 

@@ -13,5 +13,5 @@ await fs.copy(path.join(root, "target/wasm32-unknown-unknown/release/pinball_sim
 await fs.copy(path.join(root, "docs/playfield.svg"), path.join(out, "playfield.svg"));
 await fs.copy(path.join(root, "docs/backboard.svg"), path.join(out, "backboard.svg"));
 
-console.log("Built. Run: python3 -m http.server -d sim/web 8000");
-console.log("Then open http://localhost:8000");
+console.log("Built. Run: pnpm run serve:sim");
+console.log("Then open (or reload) http://localhost:8000");
