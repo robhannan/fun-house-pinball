@@ -48,7 +48,47 @@ function start(sim) {
     mask: el.dataset.coil.split(" ").reduce((m, c) => m | (1 << Number(c)), 0),
     lastOn: -Infinity,
   }));
-  const flippers = coils.filter(({ el }) => el.dataset.flipper);
+  const flippers = [...document.querySelectorAll("#playfield [data-flipper]")].map((el) => {
+    // Turn about the pivot: the middle of the base end (the first and last
+    // points of the path), as the physics does.
+    const p = el.getAttribute("d").match(/-?[\d.]+/g).map(Number);
+    return { el, n: el.dataset.flipper === "left" ? 0 : 1, pivot: [(p[0] + p[6]) / 2, (p[1] + p[7]) / 2] };
+  });
+
+  // The ball, drawn on top of the playfield.
+  const svg = document.querySelector("#playfield svg");
+  const ballEl = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  ballEl.id = "sim-ball";
+  ballEl.setAttribute("r", "10");
+  ballEl.setAttribute("fill", "#b8c0c8");
+  ballEl.setAttribute("stroke", "#4b535b");
+  ballEl.setAttribute("stroke-width", "2");
+  svg.appendChild(ballEl);
+
+  // The plunger: hold to pull back, let go to launch.
+  const plungerButton = document.getElementById("plunger");
+  const pullMeter = document.getElementById("plunger-pull");
+  const plunger = (pulled) => {
+    sim.sim_plunger(pulled ? 1 : 0);
+    plungerButton.classList.toggle("pressed", pulled);
+  };
+  plungerButton.addEventListener("pointerdown", () => plunger(true));
+  plungerButton.addEventListener("pointerup", () => plunger(false));
+  plungerButton.addEventListener("pointerleave", () => plunger(false));
+  document.getElementById("nudge").addEventListener("click", () => sim.sim_nudge());
+  addEventListener("keydown", (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key === " ") {
+      event.preventDefault();
+      if (!event.repeat) plunger(true);
+    } else if (event.key.toLowerCase() === "n" && !event.repeat) {
+      sim.sim_nudge();
+    }
+  });
+  addEventListener("keyup", (event) => {
+    if (event.key === " ") plunger(false);
+  });
+  addEventListener("blur", () => plunger(false));
 
   const press = (label, closed) => sim.sim_set_switch(switchIndex(label), closed ? 1 : 0);
   const tap = (label) => sim.sim_tap(switchIndex(label));
@@ -161,7 +201,6 @@ function start(sim) {
     carry -= ms;
     if (ms > 0) sim.sim_advance(ms);
 
-    const coilBits = sim.sim_coils() >>> 0;
     const coilsSeen = sim.sim_coils_seen() >>> 0;
     const lampLow = sim.sim_lamps_low() >>> 0;
     const lampHigh = sim.sim_lamps_high() >>> 0;
@@ -186,7 +225,14 @@ function start(sim) {
         coil.el.classList.toggle("firing", now - coil.lastOn < COIL_GLOW_MS);
       }
     }
-    for (const { el, mask } of flippers) el.classList.toggle("up", (coilBits & mask) !== 0);
+    for (const { el, n, pivot } of flippers) {
+      const degrees = (sim.sim_flipper_turn(n) * 180) / Math.PI;
+      el.setAttribute("transform", `rotate(${degrees.toFixed(2)} ${pivot[0]} ${pivot[1]})`);
+    }
+    ballEl.setAttribute("cx", sim.sim_ball_x().toFixed(1));
+    ballEl.setAttribute("cy", sim.sim_ball_y().toFixed(1));
+    ballEl.style.display = sim.sim_ball_shown() ? "" : "none";
+    pullMeter.style.width = `${Math.round(sim.sim_plunger_pull() * 100)}%`;
 
     for (let track = sim.sim_take_stop(); track !== 0; track = sim.sim_take_stop()) audio.stop(track);
     for (let sound = sim.sim_take_sound(); sound !== 0; sound = sim.sim_take_sound()) {

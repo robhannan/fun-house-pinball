@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1200" width="600" height="1200" font-family="Helvetica, Arial, sans-serif">
   <title>Fun House (1956) playfield wiring reference</title>
-  <desc>Schematic, not to scale, drawn from photos of the playfield. Labels give each part's switch matrix position (C = column, R = row), coil number and lamp number, matching crates/pinball-core/src/playfield.rs. The data-switch, data-coil and data-lamp attributes drive the simulator in sim/ and are checked against playfield.rs by its tests.</desc>
+  <desc>Schematic, not to scale, drawn from photos of the playfield. Labels give each part's switch matrix position (C = column, R = row), coil number and lamp number, matching crates/pinball-core/src/playfield.rs. The data-switch, data-coil and data-lamp attributes drive the simulator in sim/ and are checked against playfield.rs by its tests. The simulator's ball physics also takes its geometry from this file: data-wall marks solid walls and posts, and data-gate a one-way gate.</desc>
 
   <style>
     .label { font-size: 10px; fill: #1f2328; }
@@ -18,26 +18,27 @@
   <text x="280" y="46" class="sub mid">Schematic, not to scale. Parts marked * are guesses from photos: verify on the table.</text>
 
   <!-- Playfield outline -->
-  <path d="M 40 150 Q 40 70 120 70 L 480 70 Q 560 70 560 150 L 560 1040 L 40 1040 Z" fill="#fdf6e3" stroke="#8a6d3b" stroke-width="3"/>
+  <path d="M 40 150 Q 40 70 120 70 L 480 70 Q 560 70 560 150 L 560 1040 L 40 1040 Z" fill="#fdf6e3" stroke="#8a6d3b" stroke-width="3" data-wall=""/>
 
   <!-- Shooter lane (right edge) -->
-  <line x1="525" y1="130" x2="525" y2="1040" stroke="#8a6d3b" stroke-width="2"/>
-  <circle cx="542" cy="1010" r="7" fill="#c9d1d9" stroke="#57606a" data-switch="C0R1"/>
+  <line x1="525" y1="130" x2="525" y2="1040" stroke="#8a6d3b" stroke-width="2" data-wall=""/>
+  <line x1="527" y1="118" x2="559" y2="100" stroke="#57606a" stroke-width="2" stroke-dasharray="4 3" data-gate=""/>
+  <circle cx="542" cy="1028" r="7" fill="#c9d1d9" stroke="#57606a" data-switch="C0R1"/>
   <text x="547" y="990" class="label" transform="rotate(-90 547 990)">Shooter lane: C0·R1 *</text>
 
   <!-- Top corners: jack-in-the-box kickers -->
-  <circle cx="92" cy="98" r="10" fill="#57606a"/>
+  <circle cx="92" cy="98" r="10" fill="#57606a" data-wall=""/>
   <text x="80" y="118" class="tag end">roller</text>
   <g fill="#fff3b0" stroke="#1f2328" stroke-width="3" stroke-linejoin="round">
-    <polygon points="52,138 108,122 124,176 68,200" data-switch="C1R4" data-coil="21"/>
-    <polygon points="508,138 452,122 436,176 492,200" data-switch="C1R5" data-coil="22"/>
+    <polygon points="68,140 122,124 136,176 82,200" data-switch="C1R4" data-coil="21"/>
+    <polygon points="497,140 443,124 429,176 483,200" data-switch="C1R5" data-coil="22"/>
   </g>
   <text x="48" y="214" class="tag">Jack-in-the-box kicker</text>
   <text x="48" y="225" class="tag">C1·R4 · coil 21</text>
   <text x="512" y="214" class="tag end">Jack-in-the-box kicker</text>
   <text x="512" y="225" class="tag end">C1·R5 · coil 22</text>
 
-  <!-- Guide rails along the side walls (passive) -->
+  <!-- Guide rails lining the side walls (drawn only: the walls stop the ball) -->
   <g stroke="#8b949e" stroke-width="6" stroke-linecap="round">
     <line x1="52" y1="262" x2="52" y2="335"/>
     <line x1="508" y1="262" x2="508" y2="335"/>
@@ -112,12 +113,10 @@
 
   <!-- "10 points" lanes, two either side of the box -->
   <g stroke="#8a6d3b" stroke-width="3">
-    <line x1="55" y1="356" x2="55" y2="425"/>
-    <line x1="110" y1="356" x2="110" y2="425"/>
-    <line x1="165" y1="356" x2="165" y2="425"/>
-    <line x1="395" y1="356" x2="395" y2="425"/>
-    <line x1="450" y1="356" x2="450" y2="425"/>
-    <line x1="505" y1="356" x2="505" y2="425"/>
+    <line x1="110" y1="356" x2="110" y2="425" data-wall=""/>
+    <line x1="165" y1="356" x2="165" y2="425" data-wall=""/>
+    <line x1="395" y1="356" x2="395" y2="425" data-wall=""/>
+    <line x1="450" y1="356" x2="450" y2="425" data-wall=""/>
   </g>
   <g class="tag mid">
     <text x="82" y="372">10</text>
@@ -158,8 +157,8 @@
 
   <!-- Side kickers: striped, under the lower pop bumpers -->
   <g fill="#f6c6cb" stroke="#1f2328" stroke-width="3" stroke-linejoin="round">
-    <polygon points="62,500 122,620 62,740" data-switch="C1R2" data-coil="19"/>
-    <polygon points="498,500 438,620 498,740" data-switch="C1R3" data-coil="20"/>
+    <polygon points="41,500 118,620 41,740" data-switch="C1R2" data-coil="19"/>
+    <polygon points="524,500 442,620 524,740" data-switch="C1R3" data-coil="20"/>
   </g>
   <text x="100" y="690" class="label">Left side kicker</text>
   <text x="100" y="703" class="tag">C1·R2 · coil 19</text>
@@ -217,6 +216,17 @@
   <text x="500" y="790" class="label end">Right kicker</text>
   <text x="500" y="777" class="tag end">C1·R1 · coil 2</text>
 
+  <!-- Apron: no outlanes, so the kickers meet the walls, and a V under the
+       flippers funnels a drained ball into the outhole -->
+  <g stroke="#8a6d3b" stroke-width="3" stroke-linecap="round">
+    <line x1="41" y1="780" x2="80" y2="800" data-wall=""/>
+    <line x1="524" y1="780" x2="480" y2="800" data-wall=""/>
+    <line x1="160" y1="920" x2="170" y2="940" data-wall=""/>
+    <line x1="400" y1="920" x2="390" y2="940" data-wall=""/>
+    <line x1="182" y1="962" x2="262" y2="1034" data-wall=""/>
+    <line x1="378" y1="962" x2="298" y2="1034" data-wall=""/>
+  </g>
+
   <!-- Flippers (inward facing) -->
   <g fill="#ffffff" stroke="#1f2328" stroke-width="3" stroke-linejoin="round">
     <path d="M 175 935 L 248 968 L 244 978 L 170 952 Z" data-coil="8 9" data-flipper="left"/>
@@ -230,7 +240,7 @@
   <text x="410" y="1013" class="tag mid">coils 10 (power), 11 (hold)</text>
 
   <!-- Centre post and outhole -->
-  <circle cx="280" cy="955" r="7" fill="#ffffff" stroke="#1f2328" stroke-width="2"/>
+  <circle cx="280" cy="955" r="7" fill="#ffffff" stroke="#1f2328" stroke-width="2" data-wall=""/>
   <circle cx="280" cy="1015" r="16" fill="#1f2328" data-switch="C0R0" data-coil="0"/>
   <text x="280" y="1060" class="label mid">Outhole: C0·R0 · ball serve: coil 0</text>
 

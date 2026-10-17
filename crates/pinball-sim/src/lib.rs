@@ -2,8 +2,11 @@
 //!
 //! This wraps the real [`pinball_core::Machine`] with a simulated clock and
 //! simulated switches, and exports a tiny numeric API to WebAssembly for the
-//! page in `sim/web/`. There's no ball physics: the player triggers switches by
-//! clicking parts of the playfield or using the keyboard.
+//! page in `sim/web/`. A simulated ball ([`physics`]) rolls round the table,
+//! closing switches and being kicked by the real coil outputs; the player can
+//! also trigger any switch by clicking its part of the playfield.
+
+pub mod physics;
 
 use pinball_core::{
     Instant, MAX_PLAYERS, Machine, Outputs, Phase, Settings, Sound, SwitchId, SwitchStates,
@@ -33,7 +36,10 @@ pub fn switch_from_index(index: u32) -> Option<SwitchId> {
 #[derive(Clone, Debug)]
 pub struct Simulator {
     machine: Machine,
+    /// Switches held or tapped by the player.
     switches: SwitchStates,
+    /// The ball, flippers and plunger.
+    physics: physics::Physics,
     now: Instant,
     /// Switches closed by [`Simulator::tap`], with when to release each one.
     taps: Vec<(SwitchId, Instant)>,
@@ -73,6 +79,7 @@ impl Simulator {
         Self {
             machine: Machine::with_settings(settings),
             switches: SwitchStates::new(),
+            physics: physics::Physics::default(),
             now: Instant::from_millis(0),
             taps: Vec::new(),
             outputs: Outputs::default(),
@@ -93,6 +100,28 @@ impl Simulator {
     #[must_use]
     pub const fn test_reports(&self) -> u32 {
         self.test_reports
+    }
+
+    /// The ball, flippers and plunger.
+    #[must_use]
+    pub const fn physics(&self) -> &physics::Physics {
+        &self.physics
+    }
+
+    /// Pulls the plunger back (`true`) or lets it go, launching the ball if
+    /// it's in the shooter lane.
+    pub fn plunger(&mut self, pulled: bool) {
+        self.physics.plunger(pulled);
+    }
+
+    /// Bumps the table.
+    pub fn nudge(&mut self) {
+        self.physics.nudge();
+    }
+
+    /// Puts the ball somewhere on the playfield, for tests.
+    pub fn place_ball(&mut self, pos: physics::Vec2, vel: physics::Vec2) {
+        self.physics.place(pos, vel);
     }
 
     /// The game state, for reading score, ball, phase and so on.
@@ -161,7 +190,18 @@ impl Simulator {
                 }
                 !due
             });
-            self.outputs = self.machine.tick(now, &self.switches);
+            // The ball moves with last tick's coils, then the machine sees
+            // both the player's switches and the ball's.
+            let ball = self.physics.tick(self.outputs.coils);
+            let mut switches = self.switches;
+            for index in 0..pinball_core::switches::SWITCH_COUNT as u32 {
+                if let Some(id) = switch_from_index(index)
+                    && ball.is_closed(id)
+                {
+                    switches.set(id, true);
+                }
+            }
+            self.outputs = self.machine.tick(now, &switches);
             self.coils_seen |= self.outputs.coils;
             self.sounds.extend(self.outputs.sounds.iter());
             self.stops.extend(self.outputs.stop_sounds.iter());
@@ -356,6 +396,61 @@ mod exports {
         })
     }
 
+    /// The ball's position across the table, in playfield-map pixels.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_ball_x() -> f32 {
+        with(|sim| sim.physics().ball().x)
+    }
+
+    /// The ball's position down the table, in playfield-map pixels.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_ball_y() -> f32 {
+        with(|sim| sim.physics().ball().y)
+    }
+
+    /// 1 if the ball is on top of the playfield (or in the outhole), 0 while
+    /// it rolls underneath from a trapdoor.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_ball_shown() -> u32 {
+        with(|sim| {
+            u32::from(!matches!(
+                sim.physics().state(),
+                super::physics::BallState::Underneath { .. }
+            ))
+        })
+    }
+
+    /// How far flipper `n` (0 = left, 1 = right) has turned from rest, in
+    /// radians (clockwise positive, as SVG rotates).
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_flipper_turn(n: u32) -> f32 {
+        with(|sim| sim.physics().flipper_turn(n as usize))
+    }
+
+    /// Pulls the plunger back (`pulled != 0`) or lets it go.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_plunger(pulled: u32) {
+        with(|sim| sim.plunger(pulled != 0));
+    }
+
+    /// How far the plunger is pulled back, 0 to 1.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_plunger_pull() -> f32 {
+        with(|sim| sim.physics().plunger_pull())
+    }
+
+    /// 1 when the ball is waiting in the shooter lane.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_ready_to_plunge() -> u32 {
+        with(|sim| u32::from(sim.physics().ready_to_plunge()))
+    }
+
+    /// Bumps the table.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_nudge() {
+        with(Simulator::nudge);
+    }
+
     /// How many test-mode reports there have been; redraw the log when it
     /// changes.
     #[unsafe(no_mangle)]
@@ -427,18 +522,259 @@ mod tests {
         let mut sim = Simulator::new();
         sim.tap(pinball_core::playfield::sw::TEST_BUTTON);
         sim.advance(100);
-        sim.tap(pinball_core::playfield::sw::OUTHOLE);
+        sim.tap(pinball_core::playfield::sw::SIDE_LANES[0]);
         sim.advance(100);
         let lines: Vec<_> = sim.test_log().collect();
         assert_eq!(
             lines,
             [
-                "switch C0 R0 opened: Outhole",
-                "switch C0 R0 closed: Outhole",
+                "switch C4 R0 opened: Side lane 1",
+                "switch C4 R0 closed: Side lane 1",
                 "TEST 1/3 switches: close any switch. Test button: next",
             ]
         );
         assert_eq!(sim.test_reports(), 3);
+    }
+
+    // Ball physics, driven through the whole simulator so the real rules fire
+    // the coils.
+
+    use super::physics::{BallState, Vec2};
+
+    fn run(sim: &mut Simulator, ms: u32) {
+        for _ in 0..ms / 10 {
+            sim.advance(10);
+        }
+    }
+
+    /// Starts a game and waits for the ball to reach the shooter lane.
+    fn served() -> Simulator {
+        let mut sim = Simulator::new();
+        run(&mut sim, 200);
+        sim.tap(sw::START_BUTTON);
+        run(&mut sim, 300);
+        sim
+    }
+
+    fn plunge(sim: &mut Simulator, pull_ms: u32) {
+        sim.plunger(true);
+        run(sim, pull_ms);
+        sim.plunger(false);
+    }
+
+    #[test]
+    fn starting_a_game_serves_the_ball_to_the_shooter_lane() {
+        let mut sim = Simulator::new();
+        run(&mut sim, 100);
+        assert_eq!(sim.physics().state(), BallState::InOuthole);
+        sim.tap(sw::START_BUTTON);
+        run(&mut sim, 300);
+        assert!(
+            sim.physics().ready_to_plunge(),
+            "{:?}",
+            sim.physics().ball()
+        );
+    }
+
+    #[test]
+    fn a_full_plunge_sends_the_ball_round_the_top_and_onto_the_playfield() {
+        let mut sim = served();
+        plunge(&mut sim, 900);
+        let mut highest = f32::MAX;
+        let mut reached_playfield = false;
+        for _ in 0..300 {
+            run(&mut sim, 10);
+            let ball = sim.physics().ball();
+            highest = highest.min(ball.y);
+            reached_playfield |= ball.x < 500.0 && ball.y < 600.0;
+        }
+        assert!(highest < 120.0, "only reached y = {highest}");
+        assert!(reached_playfield);
+    }
+
+    #[test]
+    fn a_feeble_plunge_rolls_back_to_the_plunger() {
+        let mut sim = served();
+        plunge(&mut sim, 0);
+        run(&mut sim, 4_000);
+        assert!(
+            sim.physics().ready_to_plunge(),
+            "{:?}",
+            sim.physics().ball()
+        );
+    }
+
+    #[test]
+    fn an_unflipped_ball_always_drains_and_the_next_one_is_served() {
+        for pull_ms in [300, 450, 600, 750, 900] {
+            let mut sim = served();
+            plunge(&mut sim, pull_ms);
+            let mut ms = 0;
+            while sim.machine().ball() == 1 && ms < 120_000 {
+                run(&mut sim, 10);
+                ms += 10;
+                let p = sim.physics().ball();
+                assert!(
+                    (35.0..=565.0).contains(&p.x) && (60.0..=1_045.0).contains(&p.y),
+                    "pull {pull_ms}: ball escaped to {p:?}"
+                );
+            }
+            assert_eq!(
+                sim.machine().ball(),
+                2,
+                "pull {pull_ms}: stuck at {:?}",
+                sim.physics().ball()
+            );
+            run(&mut sim, 1_500);
+            assert!(
+                sim.physics().ready_to_plunge(),
+                "pull {pull_ms}: next ball not served"
+            );
+        }
+    }
+
+    #[test]
+    fn a_ball_never_escapes_or_gets_stuck_during_random_play() {
+        for seed in [12_345, 777, 2_024] {
+            random_play(seed, 12);
+        }
+    }
+
+    /// Plays `balls` balls with random plunges and flips, failing if the ball
+    /// ever leaves the table or gets trapped.
+    fn random_play(seed: u32, balls: u32) {
+        // A small deterministic random number generator (an LCG).
+        let mut seed = seed;
+        let mut random = move |n: u32| {
+            seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+            (seed >> 8) % n
+        };
+        let mut sim = served();
+        // Where the ball has been hanging around, and for how long. A ball
+        // trapped somewhere (even one a kicker keeps bouncing) stays near one
+        // spot.
+        let mut anchor = sim.physics().ball();
+        let mut near_ms = 0;
+        for _ in 0..balls {
+            // Plunge whatever ball is waiting, then flip at random.
+            plunge(&mut sim, 300 + random(600));
+            for _ in 0..3_000 {
+                if random(40) == 0 {
+                    let button =
+                        [sw::LEFT_FLIPPER_BUTTON, sw::RIGHT_FLIPPER_BUTTON][random(2) as usize];
+                    sim.tap(button);
+                }
+                run(&mut sim, 10);
+                let p = sim.physics().ball();
+                assert!(
+                    (35.0..=565.0).contains(&p.x) && (60.0..=1_045.0).contains(&p.y),
+                    "seed {seed}: ball escaped to {p:?}"
+                );
+                let waiting =
+                    sim.physics().state() != BallState::Rolling || sim.physics().ready_to_plunge();
+                let (dx, dy) = (p.x - anchor.x, p.y - anchor.y);
+                if waiting || dx * dx + dy * dy > 40.0 * 40.0 {
+                    anchor = p;
+                    near_ms = 0;
+                } else {
+                    near_ms += 10;
+                    assert!(near_ms < 5_000, "seed {seed}: ball trapped near {anchor:?}");
+                }
+                if sim.machine().phase() == pinball_core::Phase::Attract {
+                    sim.tap(sw::START_BUTTON);
+                }
+            }
+        }
+    }
+
+    /// A longer search for traps: `cargo test -p pinball-sim --release -- --ignored`.
+    #[test]
+    #[ignore = "slow; run when changing the table geometry"]
+    fn many_random_games() {
+        for seed in 1..=40 {
+            random_play(seed, 15);
+        }
+    }
+
+    #[test]
+    fn a_pop_bumper_scores_and_kicks_the_ball_away() {
+        let mut sim = served();
+        // Pop 1 is at (160, 285), radius 30. Roll the ball gently into it.
+        sim.place_ball(Vec2::new(160.0, 230.0), Vec2::new(0.0, 150.0));
+        let mut fastest: f32 = 0.0;
+        for _ in 0..40 {
+            run(&mut sim, 10);
+            let v = sim.physics().velocity();
+            fastest = fastest.max((v.x * v.x + v.y * v.y).sqrt());
+        }
+        assert!(sim.machine().score() >= 1);
+        assert!(fastest > 1_000.0, "fastest {fastest}");
+    }
+
+    #[test]
+    fn an_open_trapdoor_swallows_the_ball_and_scores_the_bonus() {
+        let mut sim = served();
+        sim.set_trapdoor(1, true);
+        run(&mut sim, 20);
+        sim.place_ball(Vec2::new(280.0, 370.0), Vec2::new(0.0, 100.0));
+        run(&mut sim, 100);
+        assert!(matches!(
+            sim.physics().state(),
+            BallState::Underneath { .. }
+        ));
+        assert_eq!(sim.machine().score(), 10, "the bonus");
+        run(&mut sim, 2_000);
+        assert_eq!(sim.machine().ball(), 2, "it rolled to the outhole");
+    }
+
+    #[test]
+    fn a_closed_trapdoor_lets_the_ball_roll_over() {
+        let mut sim = served();
+        sim.place_ball(Vec2::new(280.0, 370.0), Vec2::new(0.0, 100.0));
+        run(&mut sim, 200);
+        assert_eq!(sim.physics().state(), BallState::Rolling);
+        assert!(sim.physics().ball().y > 400.0);
+    }
+
+    #[test]
+    fn a_held_flipper_cradles_the_ball() {
+        let mut sim = served();
+        sim.set_switch(sw::LEFT_FLIPPER_BUTTON, true);
+        run(&mut sim, 100);
+        // Drop the ball onto the raised left flipper.
+        sim.place_ball(Vec2::new(200.0, 880.0), Vec2::default());
+        run(&mut sim, 3_000);
+        assert_eq!(sim.physics().state(), BallState::Rolling);
+        assert!(sim.physics().ball().y < 960.0, "{:?}", sim.physics().ball());
+        // Let go and it rolls off and drains.
+        sim.set_switch(sw::LEFT_FLIPPER_BUTTON, false);
+        run(&mut sim, 3_000);
+        assert_eq!(sim.machine().ball(), 2);
+    }
+
+    #[test]
+    fn a_flipper_hits_the_ball_up_the_table() {
+        let mut sim = served();
+        sim.place_ball(Vec2::new(215.0, 940.0), Vec2::default());
+        run(&mut sim, 30);
+        sim.set_switch(sw::LEFT_FLIPPER_BUTTON, true);
+        let mut highest = f32::MAX;
+        for _ in 0..100 {
+            run(&mut sim, 10);
+            highest = highest.min(sim.physics().ball().y);
+        }
+        assert!(highest < 500.0, "only reached y = {highest}");
+    }
+
+    #[test]
+    fn a_tilt_drops_the_flippers() {
+        let mut sim = served();
+        sim.set_switch(sw::LEFT_FLIPPER_BUTTON, true);
+        run(&mut sim, 100);
+        assert!(sim.physics().flipper_turn(0) < -0.5);
+        sim.tap(sw::TILT);
+        run(&mut sim, 200);
+        assert!(sim.physics().flipper_turn(0).abs() < 0.01);
     }
 
     #[test]
