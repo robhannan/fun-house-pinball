@@ -8,9 +8,9 @@ Everything needed to build the controller described in the
 
 | | Estimate |
 |---|---|
-| **Everything** | **£600–1,115** |
-| Without tools (if you already have them) | £520–950 |
-| Electronics only (sections 1–8, no pinball parts or tools) | £310–580 |
+| **Everything** | **£625–1,165** |
+| Without tools (if you already have them) | £545–1,000 |
+| Electronics only (sections 1–8, no pinball parts or tools) | £335–630 |
 
 These are rough **estimates in GBP, as of October 2026**, to help with budgeting.
 
@@ -165,13 +165,13 @@ The trapdoors are rebuilt with a hobby servo turning each flap; see the
 | Inline fuse holder and 3 A fuse | 1 | For the servo rail's + lead | [AliExpress](https://www.aliexpress.com/w/wholesale-inline-fuse-holder-5x20.html) | 1–3 |
 | 1000 µF 10 V electrolytic capacitor | 1 | Across the servo supply, near the servos | [AliExpress](https://www.aliexpress.com/w/wholesale-1000uf-10v-capacitor.html) | 1–2 |
 | Servo extension leads, 30–50 cm | 3 | From under the playfield to the Arduino | [AliExpress](https://www.aliexpress.com/w/wholesale-servo-extension-cable.html) | 2–4 |
-| Lever microswitches (KW11 type) | 5 | One in each trapdoor's chute, plus spares | [AliExpress](https://www.aliexpress.com/w/wholesale-kw11-micro-switch-lever.html) | 2–4 |
+| Lever microswitches (KW11 type) | 5 | One in each trapdoor's catch box and one in the ball lift (the outhole switch), plus a spare | [AliExpress](https://www.aliexpress.com/w/wholesale-kw11-micro-switch-lever.html) | 2–4 |
 | 2 mm steel rod | 1 length | The flaps' hinge pins | [AliExpress](https://www.aliexpress.com/w/wholesale-2mm-steel-rod.html) | 2–4 |
-| 3D-printed parts, PETG | 12 | A frame, flap, lifter arm and chute per trapdoor, from a printing service, library or makerspace. See [3D-printed parts](3d-printing.md). | [JLCPCB](https://jlcpcb.com/3d-printing) · [Craftcloud](https://craftcloud3d.com) | 15–40 |
+| 3D-printed ball return, PETG | about 23 parts | The trapdoors' frame, flaps, links, cranks, servo hangers and collector, and the return run, outhole funnel, serve run and ball lift, from a printing service, library or makerspace. See [3D-printed ball return](3d-printing.md). | [JLCPCB](https://jlcpcb.com/3d-printing) · [Craftcloud](https://craftcloud3d.com) | 40–90 |
 | 🛡️ Wood screws, 3.5 × 9.5 mm (No. 6 × 3/8") | 1 pack | The frames, into the playfield's underside. **No longer than 9.5 mm**, or they come through the artwork. | [AliExpress](https://www.aliexpress.com/w/wholesale-wood-screw-3.5x9.5.html) | 2–4 |
-| Self-tapping screw assortment, M2 and M3 | 1 box | The chutes to the frames (M3 × 6 mm), and the lifter arms to the servo horns (M2) | [AliExpress](https://www.aliexpress.com/w/wholesale-self-tapping-screw-assortment-m2-m3.html) | 3–5 |
+| Self-tapping screw assortment, M2 and M3 | 1 box | The collector to the frame (M3 × 6 mm), the cranks to the servo horns, and the links' pivots (M2 × 10 mm) | [AliExpress](https://www.aliexpress.com/w/wholesale-self-tapping-screw-assortment-m2-m3.html) | 3–5 |
 
-**Section estimate: £41–89**
+**Section estimate: £66–139**
 
 ## 7. Power
 
@@ -231,7 +231,7 @@ of the old parts.
 |---|---|---|---|
 | Kicker coils | 6 | DC, at your coil voltage | 60–90 |
 | Pop bumper coils | 6 | DC, at your coil voltage | 60–90 |
-| Ball serve coil and mechanism | 1 | Only if replacing the manual ball lift | 25–60 |
+| Ball-serve (ball lift) coil assembly | 1 | Kicks each ball up the printed ball lift into the shooter lane. Measure its plunger and mounting screws for the printed parts. | 25–60 |
 | Dual-wound flipper coils | 2 | DC, at your coil voltage; ask for the lug layout | 22–30 |
 | *Optional:* bells with coils | 0–3 | Not needed now. For the authentic 1950s scoring sound later (wiring guide section 7e). | varies |
 | Flipper rebuild kits, rubber rings, pop bumper caps | As needed | | 40–100 |

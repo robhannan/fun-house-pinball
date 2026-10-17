@@ -51,7 +51,9 @@ pub mod sw {
     pub const TEST_BUTTON: SwitchId = SwitchId::direct(5);
 
     // Ball handling.
-    /// Outhole: a drained ball rests here.
+    /// Outhole: every ball ends up waiting here, drained or through a
+    /// trapdoor. Physically it's on the printed ball lift, under the shooter
+    /// lane (see `docs/3d-printing.md`).
     pub const OUTHOLE: SwitchId = SwitchId::matrix(0, 0);
     /// Shooter lane (ball ready to plunge).
     pub const SHOOTER_LANE: SwitchId = SwitchId::matrix(0, 1);
@@ -111,8 +113,8 @@ pub mod sw {
 pub mod coil {
     use super::CoilId;
 
-    /// Kicks a drained ball from the outhole back to the shooter lane.
-    /// Leave unused if keeping the original manual ball lift.
+    /// The ball-serve coil: kicks the waiting ball up the printed ball lift
+    /// into the shooter lane.
     pub const BALL_SERVE: CoilId = CoilId::new(0);
     /// Left kicking rubber.
     pub const LEFT_KICKER: CoilId = CoilId::new(1);

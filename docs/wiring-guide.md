@@ -510,35 +510,42 @@ adjust, and its closed and open angles are set from test mode.
   they never disturb the main loop. Servo extension leads reach from under the
   playfield to the Arduino.
 
-**Building each trapdoor.** The parts are 3D-printed; see
-[3D-printed parts](3d-printing.md) for measuring, printing and assembling them.
-No modelling experience is needed. Each trapdoor has:
+**Building the trapdoors.** They're part of the 3D-printed ball return; see
+[3D-printed ball return](3d-printing.md) for measuring, printing and fitting
+it. No modelling experience is needed. Each trapdoor has:
 
-- **A frame** that slides up into the hole and screws on underneath. The servo
-  hangs from it.
-- **A flap** that sits exactly flush in the top of the frame, hinged on a 2 mm
-  steel pin along its **uphill** edge (towards the back of the machine). It
-  swings down from there, so open it makes a ramp into the hole, and the ball
-  rolls in instead of jumping the gap.
-- **A lifter arm** on the servo. The flap rests on its tip: pointing up, it
-  holds the flap flush; turned back, it lets the flap swing open about 40°. A
-  ball landing on a closed flap pushes against the lifter, which the MG90S's
-  metal gears take.
-- **A chute** under the frame that rolls the ball towards the outhole, with a
-  lever microswitch under its floor wired to the trapdoor's matrix position
-  (C4·R5–R7, section 6). Each door needs its own switch: only the centre one
-  gives the special's replay.
+- **A flap** that sits flush in a printed frame, hinged on a 2 mm steel pin
+  along its **uphill** edge (towards the back of the machine). It swings down
+  from there until it hangs straight down, clearing the hole for the ball.
+- **A drive:** a rib under the flap's right edge, a link, and a crank on the
+  servo, which hangs under the playfield behind the trapdoor. The servo turns
+  about 80° from closed to open, and holds the flap flush when closed. A ball
+  rolling over a closed flap pushes against the servo, which the MG90S's metal
+  gears take.
+- **A catch box** under it, in the collector, with a lever microswitch under
+  its floor wired to the trapdoor's matrix position (C4·R5–R7, section 6).
+  Each door needs its own switch: only the centre one gives the special's
+  replay.
 
 **Setting the angles.** Press the test button three times for test mode's
 flaps stage. Each press of Start moves to the next flap position (flap 1
 closed, flap 1 open, flap 2 closed, ...) and moves that flap there. The flipper
 buttons trim the angle a degree at a time, and the console prints it. Trim each
-closed position until the lifter holds the flap exactly flush, and each open
-position until the flap hangs open far enough for the ball to roll in. The angles are saved in the Arduino's EEPROM when
-test mode ends, and survive power-off.
+closed position until the flap is exactly flush, and each open position until
+it hangs straight down. The angles are saved in the Arduino's EEPROM when test
+mode ends, and survive power-off.
 
 If power fails, a servo stays where it was. That's harmless: an open flap just
 swallows the next ball.
+
+**The ball lift.** The printed ball return brings every ball (drained, or
+through a trapdoor) to a tube under a hole in the shooter lane. The ball waits
+there on the plunger of the **ball-serve coil** (coil 0), and the **outhole
+switch** (C0·R0) goes on the tube, its lever touching the waiting ball. When
+the game serves a ball, it pulses the coil, which kicks the ball up the tube
+into the shooter lane. The coil's pulse length may need raising to throw the
+ball the whole way; check it in test mode's coil stage, and see the coil
+safety rules before changing its limit.
 
 ---
 
