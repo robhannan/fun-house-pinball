@@ -16,8 +16,9 @@
 //!   outside each rubber, and a jack-in-the-box kicker in each top corner
 //! * three "1 point" pop bumpers across the top, with long guide rails along
 //!   the side walls
-//! * the "Scores Bonus" box: three coil-driven trapdoors, each with a lamp
-//!   above it ("trap door open when lite is lit")
+//! * the "Scores Bonus" box: three servo-driven trapdoors (see
+//!   `crate::flaps`), each with a lamp above it ("trap door open when lite is
+//!   lit")
 //! * four "10 points" lanes, two either side of the box, each with a
 //!   "30 points when lit" lamp below it
 //! * two lower "1 point" pop bumpers, one each side, marked "advance bonus
@@ -133,10 +134,7 @@ pub mod coil {
     pub const RIGHT_FLIPPER_POWER: CoilId = CoilId::new(10);
     /// Right flipper hold winding.
     pub const RIGHT_FLIPPER_HOLD: CoilId = CoilId::new(11);
-    /// Trapdoor flaps in the "Scores Bonus" box, matching
-    /// [`super::sw::TRAPDOORS`]. Assumed (*verify*): energised = flap open,
-    /// so every flap closes whenever coil power is cut.
-    pub const TRAPDOOR_FLAPS: [CoilId; 3] = [CoilId::new(12), CoilId::new(13), CoilId::new(14)];
+    // 12–14 are spare: the trapdoor flaps are turned by servos (`crate::flaps`).
     /// Optional real bells for the 1s, 10s and 100s, rung by scoring (see
     /// `crate::bells`). Not fitted yet: only used when `Settings::bells` is on.
     pub const BELLS: [CoilId; 3] = [CoilId::new(15), CoilId::new(16), CoilId::new(17)];
@@ -251,13 +249,6 @@ pub const COIL_KINDS: [CoilKind; COIL_COUNT] = {
     k[coil::LEFT_FLIPPER_HOLD.index()] = CoilKind::Hold;
     k[coil::RIGHT_FLIPPER_POWER.index()] = pulse(40, 0);
     k[coil::RIGHT_FLIPPER_HOLD.index()] = CoilKind::Hold;
-    // A flap can be held open indefinitely, so these coils must be rated for
-    // continuous duty at the coil supply voltage.
-    let mut i = 0;
-    while i < coil::TRAPDOOR_FLAPS.len() {
-        k[coil::TRAPDOOR_FLAPS[i].index()] = CoilKind::Hold;
-        i += 1;
-    }
     // Optional bells: short strokes. Conservative until real bells and their
     // coil ratings are chosen.
     let mut i = 0;
@@ -441,19 +432,19 @@ pub const PARTS: &[Part] = &[
     part(
         "Trapdoor 1",
         Some(sw::TRAPDOORS[0]),
-        &[coil::TRAPDOOR_FLAPS[0]],
+        &[],
         Some(lamp::TRAPDOORS[0]),
     ),
     part(
         "Trapdoor 2",
         Some(sw::TRAPDOORS[1]),
-        &[coil::TRAPDOOR_FLAPS[1]],
+        &[],
         Some(lamp::TRAPDOORS[1]),
     ),
     part(
         "Trapdoor 3",
         Some(sw::TRAPDOORS[2]),
-        &[coil::TRAPDOOR_FLAPS[2]],
+        &[],
         Some(lamp::TRAPDOORS[2]),
     ),
     // Optional bells (not fitted yet)

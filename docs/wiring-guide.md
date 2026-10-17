@@ -153,6 +153,7 @@ on the board (`22`, `23`, ... and `GND`, `5V`).
 | GND | Common ground point, every 74HC595 pin 8, every ULN2803 pin 9 | 4, 7 |
 | 18 (TX1) | WAV Trigger serial RX, **through a 1 kΩ resistor** | 7d |
 | 19 (RX1) | WAV Trigger serial TX; optional, for future status messages | 7d |
+| 5, 2, 3 | Trapdoor flap servo signals: flap 1 (left), 2, 3 | 7f |
 | USB | Your computer, for flashing and the serial console | 9 |
 
 Leave pins 50 and 53 unconnected; the SPI hardware uses them.
@@ -347,16 +348,8 @@ Confirm which lug is which with the coil's datasheet or supplier. The power
 winding has the *lower* resistance; measure it with the multimeter's Ω setting,
 power off.
 
-**Trapdoor flaps** (the three trapdoors in the "Scores Bonus" box) use the
-same single-coil MOSFET circuit. Unlike a kicker, a flap can be **held open for
-a long time**, so:
-
-- Each flap coil must be rated for **continuous duty** at your coil supply
-  voltage. A normal kicker coil held on will overheat and burn out.
-- Check that the flap is closed when its coil has no power, so that it fails
-  safe. The firmware assumes energised = open (*verify* on the real mechanism).
-- After it has been held open for a few minutes, check by touch that the coil
-  is no more than warm.
+The **trapdoor flaps** aren't coils: hobby servos turn them (section 7f), so
+outputs 12–14 are spare.
 
 | Coil | Number | Chip | Output (595 pin) |
 |---|---|---|---|
@@ -368,7 +361,7 @@ a long time**, so:
 | Left flipper hold | 9 | 2 | Q1 (1) |
 | Right flipper power | 10 | 2 | Q2 (2) |
 | Right flipper hold | 11 | 2 | Q3 (3) |
-| Trapdoor flaps 1–3 (left to right) | 12–14 | 2 | Q4–Q6 (4–6) |
+| *Spare* (were the trapdoor flaps; now servos, section 7f) | 12–14 | 2 | Q4–Q6 (4–6) |
 | *Optional:* bell for the 1s | 15 | 2 | Q7 (7) |
 | *Optional:* bells for the 10s, 100s | 16–17 | 3 | Q0–Q1 (15, 1) |
 | Top bumper ("10 points") | 18 | 3 | Q2 (2) |
@@ -488,6 +481,60 @@ for three: one each for the 1s, 10s and 100s.
 - **Try it first:** the simulator's "Real bells fitted" setting plays recordings
   of real bells, so you can hear how it would sound.
 
+### 7f. Trapdoor flaps (servos)
+
+The three trapdoors in the "Scores Bonus" box were missing from this table, so
+they're rebuilt with a hobby servo turning each flap, rather than a coil. A
+servo holds a position without heating up, needs no spring or linkage to
+adjust, and its closed and open angles are set from test mode.
+
+**Wiring.** Each servo has three wires:
+
+| Servo wire (usual colour) | Connect to |
+|---|---|
+| Signal (orange or yellow) | Arduino pin 5 (flap 1, left), 2 (flap 2) or 3 (flap 3) |
+| + (red) | The servo supply's **+5–6 V**, not the Arduino's 5 V pin |
+| − (brown or black) | The servo supply's **−**, which also joins the common ground point |
+
+- **Their own supply:** a servo can draw an amp or more as it moves, which
+  would brown out the Arduino. Use a separate 5–6 V, 3 A supply, and fit a
+  1000 µF capacitor across its terminals near the servos (stripe to −).
+- **Common ground:** join the servo supply's − to the common ground point, or
+  the signal has nothing to be measured against.
+- **Signals:** Timer 3 generates all three in hardware (50 Hz, 0.5–2.5 ms), so
+  they never disturb the main loop. Servo extension leads reach from under the
+  playfield to the Arduino.
+
+**Building each flap.**
+
+- **The flap:** a 1.5–2 mm aluminium or steel plate cut to the hole with about
+  0.5 mm clearance, painted (or covered with a print of the artwork) to match.
+  It must sit **exactly flush**; any lip catches or bounces the ball.
+- **The hinge:** along the flap's **uphill** edge (towards the back of the
+  machine), so it swings down from there. Open, it makes a ramp into the hole,
+  and the ball rolls in instead of jumping the gap. Two small brackets and a
+  2 mm steel pin, or a small piano hinge, screwed under the playfield.
+- **The servo:** on a bracket under the playfield (3D-printed PETG is fine),
+  its arm turning the hinge pin directly or through a short pushrod. Open is
+  about 30–45° down.
+- **A stop:** a ledge or screw under the flap's downhill edge, so a fast ball
+  landing on a closed flap pushes against the stop, not the servo.
+- **Underneath:** a chute from each hole to the outhole, with a lever
+  microswitch in it wired to the trapdoor's matrix position (C4·R5–R7,
+  section 6). Each door needs its own switch: only the centre one gives the
+  special's replay.
+
+**Setting the angles.** Press the test button three times for test mode's
+flaps stage. Each press of Start moves to the next flap position (flap 1
+closed, flap 1 open, flap 2 closed, ...) and moves that flap there. The flipper
+buttons trim the angle a degree at a time, and the console prints it. Trim each
+closed position until the flap is exactly flush, and each open position until
+the flap clears the hole. The angles are saved in the Arduino's EEPROM when
+test mode ends, and survive power-off.
+
+If power fails, a servo stays where it was. That's harmless: an open flap just
+swallows the next ball.
+
 ---
 
 ## 8. Good wiring habits
@@ -515,7 +562,7 @@ to look. **Keep the coil supply switched off until step 6.**
    The console should print `Fun House controller ready`.
 2. **Direct switches.** Wire the start, flipper and test buttons (section 6).
    Check each with the multimeter: continuity to ground when pressed. Then
-   press the test button: the console prints `TEST 1/3 switches`, and every
+   press the test button: the console prints `TEST 1/4 switches`, and every
    switch you press from then on prints its name. That's **test mode**, and
    the rest of these steps use it (see the README).
 3. **One shift register and test LEDs.** Build chip 1 only, on a breadboard. Put
@@ -540,8 +587,9 @@ to look. **Keep the coil supply switched off until step 6.**
    (the console names each coil), and press Start: you should get one short,
    sharp kick. If the coil buzzes or stays on, cut the power and recheck the
    flyback diode and MOSFET wiring.
-7. **The remaining coils, one by one**, in the same way, then the lamps in test
-   mode's lamp stage (the flipper buttons step through them by name).
+7. **The remaining coils, one by one**, in the same way, then the trapdoor
+   flaps in test mode's flaps stage (section 7f), then the lamps in its lamp
+   stage (the flipper buttons step through them by name).
 8. **Sound.** Wire the WAV Trigger and its speaker, and prepare the SD card
    (section 7d). Power on and wait 2 seconds, then press start: you should hear
    the calliope march.

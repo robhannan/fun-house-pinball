@@ -17,6 +17,7 @@
 pub mod attract;
 pub mod bells;
 pub mod coils;
+pub mod flaps;
 pub mod game;
 pub mod lamps;
 pub mod music_beats;

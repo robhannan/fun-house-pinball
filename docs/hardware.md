@@ -23,6 +23,7 @@ is mature.
 | SPI SS (unused, must be output) | D53 | |
 | Serial console | D0/D1 (USB) | 57600 baud |
 | Sound board (WAV Trigger) | D18 (TX1), D19 (RX1) | 57600 baud; TX1 goes through a 1 kΩ resistor to the board's RX |
+| Trapdoor flap servos | D5, D2, D3 (flaps 1–3) | Timer 3 hardware PWM (OC3A/B/C), 50 Hz; servos on their own 5–6 V supply |
 
 ## Switches
 
@@ -38,6 +39,9 @@ A daisy chain of 12 × 74HC595 shift registers:
 1. Bytes 0–3 (nearest the Arduino): 32 coil outputs, each feeding a logic-level
    N-channel MOSFET with a flyback diode across the coil.
 2. Bytes 4–11: 64 lamp outputs (LED replacements) via ULN2803 or MOSFET arrays.
+
+The three trapdoor flaps are turned by hobby servos instead, driven straight
+from the Arduino (see the wiring guide, section 7f).
 
 ## Safety
 
