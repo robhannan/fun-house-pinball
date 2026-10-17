@@ -601,6 +601,8 @@ impl Machine {
                 // the ball can still be served once this one drains.
                 self.coils.set_enabled(false);
                 self.coils.set_enabled(true);
+                // That dropped the flaps; turn their lamps off to match.
+                self.close_trapdoors();
                 self.lamps.set(lamp::TILT, LampMode::On);
                 self.sound.request(Sound::Tilt);
             }
@@ -794,6 +796,16 @@ mod tests {
         sim.tap(sw::RIGHT_SIDE_KICKER);
         assert!(sim.coil_on(coil::RIGHT_SIDE_KICKER));
         assert_eq!(sim.machine.score(), 2);
+    }
+
+    #[test]
+    fn a_tilt_turns_off_the_trapdoor_lamps_with_the_flaps() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.machine.set_trapdoor(1, true);
+        sim.tap(sw::TILT);
+        assert!(!sim.coil_on(coil::TRAPDOOR_FLAPS[1]));
+        assert_eq!(sim.last.lamps & (1 << lamp::TRAPDOORS[1].index()), 0);
     }
 
     #[test]
