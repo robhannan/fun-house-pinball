@@ -1,8 +1,13 @@
 //! The game rules: a state machine driven by switch events and time.
 //!
-//! Scores follow the original's 1950s scale (a replay at 400 points). Point
-//! values printed on the playfield are used where visible; the rest, and the
-//! bonus-wheel rules, are assumptions to check against the schematic.
+//! Scores follow the original's 1950s scale (the first replay at 500 points).
+//! Point values printed on the playfield are used where visible; the rest, and
+//! the bonus-wheel rules, are assumptions to check against the schematic.
+//!
+//! From the instruction card on the apron: replays at 500, 600, 700, 800 and
+//! 900; "1 Replay for ball through center trap when special lite is lit"; and
+//! "Any player that tilts game loses score of ball in play, but can continue
+//! in his regular turn when more than one are playing."
 //!
 //! From the flyer: "1 to 4 can play", "adjustable to 3-4-or 5 ball play",
 //! "Novelty or Replay", and a "Multi-Tilt feature [that] permits player to
@@ -19,8 +24,10 @@ use crate::time::Instant;
 
 /// Most players in one game ("1 to 4 can play").
 pub const MAX_PLAYERS: usize = 4;
-/// The credit window shows two digits (*verify*).
-pub const MAX_CREDITS: u8 = 99;
+/// Most credits the machine holds. From the free-play card on the owner's
+/// apron, "Maximum Credits - 30" (*verify*: that card is modern, so it may
+/// come from a later conversion rather than the original credit unit).
+pub const MAX_CREDITS: u8 = 30;
 /// Tilt warnings allowed before the ball is tilted. Classic EM rules: none.
 pub const TILT_WARNINGS: u8 = 0;
 /// Consecutive matching scans before a switch change is accepted.
@@ -29,9 +36,13 @@ pub const DEBOUNCE_SCANS: u8 = 2;
 /// ball time to settle in the outhole.
 pub const SERVE_DELAY_MS: u32 = 1_000;
 
-/// From the instruction card: one replay for each score of 400, 600, 700,
+/// From the instruction card: one replay for each score of 500, 600, 700,
 /// 800 and 900 points.
-pub const REPLAY_SCORES: [u32; 5] = [400, 600, 700, 800, 900];
+pub const REPLAY_SCORES: [u32; 5] = [500, 600, 700, 800, 900];
+
+/// The centre trapdoor, the only one that awards the special ("1 Replay for
+/// ball through center trap when special lite is lit").
+const CENTRE_TRAPDOOR: usize = 1;
 
 const FLIPPER_POWER_MS: u16 = 40;
 
@@ -108,6 +119,9 @@ pub struct Machine {
     /// Whose turn it is, 0-based.
     player: u8,
     scores: [u32; MAX_PLAYERS],
+    /// The current player's score when this ball was served, which a tilt
+    /// takes them back to.
+    ball_start_score: u32,
     replays: [u8; MAX_PLAYERS],
     /// Credits on the backboard's credit window (in the clown's nose).
     credits: u8,
@@ -154,6 +168,7 @@ impl Machine {
             players: 0,
             player: 0,
             scores: [0; MAX_PLAYERS],
+            ball_start_score: 0,
             replays: [0; MAX_PLAYERS],
             credits: 0,
             bonus_step: 0,
@@ -349,7 +364,7 @@ impl Machine {
                 }
                 self.close_trapdoors();
                 self.sound.request(Sound::Trapdoor);
-                self.collect_bonus();
+                self.collect_bonus(n == CENTRE_TRAPDOOR);
             }
             _ => {
                 if let Some(n) = sw::POP_BUMPERS.iter().position(|&pop| pop == id) {
@@ -483,13 +498,14 @@ impl Machine {
         advanced
     }
 
-    /// Assumed rule: a ball through a trapdoor in the "Scores Bonus" box
-    /// scores the lit wheel value, plus a replay (once) when the special is
-    /// lit.
-    fn collect_bonus(&mut self) {
+    /// A ball through a trapdoor in the "Scores Bonus" box scores the lit
+    /// wheel value (assumed: the card doesn't give the value). Through the
+    /// centre trapdoor, it also awards a replay when the special is lit, and
+    /// the special goes out (assumed: once per lighting).
+    fn collect_bonus(&mut self, centre: bool) {
         self.sound.request(Sound::BonusCollect);
         self.add_score(self.bonus());
-        if self.lamps.mode(lamp::SPECIAL) != LampMode::Off {
+        if centre && self.lamps.mode(lamp::SPECIAL) != LampMode::Off {
             self.lamps.set(lamp::SPECIAL, LampMode::Off);
             self.award_replay();
         }
@@ -544,7 +560,9 @@ impl Machine {
 
     /// Passes play to the next player, and to the next ball after the last
     /// player. A tilted ball ends here too, so a tilt only costs the tilting
-    /// player their ball ("Multi-Tilt").
+    /// player their ball and its score ("Multi-Tilt"). Assumed (*verify*):
+    /// a lone player carries on after a tilt too; the card only promises it
+    /// "when more than one are playing".
     fn end_ball(&mut self, now: Instant) {
         if self.player + 1 < self.players {
             self.player += 1;
@@ -593,6 +611,7 @@ impl Machine {
             Phase::Playing => {
                 // TODO: decide which lamps (e.g. rollovers) reset per ball.
                 self.tilt_warnings = 0;
+                self.ball_start_score = self.scores[usize::from(self.player)];
                 self.coils.set_enabled(true);
                 self.close_trapdoors();
                 self.lamps.set(lamp::GAME_OVER, LampMode::Off);
@@ -611,6 +630,9 @@ impl Machine {
             }
             Phase::Tilted => {
                 self.bells.clear();
+                // "Loses score of ball in play". Assumed (*verify*): replays
+                // already won on this ball are kept.
+                self.scores[usize::from(self.player)] = self.ball_start_score;
                 // Cut everything (including held flippers), then re-enable so
                 // the ball can still be served once this one drains.
                 self.coils.set_enabled(false);
@@ -876,10 +898,12 @@ mod tests {
     fn replays_are_awarded_at_card_thresholds() {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
-        for _ in 0..40 {
+        for _ in 0..49 {
             sim.tap(sw::SIDE_LANES[0]);
         }
-        // 400 lane points crosses the first threshold.
+        assert_eq!(sim.machine.replays(), 0);
+        // 500 points crosses the first threshold.
+        sim.tap(sw::SIDE_LANES[0]);
         assert_eq!(sim.machine.replays(), 1);
         for _ in 0..9 {
             sim.tap(sw::TOP_REBOUNDS[0]);
@@ -888,9 +912,74 @@ mod tests {
         for n in 0..3 {
             sim.drop_through(n);
         }
-        // 409 + 3 × 100 = 709: crosses 600 and 700, plus the special's replay.
-        assert_eq!(sim.machine.score(), 709);
-        assert_eq!(sim.machine.replays(), 4);
+        // 509 + 3 × 100 = 809: crosses 600, 700 and 800, plus the special's
+        // replay from the centre trap.
+        assert_eq!(sim.machine.score(), 809);
+        assert_eq!(sim.machine.replays(), 5);
+    }
+
+    #[test]
+    fn only_the_centre_trap_awards_the_special() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        for _ in 0..9 {
+            sim.tap(sw::TOP_REBOUNDS[0]);
+        }
+        let special = |sim: &Sim| sim.last.lamps & (1 << lamp::SPECIAL.index()) != 0;
+        assert!(special(&sim));
+        sim.drop_through(0);
+        sim.drop_through(2);
+        assert_eq!(sim.machine.replays(), 0);
+        assert!(special(&sim), "the special stays lit");
+        sim.drop_through(1);
+        assert_eq!(sim.machine.replays(), 1);
+        assert!(!special(&sim));
+    }
+
+    #[test]
+    fn a_tilt_loses_the_score_of_the_ball_in_play() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::SIDE_LANES[0]);
+        sim.tap(sw::OUTHOLE);
+        assert_eq!(sim.machine.score(), 10);
+        sim.tap(sw::SIDE_LANES[0]);
+        sim.tap(sw::TOP_BUMPER);
+        assert_eq!(sim.machine.score(), 30);
+        sim.tap(sw::TILT);
+        assert_eq!(sim.machine.score(), 10, "back to the score at the serve");
+        sim.tap(sw::OUTHOLE);
+        assert_eq!(sim.machine.ball(), 3);
+        assert_eq!(sim.machine.score(), 10);
+    }
+
+    #[test]
+    fn a_tilt_keeps_the_other_players_scores() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::SIDE_LANES[0]);
+        sim.tap(sw::OUTHOLE);
+        sim.tap(sw::SIDE_LANES[0]);
+        sim.tap(sw::TILT);
+        assert_eq!(sim.machine.score_of(0), 10);
+        assert_eq!(sim.machine.score_of(1), 0);
+    }
+
+    #[test]
+    fn credits_stop_at_thirty() {
+        let mut sim = Sim::new();
+        for _ in 0..8 {
+            sim.tap(sw::START_BUTTON);
+            for _ in 0..90 {
+                sim.tap(sw::SIDE_LANES[0]);
+            }
+            sim.tap(sw::SLAM_TILT);
+            sim.set(sw::SLAM_TILT, false);
+        }
+        // Five replays a game for eight games would be 40.
+        assert_eq!(sim.machine.credits(), MAX_CREDITS);
+        assert_eq!(MAX_CREDITS, 30);
     }
 
     #[test]
@@ -1033,10 +1122,10 @@ mod tests {
             attract_music: false,
         });
         sim.tap(sw::START_BUTTON);
-        for _ in 0..40 {
+        for _ in 0..50 {
             sim.tap(sw::SIDE_LANES[0]);
         }
-        assert_eq!(sim.machine.score(), 400);
+        assert_eq!(sim.machine.score(), 500);
         assert_eq!(sim.machine.replays(), 0);
     }
 
@@ -1044,7 +1133,7 @@ mod tests {
     fn replays_add_credits_that_last_between_games() {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
-        for _ in 0..40 {
+        for _ in 0..50 {
             sim.tap(sw::SIDE_LANES[0]);
         }
         assert_eq!(sim.machine.credits(), 1);
@@ -1305,11 +1394,11 @@ mod tests {
     fn a_replay_knocks() {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
-        for _ in 0..39 {
+        for _ in 0..49 {
             sim.tap(sw::SIDE_LANES[0]);
         }
         sim.run(5_000);
-        // 400 points: the knocker, along with the lane's bell.
+        // 500 points: the knocker, along with the lane's bell.
         assert!(sounds_during(&mut sim, |s| s.tap(sw::SIDE_LANES[0])).contains(&Sound::Replay));
     }
 
