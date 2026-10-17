@@ -42,6 +42,8 @@ pub struct Simulator {
     coils_seen: u32,
     /// Sounds started but not yet played by the page, oldest first.
     sounds: std::collections::VecDeque<Sound>,
+    /// Sounds to stop, oldest first.
+    stops: std::collections::VecDeque<Sound>,
 }
 
 impl Default for Simulator {
@@ -68,6 +70,7 @@ impl Simulator {
             outputs: Outputs::default(),
             coils_seen: 0,
             sounds: std::collections::VecDeque::new(),
+            stops: std::collections::VecDeque::new(),
         }
     }
 
@@ -89,6 +92,11 @@ impl Simulator {
     #[must_use]
     pub const fn coils_seen(&self) -> u32 {
         self.coils_seen
+    }
+
+    /// The oldest sound to stop that the page hasn't taken yet.
+    pub fn take_stop(&mut self) -> Option<Sound> {
+        self.stops.pop_front()
     }
 
     /// The oldest sound started but not yet taken by the page.
@@ -135,6 +143,7 @@ impl Simulator {
             self.outputs = self.machine.tick(now, &self.switches);
             self.coils_seen |= self.outputs.coils;
             self.sounds.extend(self.outputs.sounds.iter());
+            self.stops.extend(self.outputs.stop_sounds.iter());
         }
     }
 }
@@ -162,14 +171,20 @@ mod exports {
     }
 
     /// Power-cycles the machine with `balls_per_game` (clamped to 3–5),
-    /// replays on (`replay_mode != 0`) or novelty mode, and real bells fitted
-    /// (`bells_fitted != 0`) or not.
+    /// replays on (`replay_mode != 0`) or novelty mode, real bells fitted
+    /// (`bells_fitted != 0`) or not, and attract music on (`music != 0`) or off.
     #[unsafe(no_mangle)]
-    pub extern "C" fn sim_reset_with(balls_per_game: u32, replay_mode: u32, bells_fitted: u32) {
+    pub extern "C" fn sim_reset_with(
+        balls_per_game: u32,
+        replay_mode: u32,
+        bells_fitted: u32,
+        music: u32,
+    ) {
         let settings = Settings {
             balls_per_game: balls_per_game.min(5) as u8,
             replays: replay_mode != 0,
             bells: bells_fitted != 0,
+            attract_music: music != 0,
         };
         with(|sim| *sim = Simulator::with_settings(settings));
     }
@@ -218,6 +233,12 @@ mod exports {
                 u32::from(sound.track()) | if sound.locked() { 256 } else { 0 }
             })
         })
+    }
+
+    /// The next sound to stop, as its track number; 0 when there are none left.
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_take_stop() -> u32 {
+        with(|sim| sim.take_stop().map_or(0, |sound| u32::from(sound.track())))
     }
 
     /// Every coil that was on during the last advance, for showing short pulses.
@@ -488,6 +509,7 @@ mod tests {
             balls_per_game: 3,
             replays: false,
             bells: false,
+            attract_music: false,
         });
         assert_eq!(sim.machine().settings().balls_per_game, 3);
         assert!(!sim.machine().settings().replays);
@@ -530,10 +552,10 @@ mod tests {
             else {
                 continue;
             };
-            assert_eq!(
-                sample,
-                format!("samples/{:03}.wav", sound.track()),
-                "{sound:?}"
+            let stem = format!("samples/{:03}.", sound.track());
+            assert!(
+                sample == format!("{stem}wav") || sample == format!("{stem}mp3"),
+                "{sound:?}: {sample} should be {stem}wav or {stem}mp3"
             );
             assert!(
                 web.join(sample).is_file(),

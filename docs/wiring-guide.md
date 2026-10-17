@@ -449,6 +449,13 @@ plays the same files and mixes them the same way, so what you hear there is
 what the machine plays. After changing a sound, run `pnpm run render:sounds`
 again and re-copy the card.
 
+**Attract music:** track 30 is the whole of "Entrance of the Gladiators"
+(2 min 35 s). The core starts it again when it ends, in the same tick as the
+light show restarts its beats, rather than using the board's own loop setting:
+the user guide says that leaves a small gap, which would slowly put the lamps
+out of step with the music. It's stored in the repo as an MP3 to save space;
+`pnpm run render:sounds` (which needs ffmpeg) turns it into a WAV for the card.
+
 The firmware waits 2 seconds after power-on while the board reads its card,
 then turns the amplifier on and sets the volume (`WAV_TRIGGER_GAIN_DB` in
 `crates/pinball-core/src/sound.rs`, −70 to +10 dB). The big moments (game start

@@ -1,9 +1,11 @@
 # Sound credits
 
-The recorded sounds in `sim/web/samples/` are cut from these recordings on
-[Freesound](https://freesound.org). All are
-[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) (public domain), so
-no credit is required. Thank you to everyone who shared them.
+The recorded sounds in `sim/web/samples/` are cut from these recordings. The
+effects come from [Freesound](https://freesound.org) and are
+[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/); the attract-mode
+music comes from [Wikimedia Commons](https://commons.wikimedia.org) and is in
+the public domain. No credit is required, but thank you to everyone who shared
+them.
 
 This file is generated from `sim/samples/sources.json` by
 `pnpm run import:samples`; edit that file, not this one.
@@ -23,4 +25,5 @@ This file is generated from `sim/samples/sources.json` by
 | [SLIDE WHISTLE - 2](https://freesound.org/people/SamuelGremaud/sounds/517632/) | SamuelGremaud | CC0 1.0 | Drain |
 | [Instant Drain](https://freesound.org/people/bassmosphere/sounds/384702/) | bassmosphere | CC0 1.0 | Drain, Trapdoor |
 | [wah wah sad trombone.wav](https://freesound.org/people/kirbydx/sounds/175409/) | kirbydx | CC0 1.0 | Game over |
+| [Julius Fučík's "Entrance of the Gladiators", performed by the United States Marine Band](https://commons.wikimedia.org/wiki/File:Julius_Fu%C4%8D%C3%ADk%27s_%22Entrance_of_the_Gladiators%22,_performed_by_the_United_States_Marine_Band.flac) | United States Marine Band (c. 1999) | Public domain (work of the US government; composed 1897) | Attract music |
 | [pinball-flipper hits.wav](https://freesound.org/people/schafferdavid/sounds/450270/) | schafferdavid | CC0 1.0 | Coil noise: kicker, Coil noise: pop bumper, Coil noise: flipper |

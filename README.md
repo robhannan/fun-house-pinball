@@ -54,7 +54,12 @@ extras (drum roll, fanfare, slide whistles, sad trombone). They're cut from
 free CC0 recordings, many from real electromechanical pinball machines
 (credits in [docs/sound-credits.md](docs/sound-credits.md)). The simulator
 also plays the noise each coil makes (kickers, pop bumpers, flippers), which
-the real machine makes by itself. Synthesised
+the real machine makes by itself.
+
+In attract mode, "Entrance of the Gladiators" (Julius
+Fučík's 1897 circus march, played by the United States Marine Band) plays in
+the background, repeating from the top, and the playfield and backboard lamps
+dance to its beats. It can be turned off in the operator settings. Synthesised
 versions are kept in `sim/web/sounds.js` as a fallback, and the page can switch
 between the two. The **Sound test** panel plays each one, including the
 optional real bells.

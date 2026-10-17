@@ -1,5 +1,5 @@
 {
-  "_comment": "Recorded sounds for the simulator and the WAV Trigger's SD card. Every source is CC0 (public domain) from Freesound. Run `pnpm run import:samples` to rebuild sim/web/samples/ and docs/sound-credits.md from this file. Times are in seconds into each recording; `semitones` shifts pitch (and speed), `speed` speeds up without changing pitch; `drive` is how hard the sound is mastered (more = louder and punchier; default 2.5). Check each recording for a spoken slate (some libraries announce the take number at the start) before cutting it.",
+  "_comment": "Recorded sounds for the simulator and the WAV Trigger's SD card. Effects are CC0 from Freesound; the attract music is public domain from Wikimedia Commons. Run `pnpm run import:samples` to rebuild sim/web/samples/ and docs/sound-credits.md from this file. Times are in seconds into each recording; `semitones` shifts pitch (and speed), `speed` speeds up without changing pitch; `drive` is how hard the sound is mastered (more = louder and punchier; default 2.5). Check each recording for a spoken slate (some libraries announce the take number at the start) before cutting it. The attract music (\"music\") is cut as a seamless loop; its beats go to crates/pinball-core/src/music_beats.rs.",
   "sources": {
     "450270": {
       "title": "pinball-flipper hits.wav",
@@ -98,6 +98,13 @@
       "page": "https://freesound.org/people/bassmosphere/sounds/384698/",
       "licence": "CC0 1.0",
       "preview": "https://cdn.freesound.org/previews/384/384698_1067129-hq.mp3"
+    },
+    "marine-band-gladiators": {
+      "title": "Julius Fučík's \"Entrance of the Gladiators\", performed by the United States Marine Band",
+      "author": "United States Marine Band (c. 1999)",
+      "page": "https://commons.wikimedia.org/wiki/File:Julius_Fu%C4%8D%C3%ADk%27s_%22Entrance_of_the_Gladiators%22,_performed_by_the_United_States_Marine_Band.flac",
+      "licence": "Public domain (work of the US government; composed 1897)",
+      "download": "https://upload.wikimedia.org/wikipedia/commons/7/76/Julius_Fu%C4%8D%C3%ADk%27s_%22Entrance_of_the_Gladiators%22%2C_performed_by_the_United_States_Marine_Band.flac"
     }
   },
   "tracks": {
@@ -412,6 +419,24 @@
       ],
       "fadeOut": 0.2,
       "drive": 2.2
+    },
+    "30": {
+      "name": "Attract music",
+      "layers": [
+        {
+          "source": "marine-band-gladiators",
+          "start": 0,
+          "length": 156
+        }
+      ],
+      "music": {
+        "full": true
+      },
+      "format": "mp3",
+      "fadeIn": 0.02,
+      "fadeOut": 0.3,
+      "drive": 1.3,
+      "level": 0.7
     }
   },
   "extras": {

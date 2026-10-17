@@ -4,12 +4,15 @@
 //   pnpm run render:sounds          writes target/sd-card/NNN_Name.wav
 //   pnpm run check:sounds           only checks every sound is usable
 //
-// Copy the files to the root of a FAT32-formatted microSD card. The WAV
+// Copy the files to the root of a FAT32-formatted microSD card. Needs ffmpeg to
+// decode the music, which is stored as MP3. The WAV
 // Trigger takes the track number from the first three digits of each name.
 //
 // Files are 16-bit 44.1 kHz stereo, the only format the WAV Trigger plays,
 // and are scaled by HEADROOM: the board mixes overlapping sounds, and its
 // volume control comes after the mix, so full-scale files would clip.
+import { execFileSync } from "node:child_process";
+
 import { argv, fs, path } from "zx";
 
 import { BELL_SAMPLES, COIL_SAMPLES, SOUNDS, render } from "./web/sounds.js";
@@ -39,6 +42,11 @@ async function readSample(file) {
   if (!(await fs.pathExists(full))) {
     problems.push(`${file}: missing (run pnpm run import:samples)`);
     return undefined;
+  }
+  if (file.endsWith(".mp3")) {
+    // Long sounds (the music) are stored as MP3; decode them with ffmpeg.
+    const bytes = execFileSync("ffmpeg", ["-v", "error", "-i", full, "-ac", "1", "-ar", String(SAMPLE_RATE), "-f", "f32le", "-"], { maxBuffer: 1 << 30 });
+    return { sampleRate: SAMPLE_RATE, samples: new Float32Array(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length)) };
   }
   return decodeWav(await fs.readFile(full));
 }
