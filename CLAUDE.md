@@ -64,6 +64,12 @@ Mega 2560. See `README.md` for setup and `docs/hardware.md` for wiring.
     for the one-way shooter gate. When moving or adding anything solid, leave
     a ball's width (20 px) wherever the ball should pass, and run the slow trap
     search: `cargo test -p pinball-sim --release -- --ignored`.
+- **3D-printed parts:** OpenSCAD models in `hardware/3d/`. Every table
+  measurement lives in `measurements.scad` (placeholders until measured), and
+  shared geometry in `common.scad`, so the parts always fit each other. Keep
+  each part's printing orientation and options at the top of its file, in
+  plain English for a beginner. `pnpm run check:3d` (in CI, with the latest
+  OpenSCAD) renders every model and fails on any warning.
 - **Don't present guesses as facts:** feature counts and rules not confirmed on
   the real table or schematic are marked *verify* or "assumed". Keep them marked.
 

@@ -510,31 +510,31 @@ adjust, and its closed and open angles are set from test mode.
   they never disturb the main loop. Servo extension leads reach from under the
   playfield to the Arduino.
 
-**Building each flap.**
+**Building each trapdoor.** The parts are 3D-printed; see
+[3D-printed parts](3d-printing.md) for measuring, printing and assembling them.
+No modelling experience is needed. Each trapdoor has:
 
-- **The flap:** a 1.5–2 mm aluminium or steel plate cut to the hole with about
-  0.5 mm clearance, painted (or covered with a print of the artwork) to match.
-  It must sit **exactly flush**; any lip catches or bounces the ball.
-- **The hinge:** along the flap's **uphill** edge (towards the back of the
-  machine), so it swings down from there. Open, it makes a ramp into the hole,
-  and the ball rolls in instead of jumping the gap. Two small brackets and a
-  2 mm steel pin, or a small piano hinge, screwed under the playfield.
-- **The servo:** on a bracket under the playfield (3D-printed PETG is fine),
-  its arm turning the hinge pin directly or through a short pushrod. Open is
-  about 30–45° down.
-- **A stop:** a ledge or screw under the flap's downhill edge, so a fast ball
-  landing on a closed flap pushes against the stop, not the servo.
-- **Underneath:** a chute from each hole to the outhole, with a lever
-  microswitch in it wired to the trapdoor's matrix position (C4·R5–R7,
-  section 6). Each door needs its own switch: only the centre one gives the
-  special's replay.
+- **A frame** that slides up into the hole and screws on underneath. The servo
+  hangs from it.
+- **A flap** that sits exactly flush in the top of the frame, hinged on a 2 mm
+  steel pin along its **uphill** edge (towards the back of the machine). It
+  swings down from there, so open it makes a ramp into the hole, and the ball
+  rolls in instead of jumping the gap.
+- **A lifter arm** on the servo. The flap rests on its tip: pointing up, it
+  holds the flap flush; turned back, it lets the flap swing open about 40°. A
+  ball landing on a closed flap pushes against the lifter, which the MG90S's
+  metal gears take.
+- **A chute** under the frame that rolls the ball towards the outhole, with a
+  lever microswitch under its floor wired to the trapdoor's matrix position
+  (C4·R5–R7, section 6). Each door needs its own switch: only the centre one
+  gives the special's replay.
 
 **Setting the angles.** Press the test button three times for test mode's
 flaps stage. Each press of Start moves to the next flap position (flap 1
 closed, flap 1 open, flap 2 closed, ...) and moves that flap there. The flipper
 buttons trim the angle a degree at a time, and the console prints it. Trim each
-closed position until the flap is exactly flush, and each open position until
-the flap clears the hole. The angles are saved in the Arduino's EEPROM when
+closed position until the lifter holds the flap exactly flush, and each open
+position until the flap hangs open far enough for the ball to roll in. The angles are saved in the Arduino's EEPROM when
 test mode ends, and survive power-off.
 
 If power fails, a servo stays where it was. That's harmless: an open flap just

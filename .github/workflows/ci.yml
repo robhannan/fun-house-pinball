@@ -41,6 +41,10 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - name: Every sound renders cleanly
         run: pnpm run check:sounds
+      - name: Install OpenSCAD (latest nightly)
+        run: pnpm run ci:install-openscad
+      - name: Every 3D-printed part renders cleanly
+        run: pnpm run check:3d
 
   firmware:
     name: Firmware (ATmega2560)

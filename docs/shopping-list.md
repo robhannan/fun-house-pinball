@@ -8,9 +8,9 @@ Everything needed to build the controller described in the
 
 | | Estimate |
 |---|---|
-| **Everything** | **£575–1,060** |
-| Without tools (if you already have them) | £505–910 |
-| Electronics only (sections 1–8, no pinball parts or tools) | £295–540 |
+| **Everything** | **£600–1,115** |
+| Without tools (if you already have them) | £520–950 |
+| Electronics only (sections 1–8, no pinball parts or tools) | £310–580 |
 
 These are rough **estimates in GBP, as of October 2026**, to help with budgeting.
 
@@ -166,13 +166,12 @@ The trapdoors are rebuilt with a hobby servo turning each flap; see the
 | 1000 µF 10 V electrolytic capacitor | 1 | Across the servo supply, near the servos | [AliExpress](https://www.aliexpress.com/w/wholesale-1000uf-10v-capacitor.html) | 1–2 |
 | Servo extension leads, 30–50 cm | 3 | From under the playfield to the Arduino | [AliExpress](https://www.aliexpress.com/w/wholesale-servo-extension-cable.html) | 2–4 |
 | Lever microswitches (KW11 type) | 5 | One in each trapdoor's chute, plus spares | [AliExpress](https://www.aliexpress.com/w/wholesale-kw11-micro-switch-lever.html) | 2–4 |
-| 1.5 mm aluminium sheet | 1 small sheet | The flaps | [AliExpress](https://www.aliexpress.com/w/wholesale-1.5mm-aluminium-sheet.html) | 5–10 |
-| 2 mm steel rod and shaft collars | 1 set | Hinge pins | [AliExpress](https://www.aliexpress.com/w/wholesale-2mm-steel-rod-shaft-collar.html) | 3–5 |
+| 2 mm steel rod | 1 length | The flaps' hinge pins | [AliExpress](https://www.aliexpress.com/w/wholesale-2mm-steel-rod.html) | 2–4 |
+| 3D-printed parts, PETG | 12 | A frame, flap, lifter arm and chute per trapdoor, from a printing service, library or makerspace. See [3D-printed parts](3d-printing.md). | [JLCPCB](https://jlcpcb.com/3d-printing) · [Craftcloud](https://craftcloud3d.com) | 15–40 |
+| 🛡️ Wood screws, 3.5 × 9.5 mm (No. 6 × 3/8") | 1 pack | The frames, into the playfield's underside. **No longer than 9.5 mm**, or they come through the artwork. | [AliExpress](https://www.aliexpress.com/w/wholesale-wood-screw-3.5x9.5.html) | 2–4 |
+| Self-tapping screw assortment, M2 and M3 | 1 box | The chutes to the frames (M3 × 6 mm), and the lifter arms to the servo horns (M2) | [AliExpress](https://www.aliexpress.com/w/wholesale-self-tapping-screw-assortment-m2-m3.html) | 3–5 |
 
-Servo brackets and chutes can be 3D-printed in PETG (or by a printing service)
-or bent from sheet metal.
-
-**Section estimate: £27–51**
+**Section estimate: £41–89**
 
 ## 7. Power
 
@@ -218,8 +217,9 @@ coils, and the IRL540N handles it.
 | Flush cutters | 1 | | [AliExpress](https://www.aliexpress.com/w/wholesale-flush-cutters.html) | 3–6 |
 | Helping hands with magnifier | 1 | | [AliExpress](https://www.aliexpress.com/w/wholesale-helping-hands-soldering.html) | 6–12 |
 | Safety glasses | 1 | | [AliExpress](https://www.aliexpress.com/w/wholesale-safety-glasses.html) | 2–5 |
+| Digital calipers, 150 mm | 1 | For measuring the playfield for the 3D-printed parts | [AliExpress](https://www.aliexpress.com/w/wholesale-digital-caliper-150mm.html) | 10–15 |
 
-**Section estimate: £68–151**
+**Section estimate: £78–166**
 
 ## 10. From a pinball specialist
 
