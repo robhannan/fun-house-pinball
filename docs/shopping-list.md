@@ -80,7 +80,7 @@ the numbers.
 
 ## 3. Switch matrix
 
-The map has 21 matrix switches, including the three trapdoors in the
+The map has 23 matrix switches, including the three trapdoors in the
 "Scores Bonus" box, plus 5 direct switches.
 
 | Item | Qty | Notes | Link | Est. £ |
@@ -126,7 +126,7 @@ flyback diodes or allow them to be fitted. Expect roughly £5–15 per 8-channel
 
 ## 6. Lamp drivers and lamps
 
-40 lamp outputs are used, on chips 5–10: 29 on the playfield and 11 on the backboard.
+38 lamp outputs are used, on chips 5–10: 27 on the playfield and 11 on the backboard.
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|

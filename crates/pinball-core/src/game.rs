@@ -325,9 +325,7 @@ impl Machine {
             sw::TOP_BUMPER => {
                 kick(&mut self.coils, coil::TOP_BUMPER);
                 self.sound.request(Sound::PopBumper);
-                // Assumed (*verify*): 1 point when unlit, like the others.
-                let lit = self.lit(lamp::TOP_BUMPER);
-                self.add_score(if lit { 10 } else { 1 });
+                self.add_score(10);
             }
             // The box "Scores Bonus". Assumed (*verify*): the ball then drops
             // under the playfield and rolls to the outhole, which ends the
@@ -348,6 +346,14 @@ impl Machine {
                     kick(&mut self.coils, coil::POP_BUMPERS[n]);
                     self.sound.request(Sound::PopBumper);
                     self.add_score(1);
+                    // The lower two are marked "advance bonus when lit".
+                    // Assumed (*verify*): "lit" means the bumper's own cap.
+                    if n >= 3 && self.lit(lamp::POP_BUMPERS[n]) {
+                        self.advance_bonus();
+                    }
+                } else if sw::TOP_LANES.contains(&id) {
+                    self.add_score(10);
+                    self.chime(Sound::Lane);
                 } else if let Some(n) = sw::TOP_REBOUNDS.iter().position(|&r| r == id) {
                     // Assumed (*verify*): 1 point.
                     self.add_score(1);
@@ -357,8 +363,7 @@ impl Machine {
                     // TODO: find out what lights the "30 points" lamps (#23).
                     let thirty = self.lit(lamp::THIRTY_POINTS[n]);
                     self.add_score(if thirty { 30 } else { 10 });
-                    let advance = self.lit(lamp::LANE_ADVANCE_BONUS[n / 2]);
-                    self.lane_bells(advance, thirty);
+                    self.lane_bells(false, thirty);
                 }
             }
         }
@@ -585,13 +590,12 @@ impl Machine {
                 for pop in lamp::POP_BUMPERS {
                     self.lamps.set(pop, LampMode::On);
                 }
-                // Assumed until we know what lights them (#22, #25): every
-                // "advance bonus" lamp is lit, so every rollover advances the
-                // wheel. Nothing lights the top bumper or "30 points" yet.
-                for advance in lamp::TOP_ADVANCE_BONUS
-                    .into_iter()
-                    .chain(lamp::LANE_ADVANCE_BONUS)
-                {
+                // Assumed until we know what lights them (#22, #25): the top
+                // rubbers' "advance bonus" lamps are lit, like the pop bumper
+                // caps, so they and the lower pop bumpers advance the wheel.
+                // Nothing lights the "30 points" lamps yet.
+                self.lamps.set(lamp::TOP_BUMPER, LampMode::On);
+                for advance in lamp::TOP_ADVANCE_BONUS {
                     self.lamps.set(advance, LampMode::On);
                 }
             }
@@ -729,37 +733,45 @@ mod tests {
     }
 
     #[test]
-    fn rollovers_advance_the_bonus_wheel_and_a_trapdoor_collects_it() {
+    fn rubbers_and_lower_pops_advance_the_wheel_and_a_trapdoor_collects_it() {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
         assert_eq!(sim.machine.bonus(), 10);
 
-        sim.tap(sw::SIDE_LANES[0]);
         sim.tap(sw::TOP_REBOUNDS[1]);
+        sim.tap(sw::POP_BUMPERS[3]);
         assert_eq!(sim.machine.bonus(), 30);
-        assert_eq!(sim.machine.score(), 11);
+        assert_eq!(sim.machine.score(), 2);
 
         sim.drop_through(0);
-        assert_eq!(sim.machine.score(), 41);
+        assert_eq!(sim.machine.score(), 32);
+    }
+
+    #[test]
+    fn lanes_and_upper_pops_score_without_advancing_the_wheel() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::TOP_LANES[0]);
+        sim.tap(sw::SIDE_LANES[1]);
+        sim.tap(sw::POP_BUMPERS[1]);
+        assert_eq!(sim.machine.score(), 21);
+        assert_eq!(sim.machine.bonus(), 10);
     }
 
     #[test]
     fn only_a_lit_advance_bonus_lamp_moves_the_wheel() {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
-        sim.machine
-            .lamps
-            .set(lamp::LANE_ADVANCE_BONUS[1], LampMode::Off);
+        sim.machine.lamps.set(lamp::POP_BUMPERS[4], LampMode::Off);
         sim.machine
             .lamps
             .set(lamp::TOP_ADVANCE_BONUS[0], LampMode::Off);
-        // The right-hand pair of lanes and the left top rubber don't advance it.
-        sim.tap(sw::SIDE_LANES[2]);
-        sim.tap(sw::SIDE_LANES[3]);
+        // The unlit lower-right pop bumper and left top rubber don't advance it.
+        sim.tap(sw::POP_BUMPERS[4]);
         sim.tap(sw::TOP_REBOUNDS[0]);
         assert_eq!(sim.machine.bonus(), 10);
-        // The left-hand pair still does.
-        sim.tap(sw::SIDE_LANES[1]);
+        // The lit right top rubber still does.
+        sim.tap(sw::TOP_REBOUNDS[1]);
         assert_eq!(sim.machine.bonus(), 20);
     }
 
@@ -775,16 +787,12 @@ mod tests {
     }
 
     #[test]
-    fn the_top_bumper_scores_ten_when_lit() {
+    fn the_top_bumper_scores_ten() {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
         sim.tap(sw::TOP_BUMPER);
         assert!(sim.coil_on(coil::TOP_BUMPER));
-        assert_eq!(sim.machine.score(), 1);
-        sim.run(100);
-        sim.machine.lamps.set(lamp::TOP_BUMPER, LampMode::On);
-        sim.tap(sw::TOP_BUMPER);
-        assert_eq!(sim.machine.score(), 11);
+        assert_eq!(sim.machine.score(), 10);
     }
 
     #[test]
@@ -833,13 +841,13 @@ mod tests {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
         for _ in 0..12 {
-            sim.tap(sw::SIDE_LANES[2]);
+            sim.tap(sw::TOP_REBOUNDS[0]);
         }
         assert_eq!(sim.machine.bonus(), 100);
         sim.drop_through(0);
         sim.drop_through(1);
-        // 120 lane points + 2 × 100 bonus = 320: no score replay yet.
-        assert_eq!(sim.machine.score(), 320);
+        // 12 rubber points + 2 × 100 bonus = 212: no score replay yet.
+        assert_eq!(sim.machine.score(), 212);
         assert_eq!(sim.machine.replays(), 1);
     }
 
@@ -852,11 +860,15 @@ mod tests {
         }
         // 400 lane points crosses the first threshold.
         assert_eq!(sim.machine.replays(), 1);
+        for _ in 0..9 {
+            sim.tap(sw::TOP_REBOUNDS[0]);
+        }
+        assert_eq!(sim.machine.bonus(), 100);
         for n in 0..3 {
             sim.drop_through(n);
         }
-        // + 3 × 100 = 700: crosses 600 and 700.
-        assert_eq!(sim.machine.score(), 700);
+        // 409 + 3 × 100 = 709: crosses 600 and 700, plus the special's replay.
+        assert_eq!(sim.machine.score(), 709);
         assert_eq!(sim.machine.replays(), 4);
     }
 
@@ -1064,9 +1076,13 @@ mod tests {
             sounds_during(&mut sim, |s| s.tap(sw::POP_BUMPERS[0])),
             [Sound::PopBumper]
         );
-        // A lane rings the wheel's climbing bell, not the lane bell as well.
         assert_eq!(
             sounds_during(&mut sim, |s| s.tap(sw::SIDE_LANES[0])),
+            [Sound::Lane]
+        );
+        // A rubber rings the wheel's climbing bell, not the lane bell as well.
+        assert_eq!(
+            sounds_during(&mut sim, |s| s.tap(sw::TOP_REBOUNDS[0])),
             [Sound::BonusAdvance(1)]
         );
         assert_eq!(
@@ -1085,10 +1101,10 @@ mod tests {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
         for _ in 0..9 {
-            sim.tap(sw::SIDE_LANES[0]);
+            sim.tap(sw::TOP_REBOUNDS[0]);
         }
         assert_eq!(
-            sounds_during(&mut sim, |s| s.tap(sw::SIDE_LANES[0])),
+            sounds_during(&mut sim, |s| s.tap(sw::TOP_REBOUNDS[0])),
             [Sound::Lane]
         );
     }

@@ -19,7 +19,7 @@ const PHRASE: usize = 16;
 
 /// Every lamp the show uses, so they can all be cleared afterwards. Bits in a
 /// [`Pattern`] index this list.
-const SHOW_LAMPS: [LampId; 38] = [
+const SHOW_LAMPS: [LampId; 36] = [
     lamp::BONUS_WHEEL[0],
     lamp::BONUS_WHEEL[1],
     lamp::BONUS_WHEEL[2],
@@ -47,8 +47,6 @@ const SHOW_LAMPS: [LampId; 38] = [
     lamp::TRAPDOORS[2],
     lamp::TOP_ADVANCE_BONUS[0],
     lamp::TOP_ADVANCE_BONUS[1],
-    lamp::LANE_ADVANCE_BONUS[0],
-    lamp::LANE_ADVANCE_BONUS[1],
     lamp::PLAYER_UP[0],
     lamp::PLAYER_UP[1],
     lamp::PLAYER_UP[2],
@@ -68,10 +66,10 @@ const THIRTY: usize = 12;
 const POPS: usize = 16;
 const TOP_BUMPER: usize = 21;
 const TRAPDOORS: usize = 22;
-/// The top-left, top-right, lower-left and lower-right "advance bonus" lamps.
+/// The "advance bonus" lamps for the top rubbers, left then right.
 const ADVANCE: usize = 25;
-const PLAYERS: usize = 29;
-const TRAIN: usize = 33;
+const PLAYERS: usize = 27;
+const TRAIN: usize = 31;
 const TRAIN_CARS: usize = 5;
 
 /// Which of [`SHOW_LAMPS`] are lit: bit `n` is `SHOW_LAMPS[n]`.
@@ -103,7 +101,6 @@ const LEFT: Pattern = bit(WHEEL + 6)
     | bit(POPS + 3)
     | bit(TRAPDOORS)
     | bit(ADVANCE)
-    | bit(ADVANCE + 2)
     | bit(PLAYERS)
     | bit(PLAYERS + 2)
     | bit(TRAIN)
@@ -124,7 +121,7 @@ const fn pattern(beat: usize) -> Pattern {
                 | bit(POPS + beat % 5)
                 | bit(THIRTY + beat % 4)
                 | bit(TRAPDOORS + beat % 3)
-                | bit(ADVANCE + beat % 4)
+                | bit(ADVANCE + beat % 2)
                 | bit(TRAIN + beat % TRAIN_CARS)
                 | bit(PLAYERS + beat % 4)
         }

@@ -11,17 +11,19 @@
 //!
 //! Playfield, top to bottom:
 //!
-//! * a "10 when lit" pop bumper at the top centre, with a candy-striped rubber
-//!   either side ("advance bonus when lit"), and passive jack-in-the-box
-//!   rebounds in the top corners
-//! * three "1 point" pop bumpers across the top
+//! * a "10 points" pop bumper at the top centre, with a candy-striped rubber
+//!   either side ("advance bonus when lit"), a "10 points" rollover lane
+//!   outside each rubber, and passive jack-in-the-box rebounds in the top
+//!   corners
+//! * three "1 point" pop bumpers across the top, with long guide rails along
+//!   the side walls
 //! * the "Scores Bonus" box: three coil-driven trapdoors, each with a lamp
 //!   above it ("trap door open when lite is lit")
 //! * four "10 points" lanes, two either side of the box, each with a
-//!   "30 points when lit" lamp below it, and an "advance bonus when lit" lamp
-//!   below each pair
-//! * two lower "1 point" pop bumpers, one each side, each on top of a
-//!   candy-striped kicker that runs down the side of the playfield
+//!   "30 points when lit" lamp below it
+//! * two lower "1 point" pop bumpers, one each side, marked "advance bonus
+//!   when lit", each set in a diamond-shaped candy-striped kicker that runs
+//!   down the side of the playfield
 //! * the 10–100 bonus wheel (lamps only), with "Special when lit" above it
 //! * two kicking rubbers above two inward-facing flippers, no outlanes, and a
 //!   centre post above the outhole
@@ -71,13 +73,16 @@ pub mod sw {
         SwitchId::matrix(2, 3),
         SwitchId::matrix(2, 4),
     ];
-    /// The "10 when lit" pop bumper at the top centre.
+    /// The "10 points" pop bumper at the top centre.
     pub const TOP_BUMPER: SwitchId = SwitchId::matrix(2, 5);
 
     /// The candy-striped rubbers either side of the top bumper, left then
     /// right, marked "advance bonus when lit" (*verify*: that the rubber is a
     /// switch, rather than the lanes beside it).
     pub const TOP_REBOUNDS: [SwitchId; 2] = [SwitchId::matrix(3, 0), SwitchId::matrix(3, 1)];
+    /// The "10 points" rollover lanes outside the striped rubbers, left then
+    /// right.
+    pub const TOP_LANES: [SwitchId; 2] = [SwitchId::matrix(3, 2), SwitchId::matrix(3, 3)];
 
     /// "10 points" lanes, two either side of the "Scores Bonus" box, left to
     /// right.
@@ -130,7 +135,7 @@ pub mod coil {
     /// Optional real bells for the 1s, 10s and 100s, rung by scoring (see
     /// `crate::bells`). Not fitted yet: only used when `Settings::bells` is on.
     pub const BELLS: [CoilId; 3] = [CoilId::new(15), CoilId::new(16), CoilId::new(17)];
-    /// The "10 when lit" pop bumper at the top centre.
+    /// The "10 points" pop bumper at the top centre.
     pub const TOP_BUMPER: CoilId = CoilId::new(18);
     /// Left side kicker, under the lower-left pop bumper.
     pub const LEFT_SIDE_KICKER: CoilId = CoilId::new(19);
@@ -151,8 +156,9 @@ pub mod lamp {
     /// "Trap door open when lite is lit": one above each trapdoor, matching
     /// [`super::sw::TRAPDOORS`].
     pub const TRAPDOORS: [LampId; 3] = [LampId::new(3), LampId::new(4), LampId::new(5)];
-    /// "Advance bonus when lit" by the top rubbers, matching
-    /// [`super::sw::TOP_REBOUNDS`].
+    /// "Advance bonus when lit" for the top rubbers, matching
+    /// [`super::sw::TOP_REBOUNDS`]. The playfield's arrows point at the
+    /// rubbers, so this assumes (*verify*) a lamp under each striped plastic.
     pub const TOP_ADVANCE_BONUS: [LampId; 2] = [LampId::new(6), LampId::new(7)];
     /// The bonus wheel: 10, 20, ... 100 points.
     pub const BONUS_WHEEL: [LampId; 10] = [
@@ -177,7 +183,8 @@ pub mod lamp {
         LampId::new(22),
         LampId::new(23),
     ];
-    /// "1 point" pop bumper caps, matching [`super::sw::POP_BUMPERS`].
+    /// "1 point" pop bumper caps, matching [`super::sw::POP_BUMPERS`]. The
+    /// lower two are marked "advance bonus when lit".
     pub const POP_BUMPERS: [LampId; 5] = [
         LampId::new(24),
         LampId::new(25),
@@ -185,11 +192,8 @@ pub mod lamp {
         LampId::new(27),
         LampId::new(28),
     ];
-    /// The "10 when lit" pop bumper's cap.
+    /// The "10 points" pop bumper's cap.
     pub const TOP_BUMPER: LampId = LampId::new(29);
-    /// "Advance bonus when lit" below the left pair of lanes, then the right
-    /// pair.
-    pub const LANE_ADVANCE_BONUS: [LampId; 2] = [LampId::new(30), LampId::new(31)];
 
     // Backboard (see docs/backboard.svg).
     /// The circled player numbers 1–4 on the backboard, lit for whose turn it
@@ -384,7 +388,7 @@ pub const PARTS: &[Part] = &[
         Some(lamp::POP_BUMPERS[4]),
     ),
     part(
-        "Top bumper (10 when lit)",
+        "Top bumper (10 points)",
         Some(sw::TOP_BUMPER),
         &[coil::TOP_BUMPER],
         Some(lamp::TOP_BUMPER),
@@ -392,6 +396,8 @@ pub const PARTS: &[Part] = &[
     // Upper playfield
     part("Top rubber (left)", Some(sw::TOP_REBOUNDS[0]), &[], None),
     part("Top rubber (right)", Some(sw::TOP_REBOUNDS[1]), &[], None),
+    part("Top lane (left)", Some(sw::TOP_LANES[0]), &[], None),
+    part("Top lane (right)", Some(sw::TOP_LANES[1]), &[], None),
     part(
         "Advance bonus lamp (top left)",
         None,
@@ -434,18 +440,6 @@ pub const PARTS: &[Part] = &[
     part("30 points lamp 2", None, &[], Some(lamp::THIRTY_POINTS[1])),
     part("30 points lamp 3", None, &[], Some(lamp::THIRTY_POINTS[2])),
     part("30 points lamp 4", None, &[], Some(lamp::THIRTY_POINTS[3])),
-    part(
-        "Advance bonus lamp (lower left)",
-        None,
-        &[],
-        Some(lamp::LANE_ADVANCE_BONUS[0]),
-    ),
-    part(
-        "Advance bonus lamp (lower right)",
-        None,
-        &[],
-        Some(lamp::LANE_ADVANCE_BONUS[1]),
-    ),
     part("Special when lit", None, &[], Some(lamp::SPECIAL)),
     // Bonus wheel
     part("Bonus wheel 10", None, &[], Some(lamp::BONUS_WHEEL[0])),
