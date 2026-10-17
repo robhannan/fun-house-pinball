@@ -52,6 +52,18 @@ Use `.github/pull_request_template.md`, keeping its sections in order:
   If there's nothing to say, write `None`.
 - **GIF**: see the next step.
 
+**If the PR changes `docs/playfield.svg` or `docs/backboard.svg`**, show the
+updated drawing at the end of the Summary, under a `### Rendered playfield` (or
+`### Rendered backboard`) heading. Link the raw file at the PR's latest commit,
+so it shows this PR's version and keeps working after the branch is deleted:
+
+```html
+<img src="https://raw.githubusercontent.com/robhannan/fun-house-pinball/<full commit SHA>/docs/playfield.svg" alt="the updated playfield wiring map" width="600">
+```
+
+Push first, so the commit exists on GitHub. After pushing more commits that
+change the drawing, update the SHA in the description.
+
 Delete the template's `<!-- ... -->` comments. Write the body to a file and pass
 it with `gh pr create --body-file`; don't use a heredoc inside `--body`.
 

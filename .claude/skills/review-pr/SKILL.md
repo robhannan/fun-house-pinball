@@ -127,6 +127,8 @@ Most important first:
    - The GIF is relevant to the change and loads:
      `curl -sIL <url> | grep -iE '^HTTP|content-type'` shows `200` and
      `image/gif`.
+   - If `docs/playfield.svg` or `docs/backboard.svg` changed, the Summary shows
+     the drawing, linked at the PR's latest commit that changed it.
    - One concern per PR.
    - Based on current `main`.
    - No stray files, such as `.DS_Store` or `sim/web/generated/`.
