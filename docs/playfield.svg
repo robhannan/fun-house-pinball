@@ -25,17 +25,17 @@
   <circle cx="542" cy="1010" r="7" fill="#c9d1d9" stroke="#57606a" data-switch="C0R1"/>
   <text x="547" y="990" class="label" transform="rotate(-90 547 990)">Shooter lane: C0·R1 *</text>
 
-  <!-- Top corners: passive rebounds -->
+  <!-- Top corners: jack-in-the-box kickers -->
   <circle cx="92" cy="98" r="10" fill="#57606a"/>
   <text x="80" y="118" class="tag end">roller</text>
-  <g fill="#fff3b0" stroke="#1f2328" stroke-width="2">
-    <polygon points="52,138 108,122 124,176 68,200"/>
-    <polygon points="508,138 452,122 436,176 492,200"/>
+  <g fill="#fff3b0" stroke="#1f2328" stroke-width="3" stroke-linejoin="round">
+    <polygon points="52,138 108,122 124,176 68,200" data-switch="C1R4" data-coil="21"/>
+    <polygon points="508,138 452,122 436,176 492,200" data-switch="C1R5" data-coil="22"/>
   </g>
-  <text x="48" y="214" class="tag">Jack-in-the-box</text>
-  <text x="48" y="225" class="tag">rebound (passive *)</text>
-  <text x="512" y="214" class="tag end">Jack-in-the-box</text>
-  <text x="512" y="225" class="tag end">rebound (passive *)</text>
+  <text x="48" y="214" class="tag">Jack-in-the-box kicker</text>
+  <text x="48" y="225" class="tag">C1·R4 · coil 21</text>
+  <text x="512" y="214" class="tag end">Jack-in-the-box kicker</text>
+  <text x="512" y="225" class="tag end">C1·R5 · coil 22</text>
 
   <!-- Guide rails along the side walls (passive) -->
   <g stroke="#8b949e" stroke-width="6" stroke-linecap="round">

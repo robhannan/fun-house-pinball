@@ -8,8 +8,8 @@ Everything needed to build the controller described in the
 
 | | Estimate |
 |---|---|
-| **Everything** | **£560–1,035** |
-| Without tools (if you already have them) | £490–885 |
+| **Everything** | **£580–1,065** |
+| Without tools (if you already have them) | £510–915 |
 | Electronics only (sections 1–8, no pinball parts or tools) | £270–485 |
 
 These are rough **estimates in GBP, as of October 2026**, to help with budgeting.
@@ -80,7 +80,7 @@ the numbers.
 
 ## 3. Switch matrix
 
-The map has 23 matrix switches, including the three trapdoors in the
+The map has 25 matrix switches, including the three trapdoors in the
 "Scores Bonus" box, plus 5 direct switches.
 
 | Item | Qty | Notes | Link | Est. £ |
@@ -106,7 +106,7 @@ The map has 23 matrix switches, including the three trapdoors in the
 
 ## 5. Coil drivers
 
-18 coil outputs are used: ball serve, 4 kickers, 6 pop bumpers, 2 × 2 flipper
+20 coil outputs are used: ball serve, 6 kickers, 6 pop bumpers, 2 × 2 flipper
 windings and 3 trapdoor flaps, plus 3 for the optional bells.
 
 | Item | Qty | Notes | Link | Est. £ |
@@ -206,7 +206,7 @@ of the old parts.
 
 | Item | Qty | Notes | Est. £ |
 |---|---|---|---|
-| Kicker coils | 4 | DC, at your coil voltage | 40–60 |
+| Kicker coils | 6 | DC, at your coil voltage | 60–90 |
 | Pop bumper coils | 6 | DC, at your coil voltage | 60–90 |
 | Ball serve coil and mechanism | 1 | Only if replacing the manual ball lift | 25–60 |
 | Dual-wound flipper coils | 2 | DC, at your coil voltage; ask for the lug layout | 22–30 |
@@ -214,4 +214,4 @@ of the old parts.
 | *Optional:* bells with coils | 0–3 | Not needed now. For the authentic 1950s scoring sound later (wiring guide section 7e). | varies |
 | Flipper rebuild kits, rubber rings, pop bumper caps | As needed | | 40–100 |
 
-**Section estimate: £217–400**
+**Section estimate: £237–430**

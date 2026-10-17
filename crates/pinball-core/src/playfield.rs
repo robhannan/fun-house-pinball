@@ -13,8 +13,7 @@
 //!
 //! * a "10 points" pop bumper at the top centre, with a candy-striped rubber
 //!   either side ("advance bonus when lit"), a "10 points" rollover lane
-//!   outside each rubber, and passive jack-in-the-box rebounds in the top
-//!   corners
+//!   outside each rubber, and a jack-in-the-box kicker in each top corner
 //! * three "1 point" pop bumpers across the top, with long guide rails along
 //!   the side walls
 //! * the "Scores Bonus" box: three coil-driven trapdoors, each with a lamp
@@ -63,6 +62,10 @@ pub mod sw {
     pub const LEFT_SIDE_KICKER: SwitchId = SwitchId::matrix(1, 2);
     /// Right side kicker: the striped kicker under the lower-right pop bumper.
     pub const RIGHT_SIDE_KICKER: SwitchId = SwitchId::matrix(1, 3);
+    /// Left jack-in-the-box kicker, in the top-left corner.
+    pub const LEFT_TOP_KICKER: SwitchId = SwitchId::matrix(1, 4);
+    /// Right jack-in-the-box kicker, in the top-right corner.
+    pub const RIGHT_TOP_KICKER: SwitchId = SwitchId::matrix(1, 5);
 
     /// "1 point" pop bumper skirt switches: three across the top (left,
     /// centre, right), then the lower left and lower right.
@@ -141,6 +144,10 @@ pub mod coil {
     pub const LEFT_SIDE_KICKER: CoilId = CoilId::new(19);
     /// Right side kicker, under the lower-right pop bumper.
     pub const RIGHT_SIDE_KICKER: CoilId = CoilId::new(20);
+    /// Left jack-in-the-box kicker, in the top-left corner.
+    pub const LEFT_TOP_KICKER: CoilId = CoilId::new(21);
+    /// Right jack-in-the-box kicker, in the top-right corner.
+    pub const RIGHT_TOP_KICKER: CoilId = CoilId::new(22);
 }
 
 /// Lamp assignments.
@@ -230,6 +237,8 @@ pub const COIL_KINDS: [CoilKind; COIL_COUNT] = {
     k[coil::RIGHT_KICKER.index()] = pulse(20, 100);
     k[coil::LEFT_SIDE_KICKER.index()] = pulse(20, 100);
     k[coil::RIGHT_SIDE_KICKER.index()] = pulse(20, 100);
+    k[coil::LEFT_TOP_KICKER.index()] = pulse(20, 100);
+    k[coil::RIGHT_TOP_KICKER.index()] = pulse(20, 100);
     let mut i = 0;
     while i < coil::POP_BUMPERS.len() {
         k[coil::POP_BUMPERS[i].index()] = pulse(20, 60);
@@ -354,6 +363,18 @@ pub const PARTS: &[Part] = &[
         "Right side kicker",
         Some(sw::RIGHT_SIDE_KICKER),
         &[coil::RIGHT_SIDE_KICKER],
+        None,
+    ),
+    part(
+        "Left jack-in-the-box kicker",
+        Some(sw::LEFT_TOP_KICKER),
+        &[coil::LEFT_TOP_KICKER],
+        None,
+    ),
+    part(
+        "Right jack-in-the-box kicker",
+        Some(sw::RIGHT_TOP_KICKER),
+        &[coil::RIGHT_TOP_KICKER],
         None,
     ),
     // Pop bumpers
