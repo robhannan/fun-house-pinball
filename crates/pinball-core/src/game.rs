@@ -11,7 +11,7 @@
 use crate::attract::AttractShow;
 use crate::bells::BellRinger;
 use crate::coils::{CoilId, Coils};
-use crate::lamps::{LampMode, Lamps};
+use crate::lamps::{LampId, LampMode, Lamps};
 use crate::playfield::{COIL_KINDS, coil, lamp, sw};
 use crate::sound::{Sound, SoundScheduler, Sounds};
 use crate::switches::{Debouncer, SwitchEvent, SwitchId, SwitchStates};
@@ -313,44 +313,75 @@ impl Machine {
                 kick(&mut self.coils, coil::RIGHT_KICKER);
                 self.add_score(1);
             }
-            sw::TOP_CENTRE_BUMPER => {
-                self.sound.request(Sound::PopBumper);
+            // Assumed (*verify*): 1 point, like the kickers above the flippers.
+            sw::LEFT_SIDE_KICKER => {
+                kick(&mut self.coils, coil::LEFT_SIDE_KICKER);
                 self.add_score(1);
             }
-            sw::BONUS_GATE => self.collect_bonus(),
-            // Assumed (*verify*): the ball drops under the playfield and rolls
-            // to the outhole, which ends the ball as usual.
+            sw::RIGHT_SIDE_KICKER => {
+                kick(&mut self.coils, coil::RIGHT_SIDE_KICKER);
+                self.add_score(1);
+            }
+            // The jack-in-the-box kickers in the top corners. Assumed
+            // (*verify*): 1 point.
+            sw::LEFT_TOP_KICKER => {
+                kick(&mut self.coils, coil::LEFT_TOP_KICKER);
+                self.add_score(1);
+            }
+            sw::RIGHT_TOP_KICKER => {
+                kick(&mut self.coils, coil::RIGHT_TOP_KICKER);
+                self.add_score(1);
+            }
+            sw::TOP_BUMPER => {
+                kick(&mut self.coils, coil::TOP_BUMPER);
+                self.sound.request(Sound::PopBumper);
+                self.add_score(10);
+            }
+            // The box "Scores Bonus". Assumed (*verify*): the ball then drops
+            // under the playfield and rolls to the outhole, which ends the
+            // ball as usual.
             id if sw::TRAPDOORS.contains(&id) => {
+                // A ball can't drop through a closed flap, so ignore a noisy
+                // switch. Each trapdoor's lamp is lit exactly while it's open.
+                let n = sw::TRAPDOORS.iter().position(|&t| t == id).unwrap_or(0);
+                if !self.lit(lamp::TRAPDOORS[n]) {
+                    return;
+                }
                 self.close_trapdoors();
                 self.sound.request(Sound::Trapdoor);
+                self.collect_bonus();
             }
             _ => {
                 if let Some(n) = sw::POP_BUMPERS.iter().position(|&pop| pop == id) {
                     kick(&mut self.coils, coil::POP_BUMPERS[n]);
                     self.sound.request(Sound::PopBumper);
                     self.add_score(1);
-                } else if sw::SIDE_LANES.contains(&id) || sw::TOP_LANES.contains(&id) {
-                    self.add_score(10);
-                    // One bell per lane: the wheel's climbing bell if it moved.
-                    if !self.advance_bonus() {
-                        self.chime(Sound::Lane);
+                    // The lower two are marked "advance bonus when lit".
+                    // Assumed (*verify*): "lit" means the bumper's own cap.
+                    if n >= 3 && self.lit(lamp::POP_BUMPERS[n]) {
+                        self.advance_bonus();
                     }
-                } else if let Some(n) = sw::THIRTY_POINT_ROLLOVERS.iter().position(|&r| r == id) {
-                    // TODO: find out what lights these on the original.
-                    let lit = self.lamps.mode(lamp::THIRTY_POINTS[n]) != LampMode::Off;
-                    self.sound.request(if lit {
-                        Sound::ThirtyPoints
-                    } else {
-                        Sound::Lane
-                    });
-                    self.add_score(if lit { 30 } else { 1 });
+                } else if sw::TOP_LANES.contains(&id) {
+                    self.add_score(10);
+                    self.chime(Sound::Lane);
+                } else if let Some(n) = sw::TOP_REBOUNDS.iter().position(|&r| r == id) {
+                    // Assumed (*verify*): 1 point.
+                    self.add_score(1);
+                    let advance = self.lit(lamp::TOP_ADVANCE_BONUS[n]);
+                    self.lane_bells(advance, false);
+                } else if let Some(n) = sw::SIDE_LANES.iter().position(|&l| l == id) {
+                    // TODO: find out what lights the "30 points" lamps (#23).
+                    let thirty = self.lit(lamp::THIRTY_POINTS[n]);
+                    self.add_score(if thirty { 30 } else { 10 });
+                    self.lane_bells(false, thirty);
                 }
             }
         }
     }
 
-    /// Opens or closes trapdoor `n` (0–2, left to right) under the "Scores
-    /// Bonus" gate. Only works while a ball is in play.
+    /// Opens or closes trapdoor `n` (0–2, left to right) in the "Scores Bonus"
+    /// box, and lights its lamp while it's open. Only works while a ball is in
+    /// play.
     ///
     /// TODO: call this from the rules once we know what opens the flaps on
     /// the original.
@@ -361,12 +392,32 @@ impl Machine {
     pub fn set_trapdoor(&mut self, n: usize, open: bool) {
         if self.phase == Phase::Playing {
             self.coils.hold(coil::TRAPDOOR_FLAPS[n], open);
+            let mode = if open { LampMode::On } else { LampMode::Off };
+            self.lamps.set(lamp::TRAPDOORS[n], mode);
         }
     }
 
     fn close_trapdoors(&mut self) {
-        for flap in coil::TRAPDOOR_FLAPS {
+        for (flap, lamp) in coil::TRAPDOOR_FLAPS.into_iter().zip(lamp::TRAPDOORS) {
             self.coils.hold(flap, false);
+            self.lamps.set(lamp, LampMode::Off);
+        }
+    }
+
+    fn lit(&self, lamp: LampId) -> bool {
+        self.lamps.mode(lamp) != LampMode::Off
+    }
+
+    /// One bell per rollover: the wheel's climbing bell if `advance` moved
+    /// it, else the "30 points" fanfare or the lane bell.
+    fn lane_bells(&mut self, advance: bool, thirty: bool) {
+        if advance && self.advance_bonus() {
+            return;
+        }
+        if thirty {
+            self.sound.request(Sound::ThirtyPoints);
+        } else {
+            self.chime(Sound::Lane);
         }
     }
 
@@ -406,8 +457,9 @@ impl Machine {
         }
     }
 
-    /// Assumed rule: each lane advances the bonus wheel one step; reaching
-    /// 100 lights the special. Returns whether the wheel moved.
+    /// Assumed rule: a rollover whose "advance bonus" lamp is lit moves the
+    /// bonus wheel on one step; reaching 100 lights the special. Returns
+    /// whether the wheel moved.
     fn advance_bonus(&mut self) -> bool {
         let advanced = self.bonus_step < 9;
         if advanced {
@@ -431,8 +483,9 @@ impl Machine {
         advanced
     }
 
-    /// Assumed rule: the "Scores Bonus" gate scores the lit wheel value, plus
-    /// a replay (once) when the special is lit.
+    /// Assumed rule: a ball through a trapdoor in the "Scores Bonus" box
+    /// scores the lit wheel value, plus a replay (once) when the special is
+    /// lit.
     fn collect_bonus(&mut self) {
         self.sound.request(Sound::BonusCollect);
         self.add_score(self.bonus());
@@ -547,6 +600,14 @@ impl Machine {
                 for pop in lamp::POP_BUMPERS {
                     self.lamps.set(pop, LampMode::On);
                 }
+                // Assumed until we know what lights them (#22, #25): the top
+                // rubbers' "advance bonus" lamps are lit, like the pop bumper
+                // caps, so they and the lower pop bumpers advance the wheel.
+                // Nothing lights the "30 points" lamps yet.
+                self.lamps.set(lamp::TOP_BUMPER, LampMode::On);
+                for advance in lamp::TOP_ADVANCE_BONUS {
+                    self.lamps.set(advance, LampMode::On);
+                }
             }
             Phase::Tilted => {
                 self.bells.clear();
@@ -554,6 +615,8 @@ impl Machine {
                 // the ball can still be served once this one drains.
                 self.coils.set_enabled(false);
                 self.coils.set_enabled(true);
+                // That dropped the flaps; turn their lamps off to match.
+                self.close_trapdoors();
                 self.lamps.set(lamp::TILT, LampMode::On);
                 self.sound.request(Sound::Tilt);
             }
@@ -605,6 +668,12 @@ mod tests {
         fn tap(&mut self, id: SwitchId) {
             self.set(id, true);
             self.set(id, false);
+        }
+
+        /// Opens trapdoor `n` and drops a ball through it.
+        fn drop_through(&mut self, n: usize) {
+            self.machine.set_trapdoor(n, true);
+            self.tap(sw::TRAPDOORS[n]);
         }
 
         fn coil_on(&self, id: CoilId) -> bool {
@@ -674,18 +743,118 @@ mod tests {
     }
 
     #[test]
-    fn lanes_advance_the_bonus_wheel_and_the_gate_collects_it() {
+    fn rubbers_and_lower_pops_advance_the_wheel_and_a_trapdoor_collects_it() {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
         assert_eq!(sim.machine.bonus(), 10);
 
-        sim.tap(sw::SIDE_LANES[0]);
-        sim.tap(sw::TOP_LANES[1]);
+        sim.tap(sw::TOP_REBOUNDS[1]);
+        sim.tap(sw::POP_BUMPERS[3]);
         assert_eq!(sim.machine.bonus(), 30);
-        assert_eq!(sim.machine.score(), 20);
+        assert_eq!(sim.machine.score(), 2);
 
-        sim.tap(sw::BONUS_GATE);
-        assert_eq!(sim.machine.score(), 50);
+        sim.drop_through(0);
+        assert_eq!(sim.machine.score(), 32);
+    }
+
+    #[test]
+    fn lanes_and_upper_pops_score_without_advancing_the_wheel() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::TOP_LANES[0]);
+        sim.tap(sw::SIDE_LANES[1]);
+        sim.tap(sw::POP_BUMPERS[1]);
+        assert_eq!(sim.machine.score(), 21);
+        assert_eq!(sim.machine.bonus(), 10);
+    }
+
+    #[test]
+    fn only_a_lit_advance_bonus_lamp_moves_the_wheel() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.machine.lamps.set(lamp::POP_BUMPERS[4], LampMode::Off);
+        sim.machine
+            .lamps
+            .set(lamp::TOP_ADVANCE_BONUS[0], LampMode::Off);
+        // The unlit lower-right pop bumper and left top rubber don't advance it.
+        sim.tap(sw::POP_BUMPERS[4]);
+        sim.tap(sw::TOP_REBOUNDS[0]);
+        assert_eq!(sim.machine.bonus(), 10);
+        // The lit right top rubber still does.
+        sim.tap(sw::TOP_REBOUNDS[1]);
+        assert_eq!(sim.machine.bonus(), 20);
+    }
+
+    #[test]
+    fn a_lane_scores_thirty_when_its_lamp_is_lit() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.machine.lamps.set(lamp::THIRTY_POINTS[3], LampMode::On);
+        sim.tap(sw::SIDE_LANES[2]);
+        assert_eq!(sim.machine.score(), 10);
+        sim.tap(sw::SIDE_LANES[3]);
+        assert_eq!(sim.machine.score(), 40);
+    }
+
+    #[test]
+    fn the_top_bumper_scores_ten() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::TOP_BUMPER);
+        assert!(sim.coil_on(coil::TOP_BUMPER));
+        assert_eq!(sim.machine.score(), 10);
+    }
+
+    #[test]
+    fn the_side_kickers_kick_and_score() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::LEFT_SIDE_KICKER);
+        assert!(sim.coil_on(coil::LEFT_SIDE_KICKER));
+        sim.tap(sw::RIGHT_SIDE_KICKER);
+        assert!(sim.coil_on(coil::RIGHT_SIDE_KICKER));
+        assert_eq!(sim.machine.score(), 2);
+    }
+
+    #[test]
+    fn the_jack_in_the_box_kickers_kick_and_score() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::LEFT_TOP_KICKER);
+        assert!(sim.coil_on(coil::LEFT_TOP_KICKER));
+        sim.tap(sw::RIGHT_TOP_KICKER);
+        assert!(sim.coil_on(coil::RIGHT_TOP_KICKER));
+        assert_eq!(sim.machine.score(), 2);
+    }
+
+    #[test]
+    fn a_tilt_turns_off_the_trapdoor_lamps_with_the_flaps() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.machine.set_trapdoor(1, true);
+        sim.tap(sw::TILT);
+        assert!(!sim.coil_on(coil::TRAPDOOR_FLAPS[1]));
+        assert_eq!(sim.last.lamps & (1 << lamp::TRAPDOORS[1].index()), 0);
+    }
+
+    #[test]
+    fn a_closed_trapdoor_scores_nothing() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::TRAPDOORS[0]);
+        assert_eq!(sim.machine.score(), 0);
+    }
+
+    #[test]
+    fn a_trapdoor_lamp_is_lit_while_its_flap_is_open() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        let lit = |sim: &Sim, n: usize| sim.last.lamps & (1 << lamp::TRAPDOORS[n].index()) != 0;
+        sim.machine.set_trapdoor(2, true);
+        sim.run(1);
+        assert!(lit(&sim, 2) && !lit(&sim, 0));
+        sim.tap(sw::TRAPDOORS[2]);
+        assert!(!lit(&sim, 2));
     }
 
     #[test]
@@ -693,13 +862,13 @@ mod tests {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
         for _ in 0..12 {
-            sim.tap(sw::SIDE_LANES[2]);
+            sim.tap(sw::TOP_REBOUNDS[0]);
         }
         assert_eq!(sim.machine.bonus(), 100);
-        sim.tap(sw::BONUS_GATE);
-        sim.tap(sw::BONUS_GATE);
-        // 120 lane points + 2 × 100 bonus = 320: no score replay yet.
-        assert_eq!(sim.machine.score(), 320);
+        sim.drop_through(0);
+        sim.drop_through(1);
+        // 12 rubber points + 2 × 100 bonus = 212: no score replay yet.
+        assert_eq!(sim.machine.score(), 212);
         assert_eq!(sim.machine.replays(), 1);
     }
 
@@ -712,11 +881,15 @@ mod tests {
         }
         // 400 lane points crosses the first threshold.
         assert_eq!(sim.machine.replays(), 1);
-        for _ in 0..3 {
-            sim.tap(sw::BONUS_GATE);
+        for _ in 0..9 {
+            sim.tap(sw::TOP_REBOUNDS[0]);
         }
-        // + 3 × 100 = 700: crosses 600 and 700.
-        assert_eq!(sim.machine.score(), 700);
+        assert_eq!(sim.machine.bonus(), 100);
+        for n in 0..3 {
+            sim.drop_through(n);
+        }
+        // 409 + 3 × 100 = 709: crosses 600 and 700, plus the special's replay.
+        assert_eq!(sim.machine.score(), 709);
         assert_eq!(sim.machine.replays(), 4);
     }
 
@@ -924,14 +1097,18 @@ mod tests {
             sounds_during(&mut sim, |s| s.tap(sw::POP_BUMPERS[0])),
             [Sound::PopBumper]
         );
-        // A lane rings the wheel's climbing bell, not the lane bell as well.
         assert_eq!(
             sounds_during(&mut sim, |s| s.tap(sw::SIDE_LANES[0])),
+            [Sound::Lane]
+        );
+        // A rubber rings the wheel's climbing bell, not the lane bell as well.
+        assert_eq!(
+            sounds_during(&mut sim, |s| s.tap(sw::TOP_REBOUNDS[0])),
             [Sound::BonusAdvance(1)]
         );
         assert_eq!(
-            sounds_during(&mut sim, |s| s.tap(sw::BONUS_GATE)),
-            [Sound::BonusCollect]
+            sounds_during(&mut sim, |s| s.drop_through(1)),
+            [Sound::BonusCollect, Sound::Trapdoor]
         );
         assert_eq!(sounds_during(&mut sim, |s| s.tap(sw::TILT)), [Sound::Tilt]);
         assert_eq!(
@@ -945,10 +1122,10 @@ mod tests {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
         for _ in 0..9 {
-            sim.tap(sw::SIDE_LANES[0]);
+            sim.tap(sw::TOP_REBOUNDS[0]);
         }
         assert_eq!(
-            sounds_during(&mut sim, |s| s.tap(sw::SIDE_LANES[0])),
+            sounds_during(&mut sim, |s| s.tap(sw::TOP_REBOUNDS[0])),
             [Sound::Lane]
         );
     }

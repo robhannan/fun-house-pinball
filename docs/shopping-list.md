@@ -8,9 +8,9 @@ Everything needed to build the controller described in the
 
 | | Estimate |
 |---|---|
-| **Everything** | **£520–975** |
-| Without tools (if you already have them) | £455–825 |
-| Electronics only (sections 1–8, no pinball parts or tools) | £265–470 |
+| **Everything** | **£580–1,065** |
+| Without tools (if you already have them) | £510–915 |
+| Electronics only (sections 1–8, no pinball parts or tools) | £270–485 |
 
 These are rough **estimates in GBP, as of October 2026**, to help with budgeting.
 
@@ -80,8 +80,8 @@ the numbers.
 
 ## 3. Switch matrix
 
-The map has 21 matrix switches, 24 with the three trapdoors under the
-"Scores Bonus" gate, plus 5 direct switches.
+The map has 25 matrix switches, including the three trapdoors in the
+"Scores Bonus" box, plus 5 direct switches.
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
@@ -106,17 +106,17 @@ The map has 21 matrix switches, 24 with the three trapdoors under the
 
 ## 5. Coil drivers
 
-15 coil outputs are used: ball serve, 2 kickers, 5 pop bumpers, 2 × 2 flipper
-windings and 3 trapdoor flaps.
+20 coil outputs are used: ball serve, 6 kickers, 6 pop bumpers, 2 × 2 flipper
+windings and 3 trapdoor flaps, plus 3 for the optional bells.
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
-| 🛡️ IRL540N logic-level N-channel MOSFET | 20 | Must be **logic level** (the "L" in IRL). Rated 100 V, suitable for coil supplies up to about 50 V. | [Mouser](https://www.mouser.co.uk/c/?q=IRL540N) | 20–30 |
+| 🛡️ IRL540N logic-level N-channel MOSFET | 25 | Must be **logic level** (the "L" in IRL). Rated 100 V, suitable for coil supplies up to about 50 V. | [Mouser](https://www.mouser.co.uk/c/?q=IRL540N) | 25–38 |
 | 1N4004 diodes | 100 | Flyback diode, one per coil winding, unless the coil already has one | [AliExpress](https://www.aliexpress.com/w/wholesale-1n4004-diode.html) | 1–3 |
 | 2-pin 5.08 mm PCB screw terminals | 40 | Coil wires to the driver board | [AliExpress](https://www.aliexpress.com/w/wholesale-5.08mm-pcb-screw-terminal-2-pin.html) | 3–6 |
 | 220 Ω and 10 kΩ resistors | — | In the resistor kit from section 2 | — | — |
 
-**Section estimate: £24–39**
+**Section estimate: £29–47**
 
 **Easier alternative:** ready-made multi-channel MOSFET driver boards that take
 5 V logic inputs replace the MOSFETs, resistors and screw terminals above. Check
@@ -126,15 +126,15 @@ flyback diodes or allow them to be fitted. Expect roughly £5–15 per 8-channel
 
 ## 6. Lamp drivers and lamps
 
-30 lamp outputs are used, on chips 5–10: 19 on the playfield and 11 on the backboard.
+38 lamp outputs are used, on chips 5–10: 27 on the playfield and 11 on the backboard.
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
 | ULN2803A Darlington driver, DIP-18 | 8 | 6 used | [AliExpress](https://www.aliexpress.com/w/wholesale-uln2803a-dip18.html) | 3–6 |
 | DIP-18 IC sockets | 8 | | [AliExpress](https://www.aliexpress.com/w/wholesale-dip18-ic-socket.html) | 1–2 |
-| LED replacement bulbs, #44/#47 bayonet (BA9S), 6.3 V | 40 | Count the sockets on the playfield and backglass first. Warm white looks closest to the original incandescents. | [AliExpress](https://www.aliexpress.com/w/wholesale-ba9s-6.3v-led-pinball.html) | 10–20 |
+| LED replacement bulbs, #44/#47 bayonet (BA9S), 6.3 V | 50 | Count the sockets on the playfield and backglass first. Warm white looks closest to the original incandescents. | [AliExpress](https://www.aliexpress.com/w/wholesale-ba9s-6.3v-led-pinball.html) | 12–25 |
 
-**Section estimate: £14–28**
+**Section estimate: £16–33**
 
 ## 6b. Sound
 
@@ -206,12 +206,12 @@ of the old parts.
 
 | Item | Qty | Notes | Est. £ |
 |---|---|---|---|
-| Kicker coils | 2 | DC, at your coil voltage | 20–30 |
-| Pop bumper coils | 5 | DC, at your coil voltage | 50–75 |
+| Kicker coils | 6 | DC, at your coil voltage | 60–90 |
+| Pop bumper coils | 6 | DC, at your coil voltage | 60–90 |
 | Ball serve coil and mechanism | 1 | Only if replacing the manual ball lift | 25–60 |
 | Dual-wound flipper coils | 2 | DC, at your coil voltage; ask for the lug layout | 22–30 |
 | Trapdoor flap coils | 3 | **Continuous-duty**, DC, at your coil voltage | 30–60 |
 | *Optional:* bells with coils | 0–3 | Not needed now. For the authentic 1950s scoring sound later (wiring guide section 7e). | varies |
 | Flipper rebuild kits, rubber rings, pop bumper caps | As needed | | 40–100 |
 
-**Section estimate: £187–355**
+**Section estimate: £237–430**
