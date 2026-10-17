@@ -8,9 +8,9 @@ Everything needed to build the controller described in the
 
 | | Estimate |
 |---|---|
-| **Everything** | **£575–1,055** |
-| Without tools (if you already have them) | £505–905 |
-| Electronics only (sections 1–8, no pinball parts or tools) | £295–535 |
+| **Everything** | **£575–1,060** |
+| Without tools (if you already have them) | £505–910 |
+| Electronics only (sections 1–8, no pinball parts or tools) | £295–540 |
 
 These are rough **estimates in GBP, as of October 2026**, to help with budgeting.
 
@@ -161,7 +161,8 @@ The trapdoors are rebuilt with a hobby servo turning each flap; see the
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
 | MG90S metal-gear micro servo | 4 | One per flap, plus a spare. Metal gears survive a ball landing on the flap. | [AliExpress](https://www.aliexpress.com/w/wholesale-mg90s-servo.html) | 8–14 |
-| 5 V or 6 V, 3 A power supply | 1 | For the servos only; not the Arduino's 5 V | [AliExpress](https://www.aliexpress.com/w/wholesale-5v-3a-power-supply.html) | 5–9 |
+| 🛡️ 5 V 3 A DC adaptor, enclosed plug-in type | 1 | For the servos only; not the Arduino's 5 V. Choose an enclosed plug-in adaptor, **not** an open-frame supply with bare mains terminals, and have the electrician fit it with the others (wiring guide section 4). | [AliExpress](https://www.aliexpress.com/w/wholesale-5v-3a-power-adapter.html) | 5–9 |
+| Inline fuse holder and 3 A fuse | 1 | For the servo rail's + lead | [AliExpress](https://www.aliexpress.com/w/wholesale-inline-fuse-holder-5x20.html) | 1–3 |
 | 1000 µF 10 V electrolytic capacitor | 1 | Across the servo supply, near the servos | [AliExpress](https://www.aliexpress.com/w/wholesale-1000uf-10v-capacitor.html) | 1–2 |
 | Servo extension leads, 30–50 cm | 3 | From under the playfield to the Arduino | [AliExpress](https://www.aliexpress.com/w/wholesale-servo-extension-cable.html) | 2–4 |
 | Lever microswitches (KW11 type) | 5 | One in each trapdoor's chute, plus spares | [AliExpress](https://www.aliexpress.com/w/wholesale-kw11-micro-switch-lever.html) | 2–4 |
@@ -171,7 +172,7 @@ The trapdoors are rebuilt with a hobby servo turning each flap; see the
 Servo brackets and chutes can be 3D-printed in PETG (or by a printing service)
 or bent from sheet metal.
 
-**Section estimate: £26–48**
+**Section estimate: £27–51**
 
 ## 7. Power
 

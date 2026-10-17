@@ -95,23 +95,23 @@ The full list, with quantities and links, is in
 ## 4. Power layout
 
 ```
-            ┌───────────────────────────────┐
- Mains ───▶ │      Inlet, fuse, switch      │  ◀── have this checked by an electrician
-            └──┬─────────┬──────┬───────┬───┘
-               │         │      │       │
-        ┌──────▼───┐ ┌───▼────┐ ┌▼──────┐ ┌▼────────┐
-        │ Coil PSU │ │Lamp PSU│ │ 9 V   │ │ 5 V 2 A │
-        │ (DC)     │ │ (DC)   │ │Arduino│ │ sound   │
-        └─┬──────┬─┘ └─┬────┬─┘ └─┬───┬─┘ └─┬─────┬─┘
-        +V│  fuse│-  +V│fuse│-   +│   │-   +│fuse │-
-          ▼      │     ▼    │     ▼   │     ▼     │
-       coils     │   lamps  │  Arduino│  WAV      │
-                 │          │  barrel │  Trigger  │
-                 ▼          ▼  jack   ▼           ▼
-              ══════════ COMMON GROUND POINT ══════════
+            ┌──────────────────────────────────────────┐
+ Mains ───▶ │           Inlet, fuse, switch            │  ◀── have this checked by an electrician
+            └──┬─────────┬──────┬───────┬──────────┬───┘
+               │         │      │       │          │
+        ┌──────▼───┐ ┌───▼────┐ ┌▼──────┐ ┌▼────────┐ ┌▼────────┐
+        │ Coil PSU │ │Lamp PSU│ │ 9 V   │ │ 5 V 2 A │ │ 5 V 3 A │
+        │ (DC)     │ │ (DC)   │ │Arduino│ │ sound   │ │ servos  │
+        └─┬──────┬─┘ └─┬────┬─┘ └─┬───┬─┘ └─┬─────┬─┘ └─┬─────┬─┘
+        +V│  fuse│-  +V│fuse│-   +│   │-   +│fuse │-   +│fuse │-
+          ▼      │     ▼    │     ▼   │     ▼     │     ▼     │
+       coils     │   lamps  │  Arduino│  WAV      │  trapdoor │
+                 │          │  barrel │  Trigger  │  servos   │
+                 ▼          ▼  jack   ▼           ▼           ▼
+              ═══════════════ COMMON GROUND POINT ════════════════
 ```
 
-Every supply, the 5 V sound adaptor included, is fed from the machine's
+Every supply, the 5 V sound and servo adaptors included, is fed from the machine's
 **switched mains inlet**, so the power switch turns everything off at once.
 **Have the electrician fit all of them.** Don't splice an adaptor into the mains
 wiring yourself. A plug-in adaptor can go in an enclosed multi-socket that the
@@ -125,11 +125,14 @@ electrician wires to the inlet.
   - coil rail: a slow-blow fuse rated for the supply, e.g. 5 A
   - lamp rail: about 25% above total lamp current
   - sound rail (5 V): 2 A
+  - servo rail (5 V): 3 A
 - **Arduino power:** use the barrel jack (7–12 V; 9 V is ideal). Its 5 V pin can
   power the 74HC595 chips, which draw very little, but **nothing else**.
 - **Sound power:** the WAV Trigger has its own 5 V supply (section 7d). Only
   that supply's negative (–) goes to the common ground point; never join its
   +5 V to the Arduino's 5V pin.
+- **Servo power:** the trapdoor servos have their own 5 V supply too (section
+  7f), wired the same way: fused +, and only its – to the common ground.
 - **Coil power off switch:** fit an easy-to-reach switch or interlock that cuts
   the coil supply only. You can then test switches and lamps with coils dead.
 
@@ -497,8 +500,10 @@ adjust, and its closed and open angles are set from test mode.
 | − (brown or black) | The servo supply's **−**, which also joins the common ground point |
 
 - **Their own supply:** a servo can draw an amp or more as it moves, which
-  would brown out the Arduino. Use a separate 5–6 V, 3 A supply, and fit a
-  1000 µF capacitor across its terminals near the servos (stripe to −).
+  would brown out the Arduino. Use a separate **enclosed plug-in** 5 V, 3 A
+  adaptor, fed from the switched mains inlet and fitted by the electrician
+  like the others (section 4), with a 3 A fuse in its + lead. Fit a 1000 µF
+  capacitor across its output near the servos (stripe to −).
 - **Common ground:** join the servo supply's − to the common ground point, or
   the signal has nothing to be measured against.
 - **Signals:** Timer 3 generates all three in hardware (50 Hz, 0.5–2.5 ms), so

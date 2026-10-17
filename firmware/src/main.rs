@@ -164,9 +164,23 @@ fn main() -> ! {
         // coil power off, and well inside the watchdog's 64 ms.
         let trim = machine.flap_trim();
         if trim != saved_trim && machine.phase() == Phase::Attract {
-            let _ = eeprom.write(FLAP_TRIM_ADDRESS, &trim.to_bytes());
+            let bytes = trim.to_bytes();
+            for (offset, &byte) in (FLAP_TRIM_ADDRESS..).zip(&bytes) {
+                if eeprom.read_byte(offset) != byte {
+                    // The EEPROM's two-step write must not be interrupted, or
+                    // the byte is silently dropped. This holds off the 1 ms
+                    // clock for one byte's write, which only delays a tick.
+                    avr_device::interrupt::free(|_| eeprom.write_byte(offset, byte));
+                }
+            }
+            let mut check = [0; FlapTrim::BYTES];
+            let _ = eeprom.read(FLAP_TRIM_ADDRESS, &mut check);
             saved_trim = trim;
-            console.send_line(b"flap angles saved");
+            console.send_line(if check == bytes {
+                b"flap angles saved"
+            } else {
+                b"flap angles NOT saved: EEPROM write failed"
+            });
         }
 
         if sound_ready {
