@@ -82,6 +82,9 @@ steps. The essentials:
      versus only in tests, and any coil timing changes.
    - Delete the template's comments.
    - Pass the body with `gh pr create --body-file`.
+   - If `docs/playfield.svg` or `docs/backboard.svg` changed, show the drawing
+     in the Summary, linked from raw.githubusercontent.com at the PR's latest
+     commit (see the skill).
 5. **Replace the template's placeholder GIF with one relevant to the change.**
    Check that its link loads as a GIF and, if possible, view it before using it.
    If none can be verified, keep the pinball placeholder.
