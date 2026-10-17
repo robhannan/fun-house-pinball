@@ -299,6 +299,9 @@ impl Machine {
 
     fn on_switch(&mut self, event: SwitchEvent, now: Instant) {
         match (self.phase, event) {
+            // Test mode handles every switch itself, the slam tilt included.
+            (Phase::Test(stage), event) => self.on_test_switch(stage, event, now),
+
             (_, SwitchEvent::Closed(sw::SLAM_TILT)) => {
                 let was_playing = self.phase != Phase::Attract;
                 self.enter(Phase::Attract);
@@ -307,7 +310,6 @@ impl Machine {
                 }
             }
 
-            (Phase::Test(stage), event) => self.on_test_switch(stage, event, now),
             (Phase::Attract, SwitchEvent::Closed(sw::TEST_BUTTON)) => {
                 self.stop_show();
                 self.enter(Phase::Test(TestStage::Switches));
@@ -799,6 +801,7 @@ mod tests {
         now: u32,
         last: Outputs,
         sounds: Vec<Sound>,
+        stops: Vec<Sound>,
         reports: Vec<TestReport>,
     }
 
@@ -810,6 +813,7 @@ mod tests {
                 now: 0,
                 last: Outputs::default(),
                 sounds: Vec::new(),
+                stops: Vec::new(),
                 reports: Vec::new(),
             }
         }
@@ -821,6 +825,7 @@ mod tests {
                     .machine
                     .tick(Instant::from_millis(self.now), &self.switches);
                 self.sounds.extend(self.last.sounds.iter());
+                self.stops.extend(self.last.stop_sounds.iter());
                 self.reports.extend(self.last.reports.iter());
             }
         }
@@ -1022,7 +1027,12 @@ mod tests {
         sim.tap(sw::TEST_BUTTON);
         sim.tap(sw::TEST_BUTTON);
         sim.tap(sw::START_BUTTON);
-        sim.tap(sw::SLAM_TILT);
+        let mut reports = Vec::new();
+        let sounds = sounds_during(&mut sim, |s| {
+            reports = reports_during(s, |s| s.tap(sw::SLAM_TILT));
+        });
+        assert_eq!(reports, [TestReport::Done]);
+        assert!(!sounds.contains(&Sound::GameOver), "{sounds:?}");
         assert_eq!(sim.machine.phase(), Phase::Attract);
         assert_eq!(sim.last.coils, 0);
     }
@@ -1031,15 +1041,15 @@ mod tests {
     fn test_mode_stops_the_attract_show() {
         let mut sim = Sim::new();
         sim.run(MUSIC_DELAY_MS + 100);
-        let stops = {
-            sim.tap(sw::TEST_BUTTON);
-            sim.last.lamps
-        };
-        assert_eq!(stops, 0, "only test mode's own lamps");
+        assert!(sim.sounds.contains(&Sound::AttractMusic));
+        sim.stops.clear();
+        sim.tap(sw::TEST_BUTTON);
+        assert_eq!(sim.stops, [Sound::AttractMusic]);
+        assert_eq!(sim.last.lamps, 0, "only test mode's own lamps");
+        // And it doesn't come back while testing.
+        sim.sounds.clear();
         sim.run(MUSIC_DELAY_MS * 2);
-        assert!(
-            !sim.sounds.contains(&Sound::AttractMusic) || sim.machine.phase() != Phase::Attract
-        );
+        assert!(!sim.sounds.contains(&Sound::AttractMusic));
         assert!(matches!(sim.machine.phase(), Phase::Test(_)));
     }
 

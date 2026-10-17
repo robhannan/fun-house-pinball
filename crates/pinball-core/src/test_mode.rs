@@ -9,7 +9,8 @@
 //!    its normal pulse length (holding coils get [`HOLD_TEST_MS`]). Only the
 //!    chosen coil can fire, and only when Start is pressed.
 //! 3. **Lamps:** the flipper buttons step through the lamps one at a time, and
-//!    Start turns every lamp on or off together. Coil power is off.
+//!    Start switches between every lamp at once and one at a time again.
+//!    Coil power is off.
 //!
 //! Each step produces a [`TestReport`]. The firmware prints it as a line of
 //! text on the USB serial port ([`describe`]), and the simulator shows it.
@@ -68,7 +69,7 @@ pub enum TestReport {
     },
     /// A lamp was chosen and is lit on its own.
     Lamp(LampId),
-    /// Every lamp was turned on or off.
+    /// Every lamp was turned on (`true`), or back to one at a time.
     AllLamps(bool),
     /// Left test mode.
     Done,
@@ -295,7 +296,11 @@ pub fn describe(report: TestReport) -> ReportText {
             text.push_part(part_with_lamp(id));
         }
         TestReport::AllLamps(on) => {
-            text.push(if on { "all lamps on" } else { "all lamps off" });
+            text.push(if on {
+                "all lamps on"
+            } else {
+                "back to one lamp at a time"
+            });
         }
         TestReport::Done => text.push("TEST done"),
     }
