@@ -39,6 +39,8 @@
     }
     .machine { flex: 0 1 600px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
     .board svg { width: 100%; height: auto; display: block; border-radius: 8px; }
+    /* The playfield is tall: fit it, title to key, in the window's height. */
+    #playfield svg { width: min(100%, calc((100vh - 32px) / 2)); margin: 0 auto; }
     aside { flex: 0 1 320px; display: flex; flex-direction: column; gap: 16px; }
     section {
       background: var(--panel);
