@@ -1,6 +1,6 @@
 //! The attract-mode light show: the playfield and backboard lamps dance to the
-//! beats of the attract music ([`crate::music_beats`]). The music is a seamless
-//! loop; at the end of each loop the show starts its beats again, exactly
+//! beats of the attract music ([`crate::music_beats`]). When the music ends it
+//! repeats from the top: the show starts its beats again, exactly
 //! [`ATTRACT_MUSIC_MS`] after the last start, and tells the caller to restart
 //! the music in the same tick, so the two never drift apart.
 //!
@@ -247,11 +247,18 @@ mod tests {
     fn the_lamps_change_on_the_beat() {
         let mut lamps = Lamps::new();
         let mut show = AttractShow::new();
-        // The loop starts on a beat.
-        assert_eq!(ATTRACT_MUSIC_BEATS_MS[0], 0);
         show.start(at(0));
-        show.tick(at(0), &mut lamps);
-        let on_first = lit(&lamps, at(0));
+        let first = ATTRACT_MUSIC_BEATS_MS[0];
+        if first > 0 {
+            show.tick(at(first - 1), &mut lamps);
+            assert_eq!(
+                lit(&lamps, at(first - 1)),
+                0,
+                "nothing before the first beat"
+            );
+        }
+        show.tick(at(first), &mut lamps);
+        let on_first = lit(&lamps, at(first));
         assert_ne!(on_first, 0);
         let second = ATTRACT_MUSIC_BEATS_MS[1];
         show.tick(at(second - 1), &mut lamps);

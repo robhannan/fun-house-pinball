@@ -36,7 +36,7 @@ pub const REPLAY_SCORES: [u32; 5] = [400, 600, 700, 800, 900];
 const FLIPPER_POWER_MS: u16 = 40;
 
 /// How long attract mode waits before the music starts (after the game-over
-/// sound). It then loops for as long as the machine is in attract mode.
+/// sound). It then repeats for as long as the machine is in attract mode.
 pub const MUSIC_DELAY_MS: u32 = 5_000;
 
 /// Operator settings, set inside the cabinet on the original.
@@ -456,7 +456,8 @@ impl Machine {
         self.coils.hold(hold, pressed);
     }
 
-    /// Loops the attract music, and runs the light show to it.
+    /// Plays the attract music, repeating it from the top, and runs the light
+    /// show to it.
     fn attract_music(&mut self, now: Instant) {
         if self.phase == Phase::Attract && self.settings.attract_music {
             let at = *self.music_at.get_or_insert(now.plus(MUSIC_DELAY_MS));
@@ -466,7 +467,7 @@ impl Machine {
             }
         }
         if self.show.tick(now, &mut self.lamps) {
-            // The loop ended: start the music again, in step with the show.
+            // The music ended: start it again, in step with the show.
             self.sound.request(Sound::AttractMusic);
         }
     }
@@ -1093,10 +1094,10 @@ mod tests {
     }
 
     #[test]
-    fn attract_music_loops_seamlessly() {
+    fn attract_music_repeats_from_the_top() {
         let mut sim = Sim::new();
         sim.run(MUSIC_DELAY_MS + 10);
-        // Exactly one restart per loop, on the loop boundary.
+        // Exactly one restart each time the music ends, right on time.
         let again = sounds_during(&mut sim, |s| s.run(ATTRACT_MUSIC_MS));
         assert_eq!(again, [Sound::AttractMusic]);
         let twice = sounds_during(&mut sim, |s| s.run(2 * ATTRACT_MUSIC_MS));

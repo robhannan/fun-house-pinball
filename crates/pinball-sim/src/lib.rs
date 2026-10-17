@@ -552,10 +552,10 @@ mod tests {
             else {
                 continue;
             };
-            assert_eq!(
-                sample,
-                format!("samples/{:03}.wav", sound.track()),
-                "{sound:?}"
+            let stem = format!("samples/{:03}.", sound.track());
+            assert!(
+                sample == format!("{stem}wav") || sample == format!("{stem}mp3"),
+                "{sound:?}: {sample} should be {stem}wav or {stem}mp3"
             );
             assert!(
                 web.join(sample).is_file(),

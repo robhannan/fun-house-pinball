@@ -37,6 +37,8 @@ jobs:
       - run: cargo test --locked
       - name: Build the browser simulator
         run: pnpm run build:sim
+      - name: Install ffmpeg (decodes the MP3 attract music)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - name: Every sound renders cleanly
         run: pnpm run check:sounds
 

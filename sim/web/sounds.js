@@ -416,7 +416,7 @@ export const SOUNDS = {
   12: { name: "Drain", durationMs: 1450, sample: "samples/012.wav", render: drain },
   13: { name: "Trapdoor", durationMs: 750, sample: "samples/013.wav", render: trapdoor },
   14: { name: "Game over", durationMs: 4300, sample: "samples/014.wav", render: gameOver },
-  30: { name: "Attract music", durationMs: 30090, sample: "samples/030.wav", render: gameStart, recordingOnly: true },
+  30: { name: "Attract music", durationMs: 155220, sample: "samples/030.mp3", render: gameStart, recordingOnly: true },
   21: { name: "Bonus advance 20", durationMs: 550, sample: "samples/021.wav", render: bonusAdvance(1) },
   22: { name: "Bonus advance 30", durationMs: 550, sample: "samples/022.wav", render: bonusAdvance(2) },
   23: { name: "Bonus advance 40", durationMs: 550, sample: "samples/023.wav", render: bonusAdvance(3) },

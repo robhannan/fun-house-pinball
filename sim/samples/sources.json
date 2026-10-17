@@ -426,19 +426,15 @@
         {
           "source": "marine-band-gladiators",
           "start": 0,
-          "length": 75
+          "length": 156
         }
       ],
       "music": {
-        "loopBeats": [
-          64,
-          80,
-          96,
-          112,
-          128
-        ],
-        "crossfade": 0.05
+        "full": true
       },
+      "format": "mp3",
+      "fadeIn": 0.02,
+      "fadeOut": 0.3,
       "drive": 1.3,
       "level": 0.7
     }
