@@ -14,6 +14,7 @@ use <serve_run_segment.scad>
 use <outhole_funnel.scad>
 use <ball_lift.scad>
 use <ball_lift_cup.scad>
+use <ball_lift_exit.scad>
 
 // Lays a flat part (drawn along +x, thickness in +z) in the y-z plane at
 // across-table position `x`: from point `from` towards `to` ([y, z] points).
@@ -40,6 +41,13 @@ module at_trapdoors() {
     translate([trapdoor_x, trapdoor_y, 0]) children();
 }
 
+// Everything that screws to the playfield must land on it.
+assert_on_playfield("trapdoor frame", [trapdoor_x, trapdoor_y],
+    [trapdoor_spacing + outer_width / 2 + flange_width, outer_length / 2 + flange_width]);
+assert_on_playfield("outhole funnel", [outhole_x, outhole_y], [1, 1] * (funnel_size / 2 + wall + 12));
+assert_on_playfield("ball lift", [lift_hole_x, lift_hole_y], [1, 1] * ((lift_tube_inner + 2 * wall) / 2 + 12));
+assert_on_playfield("shooter lane", [lane_x + lane_width / 2, lift_hole_y], [lane_width / 2, lane_opening_width / 2]);
+
 // Everything that doesn't move, apart from the servos.
 module fixed_parts() {
     at_trapdoors() {
@@ -51,6 +59,7 @@ module fixed_parts() {
     outhole_funnel();
     for (k = [1 : serve_segments]) serve_segment(segment_ends(serve_start, serve_end, serve_segments, k));
     ball_lift();
+    ball_lift_exit();
 }
 
 module servos() {

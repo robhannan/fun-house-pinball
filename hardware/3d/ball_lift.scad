@@ -1,7 +1,8 @@
-// Ball lift: screws under the hole in the shooter lane. The serve run brings
-// every ball here, where it waits on the ball-serve coil's plunger and holds the
-// outhole switch closed. When the game serves a ball, the coil kicks it up the
-// tube into the shooter lane.
+// Ball lift: screws under the hole beside the shooter lane. The serve run
+// brings every ball here, where it waits on the ball-serve coil's plunger and
+// holds the outhole switch closed. When the game serves a ball, the coil kicks
+// it up the tube into the ball-lift exit on top of the playfield, which turns
+// it into the shooter lane.
 //
 // The coil assembly bolts under the base through the two slots (drill them to
 // suit if your coil's screws are elsewhere). A lever microswitch screws to the
@@ -25,7 +26,7 @@ module ball_lift() {
         union() {
             // The tube, up to the playfield.
             translate([lift_hole_x, lift_hole_y, base]) cylinder(d = outer, h = -base);
-            // The flange round the hole in the shooter lane.
+            // The flange round the hole.
             translate([lift_hole_x - plate / 2, lift_hole_y - plate / 2, -3]) cube([plate, plate, 3]);
             // The base the coil bolts to.
             translate([lift_hole_x - lift_coil_screw_spacing / 2 - 8, lift_hole_y - 10, base]) cube([lift_coil_screw_spacing + 16, 20, 4]);

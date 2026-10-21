@@ -260,10 +260,51 @@ serve_segments = ceil(serve_plan / (max_print_length - socket_length - 10));
 serve_end = [serve_plan_end[0], serve_plan_end[1], serve_start[2] - serve_plan * tan(serve_slope)];
 serve_last = segment_ends(serve_start, serve_end, serve_segments, serve_segments)[1];
 
-// The ball lift: the ball waits at the bottom of a tube under the shooter
-// lane, on the plunger of the ball-serve coil.
+// The ball lift: the ball waits at the bottom of a tube under the hole beside
+// the shooter lane, on the plunger of the ball-serve coil.
 lift_inlet = serve_last - [0, 0, joint_step];
 // Its inlet runs on at the serve run's slope to the tube.
 lift_inlet_length = lift_size / 2 + wall - (ball_diameter + 3) / 2 + 2;
 lift_centre = [lift_hole_x, lift_hole_y, lift_inlet[2] - lift_inlet_length * tan(serve_slope)];
 lift_tube_inner = ball_diameter + 3;
+assert(lift_hole_diameter >= lift_tube_inner,
+    "The ball lift's hole is too small for the ball to come up through it: check lift_hole_diameter in measurements.scad.");
+
+// --- The ball lift's exit (playfield coordinates, on top of the playfield) ---
+//
+// Kicked up the tube, the ball comes up through the hole into a hood. The
+// hood's roof rises towards the lane, so it turns the ball that way, and the
+// ball rolls down a ramp, through the opening in the lane's wall, into the
+// lane. The ramp only slopes down into the lane, so a ball rolling back down
+// the lane can't climb into it.
+lane_x = lane_wall_x + lane_wall_thickness;   // the lane's side
+// The ramp: from the hole's edge (ramp_lip above the playfield) down to the
+// lane's side, where it ends ramp_end thick, a small step down into the lane.
+ramp_lip = 4;
+ramp_end = 0.8;
+ramp_start = lift_hole_x + lift_hole_diameter / 2;
+ramp_width = lane_opening_width - 2 * fit_clearance;
+// The top of the ramp's floor, above the playfield, at `x`.
+function ramp_floor(x) =
+    x <= ramp_start ? ramp_lip
+    : ramp_end + (ramp_lip - ramp_end) * (lane_x - x) / (lane_x - ramp_start);
+// The hood: from behind the hole to the lane's wall, its roof rising towards
+// the lane. Inside heights above the playfield, at the back and at the wall.
+hood_back = lift_hole_x - lift_hole_diameter / 2 - wall;
+hood_front = lane_wall_x - fit_clearance;
+hood_half = max(lift_hole_diameter, ramp_width) / 2;
+hood_low = ramp_lip + ball_diameter + 3;
+hood_high = hood_low + 8;
+assert(hood_front - ramp_start >= 2,
+    "The ball lift's hole is too close to the shooter lane's wall: check lift_hole_x and lane_wall_x in measurements.scad.");
+assert(lane_opening_width >= ball_diameter + 4 && lane_opening_height >= ball_diameter + ramp_lip + 1,
+    "The opening in the shooter lane's wall is too small for the ball: check lane_opening_width and lane_opening_height in measurements.scad.");
+assert(hood_high + wall <= lift_headroom,
+    "There isn't room for the ball lift's hood above the playfield: check lift_headroom in measurements.scad.");
+
+// Every part that screws to the playfield must land on it.
+module assert_on_playfield(name, centre, half) {
+    assert(centre[0] - half[0] >= 0 && centre[0] + half[0] <= playfield_width
+        && centre[1] - half[1] >= 0 && centre[1] + half[1] <= playfield_length,
+        str("The ", name, " would hang off the edge of the playfield: check its position and playfield_width/playfield_length in measurements.scad."));
+}

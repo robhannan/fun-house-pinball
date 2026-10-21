@@ -1,6 +1,7 @@
 // Check: a ball can roll the whole way, from each open trapdoor and from the
-// outhole to the ball lift and up into the shooter lane, without touching
-// anything. This must render NOTHING (OpenSCAD then says "Current top level
+// outhole to the ball lift, up through its exit and down the shooter lane to
+// the plunger, without touching anything; and a ball rolling back down the
+// lane rolls past the exit to the plunger. This must render NOTHING (OpenSCAD then says "Current top level
 // object is empty"); anything that appears is a collision. Run by
 // `pnpm run check:3d`.
 
@@ -81,10 +82,24 @@ module serve_run() {
     }
 }
 
-// Into the ball lift, and up the tube into the shooter lane.
+// Into the ball lift, up the tube into its exit, and down the ramp into the
+// shooter lane.
 module lift() {
+    t = playfield_thickness;
     along([serve_last + serve_dir * lift - [0, 0, joint_step], [lift_hole_x, lift_hole_y, lift_centre[2]]]);
-    sweep([lift_hole_x, lift_hole_y, lift_centre[2] + lift + 1], [lift_hole_x, lift_hole_y, playfield_thickness + lift]);
+    top = [lift_hole_x, lift_hole_y, t + ramp_lip + lift + 1];
+    sweep([lift_hole_x, lift_hole_y, lift_centre[2] + lift + 1], top);
+    sweep(top, [ramp_start, lift_hole_y, t + ramp_lip + lift + 0.5]);
+    along([[ramp_start, lift_hole_y, t + ramp_lip], [lane_x, lift_hole_y, t + ramp_end], [lane_x + lane_width / 2, lift_hole_y, t]]);
+}
+
+// Down the shooter lane to the plunger: the served ball, and a ball rolling
+// back from further up the lane.
+module lane() {
+    t = playfield_thickness;
+    middle = lane_x + lane_width / 2;
+    along([[middle, lift_hole_y, t], [middle, plunger_tip_y + lift, t]]);
+    along([[middle, lift_hole_y + 300, t], [middle, plunger_tip_y + lift, t]]);
 }
 
 intersection() {
@@ -95,6 +110,7 @@ intersection() {
         if (stretch == "all" || stretch == "outhole") outhole();
         if (stretch == "all" || stretch == "serve_run") serve_run();
         if (stretch == "all" || stretch == "lift") lift();
+        if (stretch == "all" || stretch == "lane") lane();
     }
     union() {
         fixed_parts();

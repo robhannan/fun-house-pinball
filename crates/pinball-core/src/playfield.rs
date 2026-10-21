@@ -52,7 +52,7 @@ pub mod sw {
 
     // Ball handling.
     /// Outhole: every ball ends up waiting here, drained or through a
-    /// trapdoor. Physically it's on the printed ball lift, under the shooter
+    /// trapdoor. Physically it's on the printed ball lift, beside the shooter
     /// lane (see `docs/3d-printing.md`).
     pub const OUTHOLE: SwitchId = SwitchId::matrix(0, 0);
     /// Shooter lane (ball ready to plunge).

@@ -1,17 +1,18 @@
 # 3D-printed ball return
 
 The ball return is 3D-printed: everything under the playfield that gets a ball
-from the three trapdoors and the outhole back up into the shooter lane. The
-models are in [`hardware/3d/`](../hardware/3d/). You don't need any
-3D-modelling experience: they're written as code, with every measurement of
-your table in one file. Making them fit means measuring the table and typing
-the numbers in.
+from the three trapdoors and the outhole back up into the shooter lane, and the
+small hood on top that turns it into the lane. The models are in
+[`hardware/3d/`](../hardware/3d/). You don't need any 3D-modelling experience:
+they're written as code, with every measurement of your table in one file.
+Making them fit means measuring the table and typing the numbers in.
 
 ![the whole ball return under the playfield: the trapdoors at the back, the return run down to the outhole funnel, and the serve run across to the ball lift](images/ball-return.png)
 
-*The whole return, seen from below the playfield, with the placeholder
-measurements: the trapdoors (top right), the return run down the table, the
-outhole funnel (left), and the serve run across to the ball lift.*
+*The whole return, seen from above with the playfield hidden, with the
+placeholder measurements: the trapdoors (top right), the return run down the
+table, the outhole funnel (left), and the serve run across to the ball lift,
+with its exit on top.*
 
 ## How it works
 
@@ -26,15 +27,23 @@ outhole funnel (left), and the serve run across to the ball lift.*
    playfield: the playfield's own slope keeps the ball rolling.
 4. **The outhole funnel.** Drained balls drop into it from above, trapdoor
    balls arrive from the return run, and both roll out along the serve run.
-5. **The ball lift.** The serve run brings every ball to a tube under a hole in
-   the shooter lane. The ball waits on the ball-serve coil's plunger, holding
-   the outhole switch closed. When the game serves a ball, the coil kicks it up
-   the tube into the shooter lane.
+5. **The ball lift.** The serve run brings every ball to a tube under a hole
+   beside the shooter lane. The ball waits on the ball-serve coil's plunger,
+   holding the outhole switch closed. When the game serves a ball, the coil
+   kicks it up the tube.
+6. **The ball-lift exit.** On top of the playfield, over the hole (hidden under
+   the apron), the ball hits a hood whose roof slopes up towards the lane. That
+   turns it sideways, and it rolls down a short ramp, through the opening in the
+   shooter lane's wall, and down the lane to the plunger. The ramp only slopes
+   down into the lane, so a ball that rolls back down the lane after a weak
+   plunge goes past the opening to the plunger again.
 
-![the ball lift: a tube rising to a flange under the shooter lane, with the serve run arriving at its base](images/ball-lift.png)
+![the ball lift cut through the middle: the serve run arrives at the bottom of the tube, where the cup waits on the coil's plunger; the tube rises through the playfield into the hood on top, beside the shooter lane's wall](images/ball-lift.png)
 
-*The ball lift (right) under the shooter lane, with the serve run arriving at
-its base.*
+*The ball lift, cut through the middle: the serve run (left) arrives at the
+bottom of the tube, where the cup (red) waits on the coil's plunger. The tube
+rises through the playfield into the hood, beside the shooter lane's wall
+(right).*
 
 | Closed | Open |
 |---|---|
@@ -57,7 +66,8 @@ crank about 80 degrees and the flap swings down to hang straight.*
 | Return run | `return_run_segment.scad` | one of each segment | The channel down the table to the outhole, in segments that fit a printer. Each hangs from the playfield on two posts. |
 | Outhole funnel | `outhole_funnel.scad` | 1 | Catches drained balls and the return run, and feeds the serve run. |
 | Serve run | `serve_run_segment.scad` | one of each segment | The channel across to the ball lift, sloping down. |
-| Ball lift | `ball_lift.scad` | 1 | The tube up into the shooter lane, with mounts for the ball-serve coil and the outhole switch. |
+| Ball lift | `ball_lift.scad` | 1 | The tube up to the hole beside the shooter lane, with mounts for the ball-serve coil and the outhole switch. |
+| Ball-lift exit | `ball_lift_exit.scad` | 1 | Screws on top of the playfield over the hole, and turns the ball through the lane's wall into the shooter lane. |
 | Ball-lift cup | `ball_lift_cup.scad` | 1 | Pushes onto the coil's plunger and cradles the waiting ball. |
 
 `assembly.scad` shows everything in place; it isn't printed. The files in
@@ -86,16 +96,22 @@ measure, on the underside of the playfield:
   use the smallest.
 - **Where things are**, measured from the playfield's **bottom-left corner**
   (nearest the player's left hand): the centre of the middle trapdoor hole,
-  the centre of the outhole and its diameter, and the centre of the hole in the
-  shooter lane that the ball is lifted through, and its diameter.
+  the centre of the outhole and its diameter, and the centre of the hole beside
+  the shooter lane that the ball is lifted through, and its diameter.
+- **The shooter lane**, on top of the playfield: where its wall (the one with
+  the opening the ball rolls in through) is and how thick it is, the opening's
+  width and height, the lane's width, where the plunger's tip is at rest, and
+  how much room there is above the hole, under the apron. The model assumes the
+  opening is straight across from the hole: say if it isn't.
 - **The ball-serve coil**: its plunger's diameter, and the distance between its
   mounting screws.
 
 Also check what's already under the playfield along the route: the return run
 goes straight from the trapdoors to the outhole, and the serve run straight
-across to the shooter lane, about 50 mm and up to 100 mm below the playfield.
-Note anything in the way (coils, wiring, old brackets, the old outhole
-mechanism) and the depth to the cabinet floor.
+across to the shooter lane. `pnpm run export:3d` prints how far below the
+playfield the deepest part reaches (about 105 mm with the placeholders), and
+the ball-serve coil hangs below that. Note anything in the way (coils, wiring,
+old brackets, the old outhole mechanism) and the depth to the cabinet floor.
 
 Photos of the underside with a ruler in shot help a lot if the routes need
 changing.
@@ -117,14 +133,16 @@ a trapdoor hole being too short for the ball to fall past the open flap.
    round, scroll to zoom, and look for anything that would clash with what's
    under your playfield.
 2. Open **Window → Customizer** for the options: tick **open** to see the
-   trapdoors open, **section** to cut beside a trapdoor's drive, and
-   **show_playfield** to show the playfield.
+   trapdoors open, **section** to cut beside a trapdoor's drive,
+   **lift_section** to cut through the ball lift, and **show_playfield** to
+   show the playfield.
 3. Open each file in `hardware/3d/checks/` and press **F6**. Each must say
    **"Current top level object is empty"**:
    - `trapdoor_swing.scad`: as the trapdoors open, nothing they move hits
      anything else.
    - `ball_paths.scad`: a ball can roll the whole way, from each trapdoor and
-     the outhole to the shooter lane, without touching anything.
+     the outhole to the plunger in the shooter lane, without touching
+     anything, and a ball rolling back down the lane rolls past the exit.
    - `parts_overlap.scad`: no two parts overlap where they're fitted.
 
    If something appears instead, that's where the parts collide. Or, from the
@@ -160,8 +178,8 @@ Whichever you use, ask for:
 - **Material: PETG**, not PLA. It's tougher, and it won't soften in the warmth
   under a playfield; PLA starts to at about 55 °C.
 - **0.2 mm layers, 4 walls (perimeters), 30% infill.**
-- **Supports** for the collector, the outhole funnel and the ball lift. The
-  other parts print without.
+- **Supports** for the collector, the outhole funnel, the ball lift and its
+  exit. The other parts print without.
 
 Each part's file says which way up to print it.
 
@@ -183,12 +201,14 @@ Each part's file says which way up to print it.
 4. **Runs.** Fit the return run's segments in order from the collector, each
    socket over the end of the part before, and screw their posts to the
    playfield. Then the outhole funnel under the outhole, the serve run's
-   segments, and the ball lift under the shooter lane's hole.
+   segments, and the ball lift under the hole beside the shooter lane.
 5. **Ball lift.** Bolt the ball-serve coil under the lift's base, push the cup
    onto its plunger, and screw the outhole switch to the tab on the tube with
-   its lever through the slot.
+   its lever through the slot. On top of the playfield, screw the exit over the
+   hole with its ramp through the opening in the lane's wall.
 6. **Roll a ball through** by hand from each trapdoor and the outhole, and
-   watch it reach the lift.
+   watch it reach the lift. Then push the ball up the tube by hand (or pulse the
+   coil in test mode) and watch it roll into the shooter lane.
 
 If something doesn't fit, change the measurement and print that part again:
 that's the point of printing them. Small fit problems usually need

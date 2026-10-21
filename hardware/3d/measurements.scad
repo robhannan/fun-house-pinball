@@ -14,6 +14,11 @@
 // Thickness of the playfield at the trapdoor holes.
 playfield_thickness = 12.7;
 
+// The whole playfield board's width and length (the board runs on under the
+// apron, so measure the board itself, not just what's visible).
+playfield_width = 520;
+playfield_length = 1010;
+
 // --- The trapdoors ----------------------------------------------------------
 // "Width" runs across the table (left to right); "length" runs up the table.
 
@@ -34,16 +39,34 @@ trapdoor_y = 614;
 
 // Position of the outhole's centre, and its diameter.
 outhole_x = 240;
-outhole_y = 25;
+outhole_y = 60;
 outhole_diameter = 32;
 
-// --- The ball lift ----------------------------------------------------------
+// --- The shooter lane and ball lift ----------------------------------------
+// The ball comes up through a hole in the playfield beside the shooter lane
+// (hidden under the apron), and rolls into the lane through an opening in the
+// lane's side wall. The opening is assumed to be straight across from the
+// hole; if it isn't, say so and the model can be changed.
 
-// Position of the hole in the shooter lane that the ball is lifted up through,
-// and its diameter.
-lift_hole_x = 502;
-lift_hole_y = 40;
-lift_hole_diameter = 30;
+// Position of the hole the ball is lifted up through, and its diameter.
+lift_hole_x = 445;
+lift_hole_y = 90;
+lift_hole_diameter = 32;
+
+// The shooter lane's side wall, between the hole and the lane: the x of its
+// face on the hole's side, and its thickness.
+lane_wall_x = 470;
+lane_wall_thickness = 10;
+// The opening in that wall: its width (along the lane) and height.
+lane_opening_width = 34;
+lane_opening_height = 32;
+// The shooter lane's width, inside.
+lane_width = 30;
+// Where the plunger's tip is when it's at rest: its y.
+plunger_tip_y = 45;
+// The space above the playfield over the hole, under the apron (or whatever
+// covers it).
+lift_headroom = 45;
 
 // The ball-serve (ball lift) coil assembly: the diameter of its plunger, and
 // the distance between its two mounting screws.

@@ -36,8 +36,8 @@ function render(file, output, defines = []) {
   return { status: run.status, text: `${run.stdout}${run.stderr}` };
 }
 
-/** The size of an STL file's contents, [x, y, z]. */
-async function size(stl) {
+/** The lowest and highest corners of an STL file's contents: [[x, y, z], [x, y, z]]. */
+async function bounds(stl) {
   const data = await fs.readFile(stl);
   const points = [];
   if (data.subarray(0, 5).toString() === "solid" && data.subarray(0, 300).includes("facet")) {
@@ -50,7 +50,20 @@ async function size(stl) {
         points.push([data.readFloatLE(at), data.readFloatLE(at + 4), data.readFloatLE(at + 8)]);
       }
   }
-  return [0, 1, 2].map((axis) => Math.max(...points.map((p) => p[axis])) - Math.min(...points.map((p) => p[axis])));
+  const low = [Infinity, Infinity, Infinity];
+  const high = [-Infinity, -Infinity, -Infinity];
+  for (const p of points)
+    for (let axis = 0; axis < 3; axis++) {
+      low[axis] = Math.min(low[axis], p[axis]);
+      high[axis] = Math.max(high[axis], p[axis]);
+    }
+  return [low, high];
+}
+
+/** The size of an STL file's contents, [x, y, z]. */
+async function size(stl) {
+  const [low, high] = await bounds(stl);
+  return high.map((h, axis) => h - low[axis]);
 }
 
 const problems = [];
@@ -84,12 +97,19 @@ for (const file of parts) {
   }
 }
 
+// The assembly must render; its depth is the space needed under the playfield.
+const assemblyStl = path.join(checkOnly ? out : await fs.mkdtemp(path.join(tmpdir(), "fun-house-3d-")), "assembly.stl");
+const assembly = render(path.join(dir, "assembly.scad"), assemblyStl);
+if (assembly.status !== 0 || warningsIn(assembly.text).length > 0) {
+  problems.push(`assembly.scad: ${warningsIn(assembly.text).join(" / ") || `OpenSCAD exited with ${assembly.status}`}`);
+} else {
+  // The playfield's underside is z = 0.
+  const depth = -(await bounds(assemblyStl))[0][2];
+  console.log(`The ball return reaches ${depth.toFixed(0)} mm below the playfield, plus the ball-serve coil under the ball lift.`);
+}
+
 if (checkOnly) {
-  // The assembly must render, and every collision check must come out empty.
-  const assembly = render(path.join(dir, "assembly.scad"), path.join(out, "assembly.stl"));
-  if (assembly.status !== 0 || warningsIn(assembly.text).length > 0) {
-    problems.push(`assembly.scad: ${warningsIn(assembly.text).join(" / ") || `OpenSCAD exited with ${assembly.status}`}`);
-  }
+  // Every collision check must come out empty.
   const checks = (await fs.readdir(path.join(dir, "checks"))).filter((f) => f.endsWith(".scad")).sort();
   for (const file of checks) {
     const result = render(path.join(dir, "checks", file), path.join(out, `check-${file}.stl`));

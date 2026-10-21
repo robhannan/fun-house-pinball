@@ -520,8 +520,9 @@ it. No modelling experience is needed. Each trapdoor has:
 - **A drive:** a rib under the flap's right edge, a link, and a crank on the
   servo, which hangs under the playfield behind the trapdoor. The servo turns
   about 80° from closed to open, and holds the flap flush when closed. A ball
-  rolling over a closed flap pushes against the servo, which the MG90S's metal
-  gears take.
+  rolling over a closed flap pushes against the servo; the MG90S's metal gears
+  should take it (assumed, *verify*: no fixed stop is possible, because the
+  flap opens downwards).
 - **A catch box** under it, in the collector, with a lever microswitch under
   its floor wired to the trapdoor's matrix position (C4·R5–R7, section 6).
   Each door needs its own switch: only the centre one gives the special's
@@ -539,13 +540,16 @@ If power fails, a servo stays where it was. That's harmless: an open flap just
 swallows the next ball.
 
 **The ball lift.** The printed ball return brings every ball (drained, or
-through a trapdoor) to a tube under a hole in the shooter lane. The ball waits
-there on the plunger of the **ball-serve coil** (coil 0), and the **outhole
-switch** (C0·R0) goes on the tube, its lever touching the waiting ball. When
-the game serves a ball, it pulses the coil, which kicks the ball up the tube
-into the shooter lane. The coil's pulse length may need raising to throw the
-ball the whole way; check it in test mode's coil stage, and see the coil
-safety rules before changing its limit.
+through a trapdoor) to a tube under a hole beside the shooter lane. The ball
+waits there on the plunger of the **ball-serve coil** (coil 0), and the
+**outhole switch** (C0·R0) goes on the tube, its lever touching the waiting
+ball. When the game serves a ball, it pulses the coil, which kicks the ball up
+the tube into a printed hood on top of the playfield; the hood turns it through
+the opening in the lane's wall and into the shooter lane. The coil's pulse
+length may need raising to throw the ball the whole way; check it in test
+mode's coil stage, and see the coil safety rules before changing its limit.
+Until the game retries a serve that falls short (issue #44), a ball that drops
+back down the tube ends that ball.
 
 ---
 
