@@ -13,7 +13,10 @@
     "serve:sim": "node sim/serve.mjs",
     "render:sounds": "node sim/render-sounds.mjs",
     "check:sounds": "node sim/render-sounds.mjs --check",
-    "import:samples": "node sim/import-samples.mjs"
+    "import:samples": "node sim/import-samples.mjs",
+    "export:3d": "node hardware/export-3d.mjs",
+    "check:3d": "node hardware/export-3d.mjs --check",
+    "ci:install-openscad": "node .github/scripts/install-openscad.mjs"
   },
   "devDependencies": {
     "zx": "8.8.5"

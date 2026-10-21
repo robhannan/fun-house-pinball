@@ -16,10 +16,12 @@ driven by an Arduino Mega 2560 instead of relays and stepper units.
 ├── crates/pinball-sim    # the game logic compiled to WebAssembly for the simulator
 ├── sim/                  # browser simulator page and build script
 ├── firmware              # Arduino Mega 2560 binary: I/O + main loop (AVR, nightly)
+├── hardware/3d           # OpenSCAD models of the 3D-printed ball return
 └── docs
     ├── hardware.md       # design at a glance: pin map, driver boards
     ├── wiring-guide.md   # step-by-step wiring for beginners
     ├── shopping-list.md  # parts, quantities and where to buy
+    ├── 3d-printing.md    # the printed ball return: measuring, printing, fitting
     └── playfield.svg     # playfield map with switch/coil/lamp numbers
 ```
 
