@@ -272,35 +272,34 @@ assert(lift_hole_diameter >= lift_tube_inner,
 
 // --- The ball lift's exit (playfield coordinates, on top of the playfield) ---
 //
-// Kicked up the tube, the ball comes up through the hole into a hood. The
-// hood's roof rises towards the lane, so it turns the ball that way, and the
-// ball rolls down a ramp, through the opening in the lane's wall, into the
-// lane. The ramp only slopes down into the lane, so a ball rolling back down
-// the lane can't climb into it.
+// Above the hole, the tube bends from straight up to sideways, towards the
+// shooter lane, so the kicked ball can only come out heading for the lane. It
+// then rolls down a short ramp, through the opening in the lane's wall, into
+// the lane. The ramp only slopes down into the lane, so a ball rolling back
+// down the lane can't climb into it. A kick too weak to get the ball round the
+// bend drops it back down the tube, and the game serves it again.
 lane_x = lane_wall_x + lane_wall_thickness;   // the lane's side
-// The ramp: from the hole's edge (ramp_lip above the playfield) down to the
-// lane's side, where it ends ramp_end thick, a small step down into the lane.
-ramp_lip = 4;
+// The bend: the ball's centre follows a quarter-circle of this radius, from
+// the playfield's surface over the hole, up and over to the lane. As big as
+// fits: before the lane's wall, under the headroom, and low enough at the top
+// for the ball to roll through the wall's opening.
+bend_radius = min(
+    lane_wall_x - fit_clearance - lift_hole_x,
+    lift_headroom - lift_tube_inner / 2 - wall,
+    lane_opening_height - ball_diameter / 2 - 1.5);
+bend_centre = [lift_hole_x + bend_radius, lift_hole_y, playfield_thickness];
+// The ramp: from the end of the bend down to the lane's side, where it ends
+// ramp_end thick, a small step down into the lane.
+ramp_start = lift_hole_x + bend_radius;
+ramp_lip = bend_radius - lift_tube_inner / 2;   // above the playfield
 ramp_end = 0.8;
-ramp_start = lift_hole_x + lift_hole_diameter / 2;
 ramp_width = lane_opening_width - 2 * fit_clearance;
 // The top of the ramp's floor, above the playfield, at `x`.
-function ramp_floor(x) =
-    x <= ramp_start ? ramp_lip
-    : ramp_end + (ramp_lip - ramp_end) * (lane_x - x) / (lane_x - ramp_start);
-// The hood: from behind the hole to the lane's wall, its roof rising towards
-// the lane. Inside heights above the playfield, at the back and at the wall.
-hood_back = lift_hole_x - lift_hole_diameter / 2 - wall;
-hood_front = lane_wall_x - fit_clearance;
-hood_half = max(lift_hole_diameter, ramp_width) / 2;
-hood_low = ramp_lip + ball_diameter + 3;
-hood_high = hood_low + 8;
-assert(hood_front - ramp_start >= 2,
-    "The ball lift's hole is too close to the shooter lane's wall: check lift_hole_x and lane_wall_x in measurements.scad.");
-assert(lane_opening_width >= ball_diameter + 4 && lane_opening_height >= ball_diameter + ramp_lip + 1,
-    "The opening in the shooter lane's wall is too small for the ball: check lane_opening_width and lane_opening_height in measurements.scad.");
-assert(hood_high + wall <= lift_headroom,
-    "There isn't room for the ball lift's hood above the playfield: check lift_headroom in measurements.scad.");
+function ramp_floor(x) = ramp_end + (ramp_lip - ramp_end) * (lane_x - x) / (lane_x - ramp_start);
+assert(ramp_lip >= ramp_end + 1,
+    "There isn't room for the ball lift's bend: the hole needs to be further from the shooter lane's wall, or there needs to be more headroom or a taller opening. Check lift_hole_x, lane_wall_x, lift_headroom and lane_opening_height in measurements.scad.");
+assert(lane_opening_width >= ball_diameter + 4,
+    "The opening in the shooter lane's wall is too narrow for the ball: check lane_opening_width in measurements.scad.");
 
 // Every part that screws to the playfield must land on it.
 module assert_on_playfield(name, centre, half) {

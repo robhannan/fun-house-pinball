@@ -544,12 +544,12 @@ through a trapdoor) to a tube under a hole beside the shooter lane. The ball
 waits there on the plunger of the **ball-serve coil** (coil 0), and the
 **outhole switch** (C0·R0) goes on the tube, its lever touching the waiting
 ball. When the game serves a ball, it pulses the coil, which kicks the ball up
-the tube into a printed hood on top of the playfield; the hood turns it through
-the opening in the lane's wall and into the shooter lane. The coil's pulse
+the tube, where a printed bend on top of the playfield turns it sideways,
+through the opening in the lane's wall and into the shooter lane. The coil's pulse
 length may need raising to throw the ball the whole way; check it in test
 mode's coil stage, and see the coil safety rules before changing its limit.
-Until the game retries a serve that falls short (issue #44), a ball that drops
-back down the tube ends that ball.
+A serve that falls short drops the ball back down the tube, and the game
+serves it again, up to three times (#45).
 
 ---
 

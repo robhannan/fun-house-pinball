@@ -82,14 +82,16 @@ module serve_run() {
     }
 }
 
-// Into the ball lift, up the tube into its exit, and down the ramp into the
-// shooter lane.
+// Into the ball lift, up the tube, round the exit's bend, and down the ramp
+// into the shooter lane. Through the bend the ball is inside a tube, so once
+// it's round the bend it can only go to the lane.
 module lift() {
     t = playfield_thickness;
     along([serve_last + serve_dir * lift - [0, 0, joint_step], [lift_hole_x, lift_hole_y, lift_centre[2]]]);
-    top = [lift_hole_x, lift_hole_y, t + ramp_lip + lift + 1];
-    sweep([lift_hole_x, lift_hole_y, lift_centre[2] + lift + 1], top);
-    sweep(top, [ramp_start, lift_hole_y, t + ramp_lip + lift + 0.5]);
+    sweep([lift_hole_x, lift_hole_y, lift_centre[2] + lift + 1], [lift_hole_x, lift_hole_y, t]);
+    for (a = [0 : 10 : 80])
+        sweep(bend_centre + bend_radius * [-cos(a), 0, sin(a)], bend_centre + bend_radius * [-cos(a + 10), 0, sin(a + 10)]);
+    sweep(bend_centre + [0, 0, bend_radius], [ramp_start, lift_hole_y, t + ramp_lip + lift + 0.5]);
     along([[ramp_start, lift_hole_y, t + ramp_lip], [lane_x, lift_hole_y, t + ramp_end], [lane_x + lane_width / 2, lift_hole_y, t]]);
 }
 
