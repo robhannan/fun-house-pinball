@@ -40,8 +40,8 @@ with its exit on top.*
    the shooter lane's wall, and down the lane to the plunger. The ramp only
    slopes down into the lane, so a ball that rolls back down the lane after a
    weak plunge goes past the opening to the plunger again. A kick too weak to
-   get the ball round the bend drops it back down the tube, and the game serves
-   it again.
+   get the ball round the bend drops it back down the tube. Once #45 is merged
+   the game serves it again; until then, that ends the ball.
 
 ![the ball lift cut through the middle: the serve run arrives at the bottom of the tube, where the cup waits on the coil's plunger; the tube rises through the playfield and bends over towards the shooter lane's wall](images/ball-lift.png)
 
@@ -73,7 +73,7 @@ crank about 80 degrees and the flap swings down to hang straight.*
 | Serve run | `serve_run_segment.scad` | one of each segment | The channel across to the ball lift, sloping down. |
 | Ball lift | `ball_lift.scad` | 1 | The tube up to the hole beside the shooter lane, with mounts for the ball-serve coil and the outhole switch. |
 | Ball-lift exit | `ball_lift_exit.scad` | one of each half | Screws on top of the playfield over the hole, and bends the ball's path over through the lane's wall into the shooter lane. |
-| Ball-lift cup | `ball_lift_cup.scad` | 1 | Pushes onto the coil's plunger and cradles the waiting ball. |
+| Ball-lift cup | `ball_lift_cup.scad` | 1 | Clamps onto the coil's plunger with a grub screw and cradles the waiting ball. |
 
 `assembly.scad` shows everything in place; it isn't printed. The files in
 `hardware/3d/checks/` check that nothing collides: see step 4.
@@ -214,9 +214,12 @@ rest.
    socket over the end of the part before, and screw their posts to the
    playfield. Then the outhole funnel under the outhole, the serve run's
    segments, and the ball lift under the hole beside the shooter lane.
-5. **Ball lift.** Bolt the ball-serve coil under the lift's base, push the cup
-   onto its plunger, and screw the outhole switch to the tab on the tube with
-   its lever through the slot. On top of the playfield, screw the exit's two
+5. **Ball lift.** Bolt the ball-serve coil under the lift's base. Slide the cup
+   onto its plunger and tighten an M3 × 8 mm grub screw into the hole in the
+   cup's side until it grips the plunger: it must not come off, or it would fly
+   up the tube with the ball. (Assumed, *verify*: a plain plunger end. If yours
+   is threaded or has a cross-hole, say so and the cup can use that.) Screw the
+   outhole switch to the tab on the tube with its lever through the slot. On top of the playfield, screw the exit's two
    halves over the hole with the ramp through the opening in the lane's wall,
    and join them through the tab on top with an M3 × 16 mm self-tapping
    screw.

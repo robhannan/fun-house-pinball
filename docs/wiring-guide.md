@@ -548,8 +548,9 @@ the tube, where a printed bend on top of the playfield turns it sideways,
 through the opening in the lane's wall and into the shooter lane. The coil's pulse
 length may need raising to throw the ball the whole way; check it in test
 mode's coil stage, and see the coil safety rules before changing its limit.
-A serve that falls short drops the ball back down the tube, and the game
-serves it again, up to three times (#45).
+A serve that falls short drops the ball back down the tube. Once #45 is
+merged the game serves it again, up to three times; until then, that ends the
+ball.
 
 ---
 

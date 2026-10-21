@@ -93,8 +93,6 @@ How to find one:
 
 Rules:
 
-- Keep it safe for work.
-- Don't use GIFs of real people in a way that mocks them.
 - Make the alt text describe the GIF, e.g.
   `![flipper hitting a ball](https://media.giphy.com/media/<ID>/giphy.gif)`.
 - If no suitable GIF can be verified, keep the template's pinball GIF rather than

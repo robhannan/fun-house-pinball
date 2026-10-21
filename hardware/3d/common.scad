@@ -277,7 +277,7 @@ assert(lift_hole_diameter >= lift_tube_inner,
 // then rolls down a short ramp, through the opening in the lane's wall, into
 // the lane. The ramp only slopes down into the lane, so a ball rolling back
 // down the lane can't climb into it. A kick too weak to get the ball round the
-// bend drops it back down the tube, and the game serves it again.
+// bend drops it back down the tube; with #45, the game then serves it again.
 lane_x = lane_wall_x + lane_wall_thickness;   // the lane's side
 // The bend: the ball's centre follows a quarter-circle of this radius, from
 // the playfield's surface over the hole, up and over to the lane. As big as
