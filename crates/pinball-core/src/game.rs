@@ -37,6 +37,11 @@ pub const DEBOUNCE_SCANS: u8 = 2;
 /// Delay between a ball draining and the next one being served, giving the
 /// ball time to settle in the outhole.
 pub const SERVE_DELAY_MS: u32 = 1_000;
+/// Serves of one ball before giving up on it. A serve that falls short drops
+/// the ball back onto the outhole switch before it has reached the shooter
+/// lane, and is tried again; after this many, the ball ends as if it had
+/// drained, so a jammed ball lift can't fire its coil for ever.
+pub const MAX_SERVES: u8 = 3;
 
 /// From the instruction card: one replay for each score of 500, 600, 700,
 /// 800 and 900 points.
@@ -141,6 +146,9 @@ pub struct Machine {
     bonus_step: u8,
     tilt_warnings: u8,
     serve_at: Option<Instant>,
+    /// Serves of the current ball since it was last seen in play (in the
+    /// shooter lane or hitting anything): 0 once it has been.
+    serves: u8,
     sound: SoundScheduler,
     bells: BellRinger,
     show: AttractShow,
@@ -198,6 +206,7 @@ impl Machine {
             bonus_step: 0,
             tilt_warnings: 0,
             serve_at: None,
+            serves: 0,
             sound: SoundScheduler::new(),
             bells: BellRinger::new(),
             show: AttractShow::new(),
@@ -295,6 +304,7 @@ impl Machine {
         }
         if self.serve_at.is_some_and(|at| now.reached(at)) {
             self.serve_at = None;
+            self.serves = self.serves.saturating_add(1);
             self.coils.pulse(coil::BALL_SERVE, u16::MAX, now);
             self.sound.request(Sound::BallServe);
         }
@@ -368,6 +378,13 @@ impl Machine {
                 }
             }
 
+            // A serve that fell short, before the ball reached the shooter
+            // lane: serve it again.
+            (Phase::Playing, SwitchEvent::Closed(sw::OUTHOLE))
+                if self.serves > 0 && self.serves < MAX_SERVES =>
+            {
+                self.serve_at = Some(now.plus(SERVE_DELAY_MS));
+            }
             (Phase::Playing | Phase::Tilted, SwitchEvent::Closed(sw::OUTHOLE)) => {
                 self.end_ball(now);
             }
@@ -380,6 +397,13 @@ impl Machine {
     }
 
     fn on_playfield_hit(&mut self, id: SwitchId, now: Instant) {
+        // Anything but the cabinet's own switches means the ball is in play.
+        if !matches!(
+            id,
+            sw::LEFT_FLIPPER_BUTTON | sw::RIGHT_FLIPPER_BUTTON | sw::TILT
+        ) {
+            self.serves = 0;
+        }
         let kick = |coils: &mut Coils, coil: CoilId| coils.pulse(coil, u16::MAX, now);
         match id {
             sw::LEFT_FLIPPER_BUTTON | sw::RIGHT_FLIPPER_BUTTON => {
@@ -753,6 +777,7 @@ impl Machine {
         self.replays = [0; MAX_PLAYERS];
         self.best_scores = [0; MAX_PLAYERS];
         self.bonus_step = 0;
+        self.serves = 0;
         self.ball = 1;
         self.players = 1;
         self.player = 0;
@@ -768,6 +793,7 @@ impl Machine {
     /// a lone player carries on after a tilt too; the card only promises it
     /// "when more than one are playing".
     fn end_ball(&mut self, now: Instant) {
+        self.serves = 0;
         if self.player + 1 < self.players {
             self.player += 1;
         } else {
@@ -927,6 +953,12 @@ mod tests {
             self.set(id, false);
         }
 
+        /// The served ball reaches the shooter lane, then drains.
+        fn drain(&mut self) {
+            self.tap(sw::SHOOTER_LANE);
+            self.tap(sw::OUTHOLE);
+        }
+
         /// Opens trapdoor `n` and drops a ball through it.
         fn drop_through(&mut self, n: usize) {
             self.machine.set_trapdoor(n, true);
@@ -1005,7 +1037,7 @@ mod tests {
         assert_eq!(reports.len(), 2);
         assert!(matches!(sim.machine.phase(), Phase::Test(_)));
         sim.run(100);
-        assert!(sounds_during(&mut sim, |s| s.tap(sw::OUTHOLE)).contains(&Sound::Lane));
+        assert!(sounds_during(&mut sim, Sim::drain).contains(&Sound::Lane));
     }
 
     #[test]
@@ -1179,12 +1211,60 @@ mod tests {
     }
 
     #[test]
+    fn a_serve_that_falls_short_is_served_again() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        // The ball drops back down the ball lift before reaching the lane.
+        let sounds = sounds_during(&mut sim, |s| {
+            s.tap(sw::OUTHOLE);
+            s.run(SERVE_DELAY_MS);
+        });
+        assert_eq!(sim.machine.ball(), 1);
+        assert_eq!(sounds, [Sound::BallServe]);
+
+        // Served properly this time, it drains as usual.
+        sim.drain();
+        assert_eq!(sim.machine.ball(), 2);
+    }
+
+    #[test]
+    fn a_ball_that_hits_something_is_in_play_even_without_the_lane_switch() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::TOP_BUMPER);
+        sim.tap(sw::OUTHOLE);
+        assert_eq!(sim.machine.ball(), 2);
+    }
+
+    #[test]
+    fn pressing_the_flippers_doesnt_count_as_the_ball_in_play() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::LEFT_FLIPPER_BUTTON);
+        sim.tap(sw::OUTHOLE);
+        assert_eq!(sim.machine.ball(), 1);
+    }
+
+    #[test]
+    fn a_ball_lift_that_keeps_failing_ends_the_ball() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        for _ in 1..MAX_SERVES {
+            sim.tap(sw::OUTHOLE);
+            sim.run(SERVE_DELAY_MS);
+            assert_eq!(sim.machine.ball(), 1);
+        }
+        sim.tap(sw::OUTHOLE);
+        assert_eq!(sim.machine.ball(), 2);
+    }
+
+    #[test]
     fn game_ends_after_last_ball_drains() {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
         for ball in 1..=Settings::DEFAULT.balls_per_game {
             assert_eq!(sim.machine.ball(), ball);
-            sim.tap(sw::OUTHOLE);
+            sim.drain();
             sim.run(SERVE_DELAY_MS);
         }
         assert_eq!(sim.machine.phase(), Phase::Attract);
@@ -1202,7 +1282,7 @@ mod tests {
         assert!(!sim.coil_on(coil::RIGHT_FLIPPER_HOLD));
         sim.set(sw::RIGHT_FLIPPER_BUTTON, false);
 
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         assert_eq!(sim.machine.phase(), Phase::Playing);
         assert_eq!(sim.machine.ball(), 2);
     }
@@ -1384,14 +1464,14 @@ mod tests {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
         sim.tap(sw::SIDE_LANES[0]);
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         assert_eq!(sim.machine.score(), 10);
         sim.tap(sw::SIDE_LANES[0]);
         sim.tap(sw::TOP_BUMPER);
         assert_eq!(sim.machine.score(), 30);
         sim.tap(sw::TILT);
         assert_eq!(sim.machine.score(), 10, "back to the score at the serve");
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         assert_eq!(sim.machine.ball(), 3);
         assert_eq!(sim.machine.score(), 10);
     }
@@ -1402,7 +1482,7 @@ mod tests {
         sim.tap(sw::START_BUTTON);
         sim.tap(sw::START_BUTTON);
         sim.tap(sw::SIDE_LANES[0]);
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         sim.tap(sw::SIDE_LANES[0]);
         sim.tap(sw::TILT);
         assert_eq!(sim.machine.score_of(0), 10);
@@ -1430,12 +1510,12 @@ mod tests {
         for _ in 0..49 {
             sim.tap(sw::SIDE_LANES[0]);
         }
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         sim.tap(sw::SIDE_LANES[0]);
         assert_eq!(sim.machine.replays(), 1);
         sim.tap(sw::TILT);
         assert_eq!(sim.machine.score(), 490);
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         // Back past 500 on the next ball: no second replay for it.
         sim.tap(sw::SIDE_LANES[0]);
         assert_eq!(sim.machine.score(), 500);
@@ -1525,7 +1605,7 @@ mod tests {
         assert!(!sim.flap_open(1));
         // The ball isn't over until it reaches the outhole.
         assert_eq!(sim.machine.ball(), 1);
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         assert_eq!(sim.machine.ball(), 2);
     }
 
@@ -1546,7 +1626,7 @@ mod tests {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
         sim.machine.set_trapdoor(2, true);
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         assert!(!sim.flap_open(2));
     }
 
@@ -1564,7 +1644,7 @@ mod tests {
     fn players_can_only_be_added_during_ball_one() {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         assert_eq!(sim.machine.ball(), 2);
         sim.tap(sw::START_BUTTON);
         assert_eq!(sim.machine.players(), 1);
@@ -1578,12 +1658,12 @@ mod tests {
         assert_eq!(sim.machine.current_player(), 1);
         sim.tap(sw::SIDE_LANES[0]);
 
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         assert_eq!((sim.machine.current_player(), sim.machine.ball()), (2, 1));
         sim.tap(sw::SIDE_LANES[0]);
         sim.tap(sw::SIDE_LANES[0]);
 
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         assert_eq!((sim.machine.current_player(), sim.machine.ball()), (1, 2));
         assert_eq!(sim.machine.score_of(0), 10);
         assert_eq!(sim.machine.score_of(1), 20);
@@ -1602,10 +1682,10 @@ mod tests {
         sim.tap(sw::START_BUTTON);
         sim.tap(sw::START_BUTTON);
         for _ in 0..(3 * 2 - 1) {
-            sim.tap(sw::OUTHOLE);
+            sim.drain();
             assert_eq!(sim.machine.phase(), Phase::Playing);
         }
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         assert_eq!(sim.machine.phase(), Phase::Attract);
     }
 
@@ -1638,7 +1718,7 @@ mod tests {
         sim.tap(sw::START_BUTTON);
         sim.tap(sw::TILT);
         assert_eq!(sim.machine.phase(), Phase::Tilted);
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         assert_eq!(sim.machine.phase(), Phase::Playing);
         assert_eq!((sim.machine.current_player(), sim.machine.ball()), (2, 1));
     }
@@ -1684,9 +1764,9 @@ mod tests {
         assert!(lit(&sim, lamp::PLAYER_UP[0]) && !lit(&sim, lamp::PLAYER_UP[1]));
         assert!(lit(&sim, lamp::BALL_IN_PLAY[0]));
 
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         assert!(!lit(&sim, lamp::PLAYER_UP[0]) && lit(&sim, lamp::PLAYER_UP[1]));
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
         assert!(lit(&sim, lamp::BALL_IN_PLAY[1]) && !lit(&sim, lamp::BALL_IN_PLAY[0]));
 
         sim.tap(sw::SLAM_TILT);
@@ -1731,10 +1811,7 @@ mod tests {
             [Sound::BonusCollect, Sound::Trapdoor]
         );
         assert_eq!(sounds_during(&mut sim, |s| s.tap(sw::TILT)), [Sound::Tilt]);
-        assert_eq!(
-            sounds_during(&mut sim, |s| s.tap(sw::OUTHOLE)),
-            [Sound::Drain]
-        );
+        assert_eq!(sounds_during(&mut sim, Sim::drain), [Sound::Drain]);
     }
 
     #[test]
@@ -1869,7 +1946,7 @@ mod tests {
         });
         sim.tap(sw::START_BUTTON);
         for _ in 0..3 {
-            sim.tap(sw::OUTHOLE);
+            sim.drain();
         }
         assert_eq!(sim.machine.phase(), Phase::Attract);
         assert!(
@@ -1912,13 +1989,10 @@ mod tests {
         });
         sim.tap(sw::START_BUTTON);
         sim.run(5_000);
-        sim.tap(sw::OUTHOLE);
-        sim.tap(sw::OUTHOLE);
+        sim.drain();
+        sim.drain();
         sim.run(1_000);
-        assert_eq!(
-            sounds_during(&mut sim, |s| s.tap(sw::OUTHOLE)),
-            [Sound::GameOver]
-        );
+        assert_eq!(sounds_during(&mut sim, Sim::drain), [Sound::GameOver]);
     }
 
     #[test]
