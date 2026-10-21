@@ -1228,6 +1228,15 @@ mod tests {
     }
 
     #[test]
+    fn a_ball_that_hits_something_is_in_play_even_without_the_lane_switch() {
+        let mut sim = Sim::new();
+        sim.tap(sw::START_BUTTON);
+        sim.tap(sw::TOP_BUMPER);
+        sim.tap(sw::OUTHOLE);
+        assert_eq!(sim.machine.ball(), 2);
+    }
+
+    #[test]
     fn pressing_the_flippers_doesnt_count_as_the_ball_in_play() {
         let mut sim = Sim::new();
         sim.tap(sw::START_BUTTON);
