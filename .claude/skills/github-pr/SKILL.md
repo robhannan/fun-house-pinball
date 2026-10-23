@@ -108,3 +108,8 @@ gh pr checks <number> --watch
 
 Report the PR link and the CI result. If CI fails, fix it on the same branch,
 but only while the PR is still open (see step 1).
+
+CI doesn't run when every changed file is Markdown or under `docs/images/`
+(`paths-ignore` in `.github/workflows/ci.yml`), so `gh pr checks` reports no
+checks for those PRs. Say so instead of waiting. The local checks in step 2
+still apply.

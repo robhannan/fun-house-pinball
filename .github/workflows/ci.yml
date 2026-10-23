@@ -1,9 +1,18 @@
 name: CI
 
+# Skipped when every changed file is docs. No test or check reads Markdown or
+# docs/images/, but the simulator's tests read docs/playfield.svg and
+# docs/backboard.svg, so don't ignore all of docs/.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/images/**"
   pull_request:
+    paths-ignore:
+      - "**.md"
+      - "docs/images/**"
 
 permissions:
   contents: read
