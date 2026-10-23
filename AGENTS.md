@@ -4,6 +4,9 @@ Rust controller for a restored 1956 Williams *Fun House* (IPDB #967): an
 electromechanical (EM) table rebuilt with new parts and driven by an Arduino
 Mega 2560. See `README.md` for setup and `docs/hardware.md` for wiring.
 
+These rules are for any coding agent. `CLAUDE.md` only imports this file, so
+make changes here.
+
 ## Project rules
 
 - **Game logic goes in `crates/pinball-core`:** it's `no_std`, allocation-free
