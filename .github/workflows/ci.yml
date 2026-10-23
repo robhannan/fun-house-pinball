@@ -25,31 +25,134 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  core:
-    name: Game logic (host)
+  changes:
+    name: Changed files and repository checks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      core: ${{ steps.filter.outputs.core == 'true' || steps.filter.outputs.tooling == 'true' }}
+      simulator: ${{ steps.filter.outputs.core == 'true' || steps.filter.outputs.simulator == 'true' || steps.filter.outputs.tooling == 'true' }}
+      sounds: ${{ steps.filter.outputs.sounds == 'true' || steps.filter.outputs.tooling == 'true' }}
+      openscad: ${{ steps.filter.outputs.openscad == 'true' || steps.filter.outputs.tooling == 'true' }}
+      firmware: ${{ steps.filter.outputs.firmware == 'true' || steps.filter.outputs.tooling == 'true' }}
     steps:
       - uses: actions/checkout@v7
-      # rustup reads rust-toolchain.toml and installs the right toolchain.
-      - run: rustup show active-toolchain || rustup toolchain install
-      - uses: Swatinem/rust-cache@v2
-      # Installs pnpm (version from package.json), Node.js (from .nvmrc) and
-      # the locked dependencies.
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          # PRs compare against their base; main pushes compare against the
+          # commit before the push, including every commit in a batch.
+          base: ${{ github.ref }}
+          filters: |
+            tooling:
+              - '.github/workflows/ci.yml'
+              - '.github/scripts/ci.mjs'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - '.nvmrc'
+            core:
+              - 'crates/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'rust-toolchain.toml'
+              - 'rustfmt.toml'
+              - '.cargo/**'
+              # Host tests embed these files with include_str!.
+              - 'docs/playfield.svg'
+              - 'docs/backboard.svg'
+              - 'sim/web/index.html'
+              - 'sim/web/sounds.js'
+            simulator:
+              - 'sim/build.mjs'
+              - 'sim/web/**'
+            sounds:
+              - 'sim/render-sounds.mjs'
+              - 'sim/import-samples.mjs'
+              - 'sim/music.mjs'
+              - 'sim/wav.mjs'
+              - 'sim/samples/**'
+              - 'sim/web/sounds.js'
+              - 'sim/web/samples/**'
+            openscad:
+              - 'hardware/3d/**'
+              - 'hardware/export-3d.mjs'
+              - '.github/scripts/install-openscad.mjs'
+            firmware:
+              - 'firmware/**'
+              - 'crates/pinball-core/**'
+              # pinball-core inherits workspace metadata and lints.
+              - 'Cargo.toml'
+              - 'rustfmt.toml'
+              - '.cargo/**'
+      # This check covers every tracked path, so it always runs when CI runs.
       - uses: pnpm/setup@v3
         with:
           cache: true
           require-lockfile: true
       - name: No build output or OS files committed
         run: pnpm run check:stray-files
-      - run: cargo fmt --all --check
-      - run: cargo clippy --all-targets --locked -- -D warnings
-      - run: cargo test --locked
+
+  core:
+    name: Game logic (host)
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v3
+        with:
+          cache: true
+          require-lockfile: true
+      - run: pnpm run ci:toolchain
+      - uses: Swatinem/rust-cache@v2
+      - name: Rust formatting, lint and tests
+        run: pnpm run ci:core
+
+  simulator:
+    name: Browser simulator
+    needs: changes
+    if: needs.changes.outputs.simulator == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v3
+        with:
+          cache: true
+          require-lockfile: true
+      - run: pnpm run ci:toolchain
+      - uses: Swatinem/rust-cache@v2
       - name: Build the browser simulator
         run: pnpm run build:sim
+
+  sounds:
+    name: Sounds
+    needs: changes
+    if: needs.changes.outputs.sounds == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v3
+        with:
+          cache: true
+          require-lockfile: true
       - name: Install ffmpeg (decodes the MP3 attract music)
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+        run: pnpm run ci:install-ffmpeg
       - name: Every sound renders cleanly
         run: pnpm run check:sounds
+
+  openscad:
+    name: OpenSCAD (3D-printed parts)
+    needs: changes
+    if: needs.changes.outputs.openscad == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v3
+        with:
+          cache: true
+          require-lockfile: true
       - name: Install OpenSCAD (latest nightly)
         run: pnpm run ci:install-openscad
       - name: Every 3D-printed part renders cleanly
@@ -57,23 +160,23 @@ jobs:
 
   firmware:
     name: Firmware (ATmega2560)
+    needs: changes
+    if: needs.changes.outputs.firmware == 'true'
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: firmware
     steps:
       - uses: actions/checkout@v7
+      - uses: pnpm/setup@v3
+        with:
+          cache: true
+          require-lockfile: true
       - name: Install AVR toolchain
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-avr avr-libc binutils-avr
-      - run: rustup show active-toolchain || rustup toolchain install
+        run: pnpm run ci:install-avr
+      - run: pnpm run ci:firmware-toolchain
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: firmware
-      - run: cargo fmt --check
-      - run: cargo clippy --locked -- -D warnings
-      - run: cargo build --release --locked
-      - name: Firmware size
-        run: avr-size --format=avr --mcu=atmega2560 target/avr-none/release/fun-house-firmware.elf
+      - name: Rust formatting, lint, release build and size
+        run: pnpm run ci:firmware
       - uses: actions/upload-artifact@v7
         with:
           name: fun-house-firmware

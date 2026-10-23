@@ -16,7 +16,13 @@
     "import:samples": "node sim/import-samples.mjs",
     "export:3d": "node hardware/export-3d.mjs",
     "check:3d": "node hardware/export-3d.mjs --check",
-    "ci:install-openscad": "node .github/scripts/install-openscad.mjs"
+    "ci:install-openscad": "node .github/scripts/install-openscad.mjs",
+    "ci:install-ffmpeg": "node .github/scripts/ci.mjs install-ffmpeg",
+    "ci:install-avr": "node .github/scripts/ci.mjs install-avr",
+    "ci:toolchain": "node .github/scripts/ci.mjs toolchain",
+    "ci:firmware-toolchain": "node .github/scripts/ci.mjs firmware-toolchain",
+    "ci:core": "node .github/scripts/ci.mjs core",
+    "ci:firmware": "node .github/scripts/ci.mjs firmware"
   },
   "devDependencies": {
     "zx": "8.8.5"
