@@ -45,7 +45,8 @@ If the PR is merged or closed, say so at the top of the report.
 
 Read these first, from the PR's version of the repo:
 
-- `CLAUDE.md`: project and PR rules
+- `AGENTS.md`: project and PR rules (`CLAUDE.md` on branches older than the
+  rename; it now just imports `AGENTS.md`)
 - `.github/pull_request_template.md`
 - `.claude/skills/github-pr/SKILL.md`
 - `README.md`
