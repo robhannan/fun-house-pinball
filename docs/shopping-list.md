@@ -14,10 +14,9 @@ Everything needed to build the controller described in the
 
 These are rough **estimates in GBP, as of October 2026**, to help with budgeting.
 
-- **Checked against current listings (converted from USD and EUR):**
+- **Checked against current listings (converted from USD where needed):**
   - Mean Well coil supply: about $33–46
   - IRL540N MOSFETs: about $1.60 each
-  - flipper coils: about €13–16
   - AE-26-1200 kicker coil: £15.84 at Pinball Heaven
 - **Everything else** is a typical marketplace price range, not a quote.
 - **Not included:** delivery, import fees and an electrician's time for the mains
@@ -183,9 +182,15 @@ The original 1950s coils were wound for AC. 48 V DC is a common choice for new
 coils, and the IRL540N handles it. The first-round coils in section 10 are
 modern Williams/Bally coils from the 50 V DC family, so this list uses 48 V.
 
+Expect short peaks above the coil supply's 7.3 A continuous rating: one kicker
+draws about 10 A for its 20 ms kick, and two flippers kicking together about
+15 A for 40 ms. Check on the bench (wiring guide section 9, step 7) that the
+supply doesn't cut out when both flippers kick at once (*verify*). If it does,
+a large capacitor across the coil supply, or a bigger supply, should fix it.
+
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
-| 🛡️ Coil supply: Mean Well LRS-350-48 (48 V, 350 W) | 1 | Only if your coils are specified for 48 V DC | [Mouser](https://www.mouser.co.uk/c/?q=LRS-350-48) | 35–50 |
+| 🛡️ Coil supply: Mean Well LRS-350-48 (48 V, 350 W) | 1 | Only if your coils are specified for 48–50 V DC, like the 50 V family in section 10 (slightly weaker at 48 V) | [Mouser](https://www.mouser.co.uk/c/?q=LRS-350-48) | 35–50 |
 | 🛡️ Lamp supply: Mean Well, matched to the bulbs | 1 | For 6.3 V bulbs, a supply adjustable to 6.3–7.5 V allows for the ULN2803's ~1 V drop | [Mouser](https://www.mouser.co.uk/c/?q=mean%20well%20LRS) | 12–20 |
 | 🛡️ Slow-blow fuses, 5 × 20 mm, assorted | 1 set | One per supply rail; see the wiring guide for sizes | [Mouser](https://www.mouser.co.uk/c/?q=5x20%20slow%20blow%20fuse) | 5–10 |
 | Panel-mount 5 × 20 mm fuse holders | 4 | | [AliExpress](https://www.aliexpress.com/w/wholesale-5x20mm-panel-fuse-holder.html) | 3–6 |
