@@ -8,15 +8,15 @@ Everything needed to build the controller described in the
 
 | | Estimate |
 |---|---|
-| **Everything** | **£626–1,168** |
-| Without tools (if you already have them) | £546–1,003 |
-| Electronics only (sections 1–8, no pinball parts or tools) | £336–633 |
+| **Everything** | **£789–1,368** |
+| Without tools (if you already have them) | £711–1,202 |
+| Electronics only (sections 1–8, no pinball parts or tools) | £504–832 |
 
 These are rough **estimates in GBP, as of October 2026**, to help with budgeting.
 
-- **Checked against current listings (converted from USD and EUR):**
-  - Mean Well coil supply: about $33–46
-  - IRL540N MOSFETs: about $1.60 each
+- **Checked against current listings (October 2026; flipper coils converted from EUR):**
+  - Mean Well GST280A48-C6P coil supply: £79–83 ex VAT at RS and Rapid
+  - IRL540N MOSFETs: £1.33 each ex VAT at RS for 10 or more
   - flipper coils: about €13–16
 - **Everything else** is a typical marketplace price range, not a quote.
 - **Not included:** delivery, import fees and an electrician's time for the mains
@@ -38,12 +38,18 @@ ordering.
 - **Some parts should come from a reputable distributor instead** (marked
   🛡️), because fakes on marketplaces are common and a fake here is a safety
   risk:
-  - **Power supplies:** they connect to mains.
+  - **Power supplies:** they connect to mains. Every supply in this list is an
+    enclosed desktop adaptor with a mains lead, so nothing has bare mains
+    terminals.
   - **MOSFETs:** they switch the coils.
   - **Fuses:** they're what stops a fault becoming a fire.
 
-  Those links go to [Mouser UK](https://www.mouser.co.uk); RS, Farnell or
-  DigiKey are equally good.
+  Those links go to [RS UK](https://uk.rs-online.com) and
+  [Rapid](https://www.rapidonline.com), which sell to individuals. **Mouser and
+  Farnell don't sell some of these parts to UK consumers.** Mouser restricts
+  some power supplies, the Mean Well LRS range among them, to business
+  customers, and Farnell sends UK consumers to its CPC shop. Check that a
+  supply is sold to you before choosing a different one.
 - **Pinball-specific mechanical parts** (coils, flipper assemblies, rubbers,
   playfield switches, bulbs) are best bought from pinball specialists, who know
   what fits a 1950s Williams. Examples are [Pinball Life](https://www.pinballlife.com)
@@ -63,9 +69,9 @@ the numbers.
 | Arduino Mega 2560 R3 | 2 | One to build with, one spare. Clones with a CH340 USB chip work fine but may need the [CH340 driver](https://www.wch-ic.com/downloads/CH341SER_MAC_ZIP.html) on older macOS. | [AliExpress](https://www.aliexpress.com/w/wholesale-arduino-mega-2560-r3.html) | 16–30 |
 | Mega screw-terminal shield | 1 | Lets you screw wires to the Arduino instead of soldering to it | [AliExpress](https://www.aliexpress.com/w/wholesale-mega-2560-screw-terminal-shield.html) | 5–10 |
 | USB A-to-B cable | 1 | Often included with the board | [AliExpress](https://www.aliexpress.com/w/wholesale-usb-a-to-b-cable-arduino.html) | 1–3 |
-| 9 V 1 A DC adaptor, 5.5 × 2.1 mm plug | 1 | Powers the Arduino in the machine. Get one with your country's plug. | [AliExpress](https://www.aliexpress.com/w/wholesale-9v-1a-power-adapter-5.5x2.1.html) | 3–6 |
+| 🛡️ 9 V adaptor: Mean Well GST25A09-P1J (9 V 2.55 A) | 1 | Powers the Arduino in the machine. Its 5.5 × 2.1 mm centre-positive plug fits the Arduino's barrel jack. C14 inlet, so it takes a mains lead (section 7). The GST18A09-P1J (9 V 2 A) also works. | [RS](https://uk.rs-online.com/web/c/?searchTerm=GST25A09-P1J) | 26–30 |
 
-**Section estimate: £25–49**
+**Section estimate: £48–73**
 
 ## 2. Bench testing (before anything goes in the machine)
 
@@ -113,12 +119,12 @@ instead (section 6c).
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
-| 🛡️ IRL540N logic-level N-channel MOSFET | 25 | Must be **logic level** (the "L" in IRL). Rated 100 V, suitable for coil supplies up to about 50 V. | [Mouser](https://www.mouser.co.uk/c/?q=IRL540N) | 25–38 |
+| 🛡️ IRL540N logic-level N-channel MOSFET | 25 | Must be **logic level** (the "L" in IRL). Rated 100 V, suitable for coil supplies up to about 50 V. | [RS](https://uk.rs-online.com/web/c/?searchTerm=IRL540NPBF) | 30–40 |
 | 1N4004 diodes | 100 | Flyback diode, one per coil winding, unless the coil already has one | [AliExpress](https://www.aliexpress.com/w/wholesale-1n4004-diode.html) | 1–3 |
 | 2-pin 5.08 mm PCB screw terminals | 40 | Coil wires to the driver board | [AliExpress](https://www.aliexpress.com/w/wholesale-5.08mm-pcb-screw-terminal-2-pin.html) | 3–6 |
 | 220 Ω and 10 kΩ resistors | — | In the resistor kit from section 2 | — | — |
 
-**Section estimate: £29–47**
+**Section estimate: £34–49**
 
 **Easier alternative:** ready-made multi-channel MOSFET driver boards that take
 5 V logic inputs replace the MOSFETs, resistors and screw terminals above. Check
@@ -148,10 +154,10 @@ once; see the [wiring guide](wiring-guide.md#7d-sound-wav-trigger).
 | WAV Trigger (Robertsonics / SparkFun WIG-13660) | 1 | Polyphonic WAV player with a small on-board amplifier. About $61 at SparkFun; check stock, as some listings show backorders. | [SparkFun](https://www.sparkfun.com/wav-trigger.html) · [Pimoroni](https://shop.pimoroni.com/products/wav-trigger) | 50–70 |
 | microSD card, up to 32 GB | 1 | Formatted FAT32 with 32 KB allocation. Branded cards are more reliable; fakes are common. | [AliExpress](https://www.aliexpress.com/w/wholesale-microsd-card-16gb.html) | 3–6 |
 | Speaker, 4–8 Ω, 50–77 mm | 1 | On the WAV Trigger's speaker header | [AliExpress](https://www.aliexpress.com/w/wholesale-3w-4ohm-speaker.html) | 2–4 |
-| 5 V 2 A DC adaptor | 1 | Powers the WAV Trigger separately from the Arduino | [AliExpress](https://www.aliexpress.com/w/wholesale-5v-2a-power-adapter.html) | 3–6 |
+| 🛡️ 5 V adaptor: Mean Well GST60A05-P1J (5 V 6 A) | 1 | Powers the WAV Trigger separately from the Arduino. The same part as the servo supply (section 6c). | [RS](https://uk.rs-online.com/web/c/?searchTerm=GST60A05-P1J) | 16–20 |
 | 1 kΩ resistor | — | In the resistor kit from section 2 | — | — |
 
-**Section estimate: £58–86**
+**Section estimate: £71–100**
 
 ## 6c. Trapdoor flaps
 
@@ -161,7 +167,7 @@ The trapdoors are rebuilt with a hobby servo turning each flap; see the
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
 | MG90S metal-gear micro servo | 4 | One per flap, plus a spare. Metal gears survive a ball landing on the flap. | [AliExpress](https://www.aliexpress.com/w/wholesale-mg90s-servo.html) | 8–14 |
-| 🛡️ 5 V 3 A DC adaptor, enclosed plug-in type | 1 | For the servos only; not the Arduino's 5 V. Choose an enclosed plug-in adaptor, **not** an open-frame supply with bare mains terminals, and have the electrician fit it with the others (wiring guide section 4). | [AliExpress](https://www.aliexpress.com/w/wholesale-5v-3a-power-adapter.html) | 5–9 |
+| 🛡️ 5 V adaptor: Mean Well GST60A05-P1J (5 V 6 A) | 1 | For the servos only; not the Arduino's 5 V or the sound supply. Have the electrician fit it with the others (wiring guide section 4). | [RS](https://uk.rs-online.com/web/c/?searchTerm=GST60A05-P1J) | 16–20 |
 | Inline fuse holder and 3 A fuse | 1 | For the servo rail's + lead | [AliExpress](https://www.aliexpress.com/w/wholesale-inline-fuse-holder-5x20.html) | 1–3 |
 | 1000 µF 10 V electrolytic capacitor | 1 | Across the servo supply, near the servos | [AliExpress](https://www.aliexpress.com/w/wholesale-1000uf-10v-capacitor.html) | 1–2 |
 | Servo extension leads, 30–50 cm | 3 | From under the playfield to the Arduino | [AliExpress](https://www.aliexpress.com/w/wholesale-servo-extension-cable.html) | 2–4 |
@@ -172,7 +178,7 @@ The trapdoors are rebuilt with a hobby servo turning each flap; see the
 | Self-tapping screw assortment, M2 and M3 | 1 box | The collector to the frame (M3 × 6 mm), the ball-lift exit's halves together (M3 × 16 mm), the cranks to the servo horns, and the links' pivots (M2 × 10 mm) | [AliExpress](https://www.aliexpress.com/w/wholesale-self-tapping-screw-assortment-m2-m3.html) | 3–5 |
 | M3 × 8 mm grub screws (set screws) | 1 small pack | Holds the ball-lift cup on the coil's plunger, flush with the cup's side; comes with a hex key | [AliExpress](https://www.aliexpress.com/w/wholesale-m3-grub-screw.html) | 1–3 |
 
-**Section estimate: £67–142**
+**Section estimate: £78–153**
 
 ## 7. Power
 
@@ -180,17 +186,34 @@ Choose the coil voltage **with your coil supplier before ordering a supply**.
 The original 1950s coils were wound for AC. 48 V DC is a common choice for new
 coils, and the IRL540N handles it.
 
+Every supply here is an **enclosed desktop adaptor** with an IEC C14 inlet:
+each takes an ordinary mains lead, and the leads plug into a multi-socket that
+the electrician wires to the machine's switched inlet (wiring guide section 4).
+Nothing has bare mains terminals. Open-frame supplies such as the Mean Well LRS
+range are cheaper, but Mouser won't sell them to UK consumers, and they need
+their mains terminals wired and covered.
+
+The coil supply's 280 W (5.84 A) is less than a kick draws for a moment: one
+kicker draws about 10 A for its 20 ms pulse, and two flippers about 15 A for
+40 ms. Check on the bench (wiring guide section 9, step 7) that the supply
+doesn't cut out when both flippers kick at once (*verify*). If it does, add a
+large capacitor across the coil supply, or use the GST360A48-C6P (360 W,
+7.5 A), which is the same size but harder to find in stock.
+
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
-| 🛡️ Coil supply: Mean Well LRS-350-48 (48 V, 350 W) | 1 | Only if your coils are specified for 48 V DC | [Mouser](https://www.mouser.co.uk/c/?q=LRS-350-48) | 35–50 |
-| 🛡️ Lamp supply: Mean Well, matched to the bulbs | 1 | For 6.3 V bulbs, a supply adjustable to 6.3–7.5 V allows for the ULN2803's ~1 V drop | [Mouser](https://www.mouser.co.uk/c/?q=mean%20well%20LRS) | 12–20 |
-| 🛡️ Slow-blow fuses, 5 × 20 mm, assorted | 1 set | One per supply rail; see the wiring guide for sizes | [Mouser](https://www.mouser.co.uk/c/?q=5x20%20slow%20blow%20fuse) | 5–10 |
-| Panel-mount 5 × 20 mm fuse holders | 4 | | [AliExpress](https://www.aliexpress.com/w/wholesale-5x20mm-panel-fuse-holder.html) | 3–6 |
+| 🛡️ Coil supply: Mean Well GST280A48-C6P (48 V 5.84 A, 280 W) | 1 | Only if your coils are specified for 48 V DC. Its output plug is a 6-pin Molex Mini-Fit Jr: pins 1–3 are +V, 4–6 are −V (Mean Well's GST280A datasheet). Cut it off and wire the leads to the coil fuse and terminal block. | [RS](https://uk.rs-online.com/web/p/ac-dc-adapters/1176163) · [Rapid](https://www.rapidonline.com/mean-well-gst280a48-c6p-bench-psu-48v-5-84a-280-32w-erp-compliant-05-0693) | 80–100 |
+| 🛡️ Lamp supply: Mean Well GST60A07-P1J (7.5 V 6 A) | 1 | For 6.3 V bulbs: 7.5 V less the ULN2803's ~1 V drop. Check the total lamp current once the sockets are counted. | [RS](https://uk.rs-online.com/web/p/desktop-power-supplies/8808394) | 22–28 |
+| IEC C13 mains leads with UK plugs, 1 m | 5 | One per adaptor. The adaptors often come without one. | [RS](https://uk.rs-online.com/web/c/?searchTerm=C13%20UK%20mains%20lead) | 10–20 |
+| Enclosed multi-socket, 6-way, UK | 1 | The adaptors plug into it. **The electrician wires it to the switched inlet.** | [RS](https://uk.rs-online.com/web/c/?searchTerm=6%20way%20extension%20lead) | 8–15 |
+| 5.5 × 2.1 mm barrel socket to screw terminal adaptors | 3 | For the lamp, sound and servo supplies' plugs, so their leads can go to fuses and screw terminals. Low voltage, so a marketplace part is fine. | [AliExpress](https://www.aliexpress.com/w/wholesale-dc-barrel-jack-screw-terminal-female.html) | 2–4 |
+| 🛡️ Slow-blow fuses, 5 × 20 mm, assorted | 1 set | One per supply rail; see the wiring guide for sizes. These glass fuses are rated for 250 V AC; check their DC rating covers 48 V before using one on the coil rail (*verify*). | [Rapid](https://www.rapidonline.com/eska-122-800-slow-blow-micro-fuses-5-x-20mm-pack-of-100-54-5747) | 30–45 |
+| 🛡️ Panel-mount 5 × 20 mm fuse holders | 4 | E.g. Bulgin FX0454 (10 A) | [Rapid](https://www.rapidonline.com/search?query=FX0454) | 4–21 |
 | Terminal block / bus bar | 2 | One for the common ground point, one for coil +V distribution | [AliExpress](https://www.aliexpress.com/w/wholesale-terminal-block-bus-bar.html) | 4–8 |
-| DC-rated coil power switch | 1 | Cuts the coil supply only. Must be rated for **DC** at your coil voltage; many cheap switches are AC-only. | [AliExpress](https://www.aliexpress.com/w/wholesale-dc-rocker-switch-60v.html) | 3–8 |
-| IEC mains inlet with fuse and switch | 1 | **Have an electrician fit and check this, and the earth bonding** | [AliExpress](https://www.aliexpress.com/w/wholesale-iec-c14-inlet-fuse-switch.html) | 3–6 |
+| 🛡️ DC-rated coil power switch | 1 | Cuts the coil supply only. Must be rated for **DC** at your coil voltage; many cheap switches are AC-only. E.g. RS PRO 119-705 (DPST, 10 A at 60 V DC). | [RS](https://uk.rs-online.com/web/p/rocker-switches/0119705) | 5–7 |
+| 🛡️ IEC C14 mains inlet with fuse and switch | 1 | E.g. Bulgin BZV01/Z0000/01. Check it switches both live and neutral (*verify*). **Have an electrician fit and check this, and the earth bonding.** | [Rapid](https://www.rapidonline.com/bulgin-bzv01-z0000-01-fused-and-switched-vertical-inlet-23-3224) | 11–14 |
 
-**Section estimate: £65–108**
+**Section estimate: £176–262**
 
 ## 8. Wire, connectors and finishing
 

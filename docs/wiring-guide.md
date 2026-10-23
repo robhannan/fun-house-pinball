@@ -88,7 +88,9 @@ The full list, with quantities and links, is in
 - **Choose the coil supply voltage together with your replacement coils.** The
   original 1956 coils were wound for AC and shouldn't be reused on DC.
 - **Buy power supplies, MOSFETs and fuses from a reputable distributor**, not a
-  marketplace: fakes are common, and these are the safety-critical parts.
+  marketplace: fakes are common, and these are the safety-critical parts. Check
+  that the distributor will sell each one to you: Mouser, for one, won't sell
+  some power supplies to UK consumers.
 
 ---
 
@@ -111,11 +113,12 @@ The full list, with quantities and links, is in
               ═══════════════ COMMON GROUND POINT ════════════════
 ```
 
-Every supply, the 5 V sound and servo adaptors included, is fed from the machine's
-**switched mains inlet**, so the power switch turns everything off at once.
-**Have the electrician fit all of them.** Don't splice an adaptor into the mains
-wiring yourself. A plug-in adaptor can go in an enclosed multi-socket that the
-electrician wires to the inlet.
+Every supply is an **enclosed desktop adaptor** with its own mains lead, and
+all of them are fed from the machine's **switched mains inlet**, so the power
+switch turns everything off at once. Their leads plug into an enclosed
+multi-socket that the electrician wires to the inlet, so nothing inside the
+cabinet has bare mains terminals. **Have the electrician fit all of them.**
+Don't splice an adaptor into the mains wiring yourself.
 
 - **Common ground:** run every DC supply's negative (–) terminal, and the
   Arduino's GND, to **one** ground point, such as a terminal block. Without a
