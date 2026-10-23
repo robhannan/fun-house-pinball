@@ -82,7 +82,7 @@ make changes here.
 
 ## Pull requests
 
-Use the `github-pr` skill (`.claude/skills/github-pr/SKILL.md`) for the full
+Use the `github-pr` skill (`.agents/skills/github-pr/SKILL.md`) for the full
 steps. The essentials:
 
 1. **Check before every push**, not just the first one: run `git fetch origin`
