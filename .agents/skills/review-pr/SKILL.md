@@ -48,7 +48,7 @@ Read these first, from the PR's version of the repo:
 - `AGENTS.md`: project and PR rules (`CLAUDE.md` on branches older than the
   rename; it now just imports `AGENTS.md`)
 - `.github/pull_request_template.md`
-- `.claude/skills/github-pr/SKILL.md`
+- `.agents/skills/github-pr/SKILL.md`
 - `README.md`
 
 ## 3. Read the change properly
