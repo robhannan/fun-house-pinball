@@ -8,16 +8,16 @@ Everything needed to build the controller described in the
 
 | | Estimate |
 |---|---|
-| **Everything** | **£789–1,368** |
-| Without tools (if you already have them) | £711–1,202 |
+| **Everything** | **£870–1,535** |
+| Without tools (if you already have them) | £792–1,369 |
 | Electronics only (sections 1–8, no pinball parts or tools) | £504–832 |
 
 These are rough **estimates in GBP, as of October 2026**, to help with budgeting.
 
-- **Checked against current listings (October 2026; flipper coils converted from EUR):**
+- **Checked against current listings (October 2026):**
   - Mean Well GST280A48-C6P coil supply: £79–83 ex VAT at RS and Rapid
   - IRL540N MOSFETs: £1.33 each ex VAT at RS for 10 or more
-  - flipper coils: about €13–16
+  - AE-26-1200 kicker coil: £15.84 at Pinball Heaven
 - **Everything else** is a typical marketplace price range, not a quote.
 - **Not included:** delivery, import fees and an electrician's time for the mains
   wiring.
@@ -52,8 +52,9 @@ ordering.
   supply is sold to you before choosing a different one.
 - **Pinball-specific mechanical parts** (coils, flipper assemblies, rubbers,
   playfield switches, bulbs) are best bought from pinball specialists, who know
-  what fits a 1950s Williams. Examples are [Pinball Life](https://www.pinballlife.com)
-  and [Marco Specialties](https://www.marcospecialties.com).
+  what fits a 1950s Williams. Examples are [Pinball Heaven](https://www.pinball.co.uk)
+  in the UK, and [Pinball Life](https://www.pinballlife.com) and
+  [Marco Specialties](https://www.marcospecialties.com) in the US.
 - **Quantities include spares.** Cheap parts break and get lost, and a second
   order means another 2-week wait.
 
@@ -184,7 +185,8 @@ The trapdoors are rebuilt with a hobby servo turning each flap; see the
 
 Choose the coil voltage **with your coil supplier before ordering a supply**.
 The original 1950s coils were wound for AC. 48 V DC is a common choice for new
-coils, and the IRL540N handles it.
+coils, and the IRL540N handles it. The first-round coils in section 10 are
+modern Williams/Bally coils from the 50 V DC family, so this list uses 48 V.
 
 Every supply here is an **enclosed desktop adaptor** with an IEC C14 inlet:
 each takes an ordinary mains lead, and the leads plug into a multi-socket that
@@ -202,7 +204,7 @@ large capacitor across the coil supply, or use the GST360A48-C6P (360 W,
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
-| 🛡️ Coil supply: Mean Well GST280A48-C6P (48 V 5.84 A, 280 W) | 1 | Only if your coils are specified for 48 V DC. Its output plug is a 6-pin Molex Mini-Fit Jr: pins 1–3 are +V, 4–6 are −V (Mean Well's GST280A datasheet). Cut it off and wire the leads to the coil fuse and terminal block. | [RS](https://uk.rs-online.com/web/p/ac-dc-adapters/1176163) · [Rapid](https://www.rapidonline.com/mean-well-gst280a48-c6p-bench-psu-48v-5-84a-280-32w-erp-compliant-05-0693) | 80–100 |
+| 🛡️ Coil supply: Mean Well GST280A48-C6P (48 V 5.84 A, 280 W) | 1 | Only if your coils are specified for 48–50 V DC, like the 50 V family in section 10 (slightly weaker at 48 V). Its output plug is a 6-pin Molex Mini-Fit Jr: pins 1–3 are +V, 4–6 are −V (Mean Well's GST280A datasheet). Cut it off and wire the leads to the coil fuse and terminal block. | [RS](https://uk.rs-online.com/web/p/ac-dc-adapters/1176163) · [Rapid](https://www.rapidonline.com/mean-well-gst280a48-c6p-bench-psu-48v-5-84a-280-32w-erp-compliant-05-0693) | 80–100 |
 | 🛡️ Lamp supply: Mean Well GST60A07-P1J (7.5 V 6 A) | 1 | For 6.3 V bulbs: 7.5 V less the ULN2803's ~1 V drop. Check the total lamp current once the sockets are counted. | [RS](https://uk.rs-online.com/web/p/desktop-power-supplies/8808394) | 22–28 |
 | IEC C13 mains leads with UK plugs, 1 m | 5 | One per adaptor. The adaptors often come without one. | [RS](https://uk.rs-online.com/web/c/?searchTerm=C13%20UK%20mains%20lead) | 10–20 |
 | Enclosed multi-socket, 6-way, UK | 1 | The adaptors plug into it. **The electrician wires it to the switched inlet.** | [RS](https://uk.rs-online.com/web/c/?searchTerm=6%20way%20extension%20lead) | 8–15 |
@@ -247,17 +249,45 @@ large capacitor across the coil supply, or use the GST360A48-C6P (360 W,
 
 ## 10. From a pinball specialist
 
-Order these once the playfield has been surveyed. Give the supplier the game
-(1956 Williams *Fun House*), your coil supply voltage, and photos or measurements
-of the old parts.
+Buy these in two rounds. The first round is enough to bench-test the coil
+drivers (wiring guide section 9, steps 6–7) and to measure the parts the
+3D-printed ball return is built around. Order the second round once the
+playfield has been surveyed and the first flipper has been test-fitted under
+it. For that order, give the supplier the game (1956 Williams *Fun House*), your
+coil supply voltage, and photos or measurements of the old parts.
+
+Shops sell the kickers as **slingshot** coils and assemblies; they rarely use
+the word "kicker".
+
+### First round: bench testing
+
+These are modern (1980s–90s) Williams/Bally parts from the 50 V DC family,
+which is why the coil supply is 48 V (section 7). The coil figures below are
+from the suppliers' listings and memory: *verify* them with the multimeter
+before wiring.
 
 | Item | Qty | Notes | Est. £ |
 |---|---|---|---|
-| Kicker coils | 6 | DC, at your coil voltage | 60–90 |
+| Left flipper assembly with an FL-11722 coil | 1 | Williams/Bally WPC era. The FL-11722 (green, medium-low strength) is dual-wound with 3 lugs: about 6.2 Ω power, 160 Ω hold, diodes fitted. Leave its end-of-stroke switch unwired; the controller times the flip. Whether it fits under the 1956 playfield is unknown: compare its plate and shaft position with the old mechanism. From [Pinball Heaven](https://www.pinball.co.uk/spares-accessories/major-playfield-mechanisms/flipper-parts/left-flipper-assembly-fl-11722-coil/). | 40–80 |
+| Kicker (slingshot) coil, AE-26-1200 | 1 | The first coil to bring up (wiring guide section 9, step 6). Williams' standard slingshot and pop bumper coil: 26 AWG, 1,200 turns, roughly 10 A at 48 V. Avoid the stronger AE-23/24/25 coils and the weak AE-27/30 coils. | 15–17 |
+| Coil sleeve and plunger for the AE-26-1200 | 1 each | A bare coil can't kick. Ask the supplier for the ones that match a slingshot. | 5–10 |
+| Flipper bat with shaft, and a rubber ring | 1 | Only if the assembly doesn't include them | 8–15 |
+| Pinballs, 1-1/16" (27 mm) steel | 3–5 | For testing the flipper and test-fitting the printed ball return. Measure an original ball too (*verify* that it's the same size). | 5–10 |
+| Ball-serve (ball lift) coil assembly | 1 | Kicks each ball up the printed ball lift into the shooter lane. Buy it early if you can: measure its plunger and mounting screws for `measurements.scad` before ordering prints. | 25–60 |
+| *Optional:* flipper button with its leaf switch | 1 | The tactile buttons in section 2 do on the bench, but a real one shows how the flip feels | 5–10 |
+
+**First round estimate: £98–192**
+
+### Second round: after the survey
+
+| Item | Qty | Notes | Est. £ |
+|---|---|---|---|
+| Kicker (slingshot) coils | 5 | DC, at your coil voltage. Six kickers in all; the bench-test coil can be the sixth if it suits the table. | 50–75 |
 | Pop bumper coils | 6 | DC, at your coil voltage | 60–90 |
-| Ball-serve (ball lift) coil assembly | 1 | Kicks each ball up the printed ball lift into the shooter lane. Measure its plunger and mounting screws for the printed parts. | 25–60 |
-| Dual-wound flipper coils | 2 | DC, at your coil voltage; ask for the lug layout | 22–30 |
+| Right flipper assembly | 1 | To match the left one, once that has been test-fitted. If the left one doesn't fit, choose a pair that does. Ask for the lug layout. | 40–80 |
 | *Optional:* bells with coils | 0–3 | Not needed now. For the authentic 1950s scoring sound later (wiring guide section 7e). | varies |
 | Flipper rebuild kits, rubber rings, pop bumper caps | As needed | | 40–100 |
 
-**Section estimate: £207–370**
+**Second round estimate: £190–345**
+
+**Section estimate: £288–537**
