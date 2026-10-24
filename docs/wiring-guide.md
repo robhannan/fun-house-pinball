@@ -102,7 +102,7 @@ The full list, with quantities and links, is in
             └──┬─────────┬──────┬───────┬──────────┬───┘
                │         │      │       │          │
         ┌──────▼───┐ ┌───▼────┐ ┌▼──────┐ ┌▼────────┐ ┌▼────────┐
-        │ Coil PSU │ │Lamp PSU│ │ 9 V   │ │ 5 V 2 A │ │ 5 V 3 A │
+        │ Coil PSU │ │Lamp PSU│ │ 9 V   │ │ 5 V     │ │ 5 V     │
         │ (DC)     │ │ (DC)   │ │Arduino│ │ sound   │ │ servos  │
         └─┬──────┬─┘ └─┬────┬─┘ └─┬───┬─┘ └─┬─────┬─┘ └─┬─────┬─┘
         +V│  fuse│-  +V│fuse│-   +│   │-   +│fuse │-   +│fuse │-
@@ -396,8 +396,8 @@ its input is high.
   OUT8 is pin 11.
 - **Lamp's other side:** lamp supply + (fused)
 
-The ULN2803A drops about 1 V, so 6.3 V LED bulbs may look slightly dim. If they
-do, raise the lamp supply a little, staying within the bulbs' rated voltage.
+The ULN2803A drops about 1 V, which is why the lamp supply is 7.5 V: the
+6.3 V bulbs get about 6.5 V.
 Each chip handles up to 500 mA per lamp but less in total, which is plenty for
 LEDs.
 
@@ -503,8 +503,8 @@ adjust, and its closed and open angles are set from test mode.
 | − (brown or black) | The servo supply's **−**, which also joins the common ground point |
 
 - **Their own supply:** a servo can draw an amp or more as it moves, which
-  would brown out the Arduino. Use a separate **enclosed plug-in** 5 V, 3 A
-  adaptor, fed from the switched mains inlet and fitted by the electrician
+  would brown out the Arduino. Use a separate **enclosed** 5 V adaptor (see the
+  shopping list), fed from the switched mains inlet and fitted by the electrician
   like the others (section 4), with a 3 A fuse in its + lead. Fit a 1000 µF
   capacitor across its output near the servos (stripe to −).
 - **Common ground:** join the servo supply's − to the common ground point, or
@@ -610,6 +610,12 @@ to look. **Keep the coil supply switched off until step 6.**
 7. **The remaining coils, one by one**, in the same way, then the trapdoor
    flaps in test mode's flaps stage (section 7f), then the lamps in its lamp
    stage (the flipper buttons step through them by name).
+
+   Then check the coil supply copes with **both flippers at once**. Test mode
+   fires one coil at a time, so leave it, press Start to begin a game, and
+   press both flipper buttons together a dozen times. If a flipper drops or
+   hesitates, or the supply's light flickers, the supply is cutting out on
+   overload: see the shopping list, section 7.
 8. **Sound.** Wire the WAV Trigger and its speaker, and prepare the SD card
    (section 7d). Power on and wait 2 seconds, then press start: you should hear
    the calliope march.
