@@ -1,8 +1,8 @@
 name: Pages
 
-# Builds the parts tracker from docs/shopping-list.md. Pull requests only
-# build it, which fails on a table row the tracker can't read; pushes to main
-# also deploy it to GitHub Pages. The counts are on the parts-data branch, so
+# Builds the site: the browser simulator, and the parts tracker from
+# docs/shopping-list.md. Pull requests only build it, which fails on a table
+# row the tracker can't read; pushes to main also deploy it to GitHub Pages. The counts are on the parts-data branch, so
 # saving them doesn't run this.
 on:
   push:
@@ -12,6 +12,16 @@ on:
       - "site/**"
       - "sim/serve.mjs"
       - "sim/serve.test.mjs"
+      # The simulator: its page, and the game logic and drawings it's built from.
+      - "sim/build.mjs"
+      - "sim/web/**"
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".cargo/**"
+      - "docs/playfield.svg"
+      - "docs/backboard.svg"
       - ".github/workflows/pages.yml"
       - "package.json"
       - "pnpm-lock.yaml"
@@ -21,6 +31,16 @@ on:
       - "site/**"
       - "sim/serve.mjs"
       - "sim/serve.test.mjs"
+      # The simulator: its page, and the game logic and drawings it's built from.
+      - "sim/build.mjs"
+      - "sim/web/**"
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".cargo/**"
+      - "docs/playfield.svg"
+      - "docs/backboard.svg"
       - ".github/workflows/pages.yml"
       - "package.json"
       - "pnpm-lock.yaml"
@@ -37,7 +57,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build the parts tracker
+    name: Build the simulator and parts tracker
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -47,7 +67,9 @@ jobs:
           require-lockfile: true
       - name: Test the shopping list parser and the preview server
         run: pnpm run test:site
-      - name: Build the site from the shopping list
+      - run: pnpm run ci:toolchain
+      - uses: Swatinem/rust-cache@v2
+      - name: Build the simulator and the parts tracker
         run: pnpm run build:site
       - if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v6

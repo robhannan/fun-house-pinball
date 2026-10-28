@@ -4,9 +4,33 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fun House Pinball</title>
-<meta http-equiv="refresh" content="0; url=parts/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="parts/style.css">
+<style>
+  .pages { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .page { display: flex; flex-direction: column; gap: 4px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; text-decoration: none; color: var(--ink); }
+  .page:hover { border-color: var(--accent); }
+  .page h2 { color: var(--accent); }
+  .page p { margin: 0; color: var(--muted); }
+</style>
 </head>
 <body>
-<p>The <a href="parts/">parts tracker</a> is the only page here so far.</p>
+<div class="wrap">
+  <header>
+    <h1>Fun House Pinball</h1>
+    <p class="sub">A 1956 Williams <i>Fun House</i>, rebuilt with an Arduino Mega 2560 and a Rust controller. The code and wiring guides are on <a href="https://github.com/robhannan/fun-house-pinball">GitHub</a>.</p>
+  </header>
+  <nav class="pages">
+    <a class="page" href="sim/">
+      <h2>Simulator</h2>
+      <p>Play the real game logic in the browser, with the ball, flippers and sounds.</p>
+    </a>
+    <a class="page" href="parts/">
+      <h2>Parts Bin</h2>
+      <p>Track how many of each part on the shopping list you've got.</p>
+    </a>
+  </nav>
+</div>
 </body>
 </html>
