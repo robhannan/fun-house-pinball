@@ -9,6 +9,7 @@ const STRAY = [
   /(^|\/)target\//,
   /(^|\/)node_modules\//,
   /^sim\/web\/generated\//,
+  /^site\/generated\//,
 ];
 
 const files = (await $`git ls-files`).stdout.split("\n").filter(Boolean);

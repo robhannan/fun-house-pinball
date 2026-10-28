@@ -7,3 +7,4 @@ target/
 !.vscode/settings.json
 node_modules/
 sim/web/generated/
+site/generated/

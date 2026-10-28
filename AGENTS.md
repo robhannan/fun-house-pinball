@@ -27,6 +27,14 @@ make changes here.
 - **Parts list:** add every new part to `PARTS` in `playfield.rs`, as well as
   to the `sw`/`coil`/`lamp` modules. Tests check it against `COIL_KINDS`, and
   other checks build on it.
+- **Shopping list tables feed the parts tracker:** `site/build.mjs` reads every
+  table in `docs/shopping-list.md` with `Item` and `Qty` columns, and fails on
+  a Qty it can't read (a number, a range like `3–5`, `about 25 parts`, `As
+  needed`, or `—` for a part in another kit). An item's count is keyed by its
+  name, plus its section when the same name is in more than one section, so
+  renaming an item (or removing one of two same-named items) leaves its saved
+  count behind on the `parts-data` branch; the page lists those so they can
+  be moved. `pnpm run test:site` tests the parser.
 - **Scripts are written in zx, not bash,** wherever possible: `.mjs` files that
   `import { $ } from "zx"`, with zx pinned in `package.json`. Use **pnpm**,
   not npm: `pnpm install`, then `pnpm run <script>`. Keep workflow `run:`

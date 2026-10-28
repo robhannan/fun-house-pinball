@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fun House Parts Bin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="style.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Fun House Parts Bin</h1>
+    <p class="sub">What you've got from the <a id="list-link" href="#">shopping list</a>, part by part. Type a number or use − and +. Optional and "as needed" parts don't count towards the totals.</p>
+  </header>
+
+  <div class="summary">
+    <div class="stat"><span class="label">Parts complete</span><span class="value" id="s-done">–</span><div class="bar"><span id="s-bar"></span></div></div>
+    <div class="stat"><span class="label">Partly got</span><span class="value" id="s-partial">–</span></div>
+    <div class="stat"><span class="label">Not started</span><span class="value" id="s-none">–</span></div>
+  </div>
+
+  <details class="connect" id="connect">
+    <summary id="connect-summary">Connect to GitHub to save counts</summary>
+    <div class="connect-body">
+      <p>Counts are saved to <code id="data-path"></code> by committing to the repository, so you need a GitHub token that can write to it.</p>
+      <p>The token is kept in this browser's storage for <code>github.io</code>, which every GitHub Pages site under the same account can read. It can also push to any branch of the repository, <code>main</code> included, so give it a short expiry and use <b>Forget token</b> on a shared computer.</p>
+      <ol>
+        <li>Create a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">fine-grained token</a>.</li>
+        <li>Under <b>Repository access</b>, choose <b>Only select repositories</b> and pick <b id="repo-name"></b>.</li>
+        <li>Under <b>Permissions</b>, set <b>Contents</b> to <b>Read and write</b>.</li>
+        <li>Paste it here.</li>
+      </ol>
+      <form id="token-form" class="token-row">
+        <input id="token" type="password" autocomplete="off" placeholder="github_pat_…" aria-label="GitHub token">
+        <button type="submit">Connect</button>
+        <button type="button" id="forget" hidden>Forget token</button>
+      </form>
+    </div>
+  </details>
+
+  <div class="controls">
+    <div class="filters" role="group" aria-label="Show">
+      <button type="button" data-filter="all" aria-pressed="true">All</button>
+      <button type="button" data-filter="need" aria-pressed="false">Still to get</button>
+      <button type="button" data-filter="got" aria-pressed="false">Got</button>
+    </div>
+    <input id="search" type="search" placeholder="Find a part" aria-label="Find a part">
+    <span class="status" id="status" role="status">Loading…</span>
+  </div>
+
+  <main id="list"></main>
+  <p class="orphans" id="orphans" hidden></p>
+</div>
+</body>
+</html>
