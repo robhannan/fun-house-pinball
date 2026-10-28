@@ -29,8 +29,11 @@ await $`node sim/build.mjs`;
 await fs.emptyDir(out);
 await fs.copy(path.join(root, "sim/web"), path.join(out, "sim"));
 await fs.copy(path.join(root, "site/index.html"), path.join(out, "index.html"));
-await fs.copy(path.join(root, "site/parts"), path.join(out, "parts"));
-await fs.writeJson(path.join(out, "parts/items.json"), { repo, branch: "parts-data", file: "got.json", sections });
+await fs.copy(path.join(root, "site/parts"), path.join(out, "parts"), { filter: (file) => !file.endsWith(".test.mjs") });
+// Counts and orders are saved to parts.json. got.json holds counts from
+// before the ordered option; it's only read until parts.json exists, so a
+// tab still running the old page can't overwrite the new file.
+await fs.writeJson(path.join(out, "parts/items.json"), { repo, branch: "parts-data", file: "parts.json", legacyFile: "got.json", sections });
 
 const items = sections.flatMap((s) => s.groups.flatMap((g) => g.items));
 console.log(`Built the simulator, and ${items.length} parts in ${sections.length} sections, saving to ${repo}.`);

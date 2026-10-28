@@ -72,20 +72,26 @@ main { display: flex; flex-direction: column; gap: 16px; }
 .grp:last-child .row:last-child { border-bottom: 0; }
 .row.done { border-left-color: var(--done); }
 .row.partial { border-left-color: var(--part); }
+.row.ordered { border-left-color: var(--accent); }
 .row .info { min-width: 0; }
 .row .name { font-weight: 600; }
 .row .note { font-size: 0.85rem; color: var(--muted); }
 .tag { display: inline-block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: 2px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .tag.opt { background: var(--line); color: var(--muted); }
-.counter { display: flex; align-items: center; gap: 6px; }
+.counter { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .counter button { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 1.1rem; line-height: 1; cursor: pointer; }
 .counter button:hover:not(:disabled) { border-color: var(--accent); }
 .counter button:disabled, .counter input:disabled { opacity: 0.5; cursor: not-allowed; }
 .counter input { width: 3.6em; text-align: right; font-family: var(--font-num); font-size: 1rem; padding: 5px 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.counter .order { width: auto; height: 32px; white-space: nowrap; font: inherit; font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+.counter .order:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.counter .order[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.counter .order:disabled { opacity: 0.5; cursor: not-allowed; }
 .counter .need { font-family: var(--font-num); color: var(--muted); min-width: 6em; font-size: 0.85rem; }
 .pill { font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
 .pill.done { background: var(--done-soft); color: var(--done); }
 .pill.partial { background: var(--part-soft); color: var(--part); }
+.pill.ordered { background: var(--accent-soft); color: var(--accent); }
 .pill.none { background: var(--bg); color: var(--muted); }
 .empty, .orphans { color: var(--muted); text-align: center; font-size: 0.9rem; }
 button:focus-visible, input:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

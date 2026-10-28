@@ -36,8 +36,10 @@ your laptop without an Arduino.
 
 The [parts tracker](https://robhannan.github.io/fun-house-pinball/parts/) shows
 every part on the [shopping list](docs/shopping-list.md) with how many you've
-got. It's built from the list's tables, and the counts are saved to `got.json`
-on the `parts-data` branch: connect a GitHub token on the page to change them.
+got and what's on order. It's built from the list's tables, and the counts are
+saved to `parts.json` on the `parts-data` branch: connect a GitHub token on the
+page to change them. (`got.json` there holds counts from before the ordered
+option, and is only read until `parts.json` exists.)
 Preview it locally with `pnpm run build:site` and then `pnpm run serve:site`;
 the build includes the simulator, so it needs Rust (see below).
 The token is kept in the browser's storage for `github.io`, where every
