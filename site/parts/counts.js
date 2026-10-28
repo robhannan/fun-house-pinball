@@ -10,6 +10,7 @@ export const record = (records, id) => records[id] ?? EMPTY;
 // before the ordered option are a flat { id: count }, read the same way.
 export function parseCounts(text) {
   const data = JSON.parse(text);
+  if (data === null || typeof data !== "object" || Array.isArray(data)) throw new TypeError("not an object of counts");
   const legacy = !("got" in data || "ordered" in data);
   const got = legacy ? data : (data.got ?? {});
   const records = {};

@@ -1,18 +1,20 @@
 // The parts tracker. items.json is built from docs/shopping-list.md by
-// site/build.mjs; what you've got and what's on order live in got.json on
+// site/build.mjs; what you've got and what's on order live in parts.json on
 // the parts-data branch, read and committed through the GitHub contents API.
+// Until parts.json exists, the counts are read from the older got.json.
 import { commitMessage, itemState, parseCounts, record, serialiseCounts, withGot } from "./counts.js";
 
 const TOKEN_KEY = "funhouse-parts-token";
 const $ = (id) => document.getElementById(id);
 
-const { repo, branch, file, sections } = await (await fetch("items.json", { cache: "no-store" })).json();
+const { repo, branch, file, legacyFile, sections } = await (await fetch("items.json", { cache: "no-store" })).json();
 const items = sections.flatMap((s) => s.groups.flatMap((g) => g.items));
 const byId = new Map(items.map((it) => [it.id, it]));
-const api = `https://api.github.com/repos/${repo}/contents/${file}`;
+const contents = (name) => `https://api.github.com/repos/${repo}/contents/${name}`;
+const api = contents(file);
 
 let records = {}; // what the page shows: { id: { got, ordered } }
-let saved = {}; // what got.json held when last read or written
+let saved = {}; // what the saved file held when last read or written
 let sha = null;
 let token = readToken();
 const pending = {}; // unsaved changes by id, reapplied after a re-read
@@ -46,15 +48,28 @@ const fromBase64 = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64.re
 const toBase64 = (text) => btoa(String.fromCharCode(...new TextEncoder().encode(text)));
 const hasPending = () => Object.keys(pending).length > 0;
 
-async function load() {
-  const res = await fetch(`${api}?ref=${branch}`, { headers: headers(), cache: "no-store" });
+// The file's text and sha, or null if it doesn't exist.
+async function read(name) {
+  const res = await fetch(`${contents(name)}?ref=${branch}`, { headers: headers(), cache: "no-store" });
+  if (res.status === 404) return null;
   if (res.status === 401) throw new Error("GitHub didn't accept the token. Check it hasn't expired, or forget it and paste a new one.");
-  if (res.status === 404) throw new Error(`Can't find ${file} on the ${branch} branch of ${repo}.`);
   if (res.status === 403) throw new Error("GitHub is limiting requests. Connect a token, or try again in an hour.");
   if (!res.ok) throw new Error(`GitHub answered ${res.status} when reading the counts.`);
   const body = await res.json();
-  sha = body.sha;
-  saved = parseCounts(fromBase64(body.content));
+  return { text: fromBase64(body.content), sha: body.sha };
+}
+
+async function load() {
+  const current = await read(file);
+  // No parts.json yet: start from got.json, and create parts.json (no sha) on the first save.
+  const source = current ?? (await read(legacyFile));
+  if (!source) throw new Error(`Can't find ${file} or ${legacyFile} on the ${branch} branch of ${repo}.`);
+  sha = current?.sha ?? null;
+  try {
+    saved = parseCounts(source.text);
+  } catch {
+    throw new Error(`${current ? file : legacyFile} on the ${branch} branch isn't a list of counts. Fix or remove it there.`);
+  }
   records = { ...saved, ...pending };
 }
 
@@ -81,7 +96,7 @@ async function save() {
       const res = await fetch(api, {
         method: "PUT",
         headers: { ...headers(), "Content-Type": "application/json" },
-        body: JSON.stringify({ message: commitMessage(sent, saved, byId), content: toBase64(serialiseCounts({ ...saved, ...sent })), sha, branch }),
+        body: JSON.stringify({ message: commitMessage(sent, saved, byId), content: toBase64(serialiseCounts({ ...saved, ...sent })), ...(sha && { sha }), branch }),
       });
       if ((res.status === 409 || res.status === 422) && attempt === 0) {
         // Saved from somewhere else since we last read: re-read, keep our changes, try again.

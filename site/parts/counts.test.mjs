@@ -19,6 +19,11 @@ test("reads counts and orders, including an order for a part you have none of", 
   assert.deepEqual(parseCounts('{ "got": {}, "ordered": [] }'), {});
 });
 
+test("refuses a file that isn't an object of counts", () => {
+  for (const text of ["null", "[]", "3", '"mega"']) assert.throws(() => parseCounts(text), TypeError, text);
+  assert.throws(() => parseCounts("{"), SyntaxError);
+});
+
 test("writes sorted counts and orders, dropping zeros, and reads them back", () => {
   const records = { mega: { got: 2, ordered: false }, hc595: { got: 0, ordered: true }, leds: { got: 0, ordered: false } };
   const text = serialiseCounts(records);
