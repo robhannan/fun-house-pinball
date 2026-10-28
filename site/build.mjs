@@ -1,6 +1,6 @@
-// Builds the GitHub Pages site into site/generated/: the parts tracker, with
-// its items read from docs/shopping-list.md. Fails if a row can't be read.
-// Run with:
+// Builds the GitHub Pages site into site/generated/: the browser simulator
+// (built by sim/build.mjs) and the parts tracker, with its items read from
+// docs/shopping-list.md. Fails if a row can't be read. Run with:
 //   pnpm run build:site
 import { $, fs, path } from "zx";
 import { parseShoppingList } from "./shopping-list.mjs";
@@ -22,11 +22,16 @@ if (errors.length) {
 const remote = process.env.GITHUB_REPOSITORY ?? (await $`git remote get-url origin`).stdout.trim();
 const repo = remote.match(/([^/:]+\/[^/]+?)(?:\.git)?$/)[1];
 
+// The simulator needs Rust with the wasm32 target (rust-toolchain.toml).
+// Quiet unless it fails, when zx prints its output.
+await $`node sim/build.mjs`;
+
 await fs.emptyDir(out);
+await fs.copy(path.join(root, "sim/web"), path.join(out, "sim"));
 await fs.copy(path.join(root, "site/index.html"), path.join(out, "index.html"));
 await fs.copy(path.join(root, "site/parts"), path.join(out, "parts"));
 await fs.writeJson(path.join(out, "parts/items.json"), { repo, branch: "parts-data", file: "got.json", sections });
 
 const items = sections.flatMap((s) => s.groups.flatMap((g) => g.items));
-console.log(`Built ${items.length} parts in ${sections.length} sections, saving to ${repo}.`);
+console.log(`Built the simulator, and ${items.length} parts in ${sections.length} sections, saving to ${repo}.`);
 console.log("Preview with: pnpm run serve:site");

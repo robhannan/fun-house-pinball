@@ -15,7 +15,7 @@ driven by an Arduino Mega 2560 instead of relays and stepper units.
 ├── crates/pinball-core   # no_std game logic: switches, coils, lamps, rules (host-testable)
 ├── crates/pinball-sim    # the game logic compiled to WebAssembly for the simulator
 ├── sim/                  # browser simulator page and build script
-├── site/                 # GitHub Pages site: the parts tracker, built from the shopping list
+├── site/                 # GitHub Pages site: the simulator and the parts tracker
 ├── firmware              # Arduino Mega 2560 binary: I/O + main loop (AVR, nightly)
 ├── hardware/3d           # OpenSCAD models of the 3D-printed ball return
 └── docs
@@ -54,8 +54,11 @@ cargo clippy --all-targets
 
 ### Simulator (play it in a browser)
 
-Try the rules without any hardware. The simulator runs the real `pinball-core`
-logic compiled to WebAssembly, on the playfield map from `docs/playfield.svg`.
+Try the rules without any hardware, either
+[online](https://robhannan.github.io/fun-house-pinball/sim/) (rebuilt whenever
+its code changes on `main`) or locally as below. The simulator runs the real
+`pinball-core` logic compiled to WebAssembly, on the playfield map from
+`docs/playfield.svg`.
 A simulated ball rolls down the sloped playfield: launch it with the plunger,
 and keep it alive with the flippers. It closes the switches it touches, and the
 real rules fire the coils that kick it, so pop bumpers, kickers, flippers,
