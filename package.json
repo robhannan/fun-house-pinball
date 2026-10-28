@@ -12,6 +12,7 @@
     "build:sim": "node sim/build.mjs",
     "serve:sim": "node sim/serve.mjs",
     "build:site": "node site/build.mjs",
+    "test:site": "node --test site/shopping-list.test.mjs sim/serve.test.mjs",
     "serve:site": "node sim/serve.mjs --dir=../site/generated",
     "render:sounds": "node sim/render-sounds.mjs",
     "check:sounds": "node sim/render-sounds.mjs --check",

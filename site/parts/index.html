@@ -25,7 +25,8 @@
   <details class="connect" id="connect">
     <summary id="connect-summary">Connect to GitHub to save counts</summary>
     <div class="connect-body">
-      <p>Counts are saved to <code id="data-path"></code> by committing to the repository, so you need a GitHub token that can write to it. The token stays in this browser.</p>
+      <p>Counts are saved to <code id="data-path"></code> by committing to the repository, so you need a GitHub token that can write to it.</p>
+      <p>The token is kept in this browser's storage for <code>github.io</code>, which every GitHub Pages site under the same account can read. It can also push to any branch of the repository, <code>main</code> included, so give it a short expiry and use <b>Forget token</b> on a shared computer.</p>
       <ol>
         <li>Create a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">fine-grained token</a>.</li>
         <li>Under <b>Repository access</b>, choose <b>Only select repositories</b> and pick <b id="repo-name"></b>.</li>

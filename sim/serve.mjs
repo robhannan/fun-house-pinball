@@ -24,9 +24,21 @@ const TYPES = {
 
 createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", "http://localhost");
-  const file = path.join(root, decodeURIComponent(url.pathname.endsWith("/") ? url.pathname + "index.html" : url.pathname));
+  let file;
+  try {
+    file = path.join(root, decodeURIComponent(url.pathname.endsWith("/") ? url.pathname + "index.html" : url.pathname));
+  } catch {
+    response.writeHead(400, { "Content-Type": "text/plain" }).end("Bad request");
+    return;
+  }
   // Never serve anything outside the served folder.
-  if (!file.startsWith(root + path.sep) || !(await fs.pathExists(file)) || (await fs.stat(file)).isDirectory()) {
+  const inside = file.startsWith(root + path.sep);
+  // A folder without its trailing slash: redirect, as GitHub Pages does.
+  if (inside && (await fs.pathExists(file)) && (await fs.stat(file)).isDirectory()) {
+    response.writeHead(301, { Location: url.pathname + "/" }).end();
+    return;
+  }
+  if (!inside || !(await fs.pathExists(file))) {
     response.writeHead(404, { "Content-Type": "text/plain" }).end("Not found");
     return;
   }

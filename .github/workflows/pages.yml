@@ -10,6 +10,8 @@ on:
     paths:
       - "docs/shopping-list.md"
       - "site/**"
+      - "sim/serve.mjs"
+      - "sim/serve.test.mjs"
       - ".github/workflows/pages.yml"
       - "package.json"
       - "pnpm-lock.yaml"
@@ -17,6 +19,8 @@ on:
     paths:
       - "docs/shopping-list.md"
       - "site/**"
+      - "sim/serve.mjs"
+      - "sim/serve.test.mjs"
       - ".github/workflows/pages.yml"
       - "package.json"
       - "pnpm-lock.yaml"
@@ -25,9 +29,11 @@ on:
 permissions:
   contents: read
 
+# A newer push to a pull request cancels its older build, but a deploy to
+# Pages is never cancelled part-way.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -39,6 +45,8 @@ jobs:
         with:
           cache: true
           require-lockfile: true
+      - name: Test the shopping list parser and the preview server
+        run: pnpm run test:site
       - name: Build the site from the shopping list
         run: pnpm run build:site
       - if: github.event_name != 'pull_request'

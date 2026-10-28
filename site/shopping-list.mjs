@@ -36,15 +36,13 @@ export function parseQty(text) {
   return { need: Number(match[2] ?? match[1]), qty };
 }
 
-const firstSentence = (text) => {
-  const match = text.match(/^.*?[.!?](?=\s|$)/);
-  return match ? match[0] : text;
-};
-
 export function parseShoppingList(markdown) {
   const sections = [];
   const errors = [];
   const ids = new Set();
+  // A name used in more than one section gets the section on every copy, so
+  // removing one copy shows its count as left behind instead of passing it on.
+  const names = new Map();
   let section = null;
   let group = null;
   let columns = null;
@@ -89,13 +87,13 @@ export function parseShoppingList(markdown) {
     }
     const optional = /^\*Optional:\*\s*/.test(itemText);
     const name = plain(itemText.replace(/^\*Optional:\*\s*/, ""));
-    let id = slug(name);
-    if (ids.has(id)) id = `${id}-${section.key}`;
-    if (ids.has(id)) {
+    const id = slug(name);
+    if (ids.has(`${section.key}/${id}`)) {
       errors.push(`line ${lineNo}: "${name}" appears twice in section ${section.key}`);
       return;
     }
-    ids.add(id);
+    ids.add(`${section.key}/${id}`);
+    names.set(id, (names.get(id) ?? 0) + 1);
 
     if (!group) {
       group = { title: null, items: [] };
@@ -108,12 +106,19 @@ export function parseShoppingList(markdown) {
       qty: qty.qty,
       optional,
       distributor: itemText.includes("🛡️"),
-      note: plain(firstSentence(row[columns.notes] ?? "")),
+      section: section.key,
+      note: plain(row[columns.notes] ?? ""),
       links: "link" in columns ? links(row[columns.link] ?? "") : [],
       where: "link" in columns && !links(row[columns.link] ?? "").length ? plain(row[columns.link] ?? "") : "",
     });
   });
 
-  for (const s of sections) s.groups = s.groups.filter((g) => g.items.length);
+  for (const s of sections) {
+    s.groups = s.groups.filter((g) => g.items.length);
+    for (const item of s.groups.flatMap((g) => g.items)) {
+      if (names.get(item.id) > 1) item.id = `${item.id}-${item.section}`;
+      delete item.section;
+    }
+  }
   return { sections: sections.filter((s) => s.groups.length), errors };
 }

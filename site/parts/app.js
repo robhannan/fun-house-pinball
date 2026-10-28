@@ -80,49 +80,62 @@ function serialise(values) {
   return JSON.stringify(tidy, null, 2) + "\n";
 }
 
-async function save(retried = false) {
+// A save that fails for a reason trying again won't fix, such as a bad token.
+class StopSaving extends Error {}
+
+const SAVE_DELAY_MS = 1500;
+let retryDelay = SAVE_DELAY_MS;
+
+async function save() {
   if (saving) return schedule();
-  if (!dirty.size) return;
+  if (!dirty.size || !token) return;
   saving = true;
-  const ids = [...dirty];
-  const sent = Object.fromEntries(ids.map((id) => [id, counts[id]]));
+  let stop = false;
   setStatus("Saving…");
   try {
-    const res = await fetch(api, {
-      method: "PUT",
-      headers: { ...headers(), "Content-Type": "application/json" },
-      body: JSON.stringify({ message: commitMessage(ids), content: toBase64(serialise({ ...saved, ...sent })), sha, branch }),
-    });
-    if ((res.status === 409 || res.status === 422) && !retried) {
-      // Saved from somewhere else since we last read: re-read, keep our changes, try again.
-      saving = false;
-      await load();
-      render();
-      return save(true);
-    }
-    if (res.status === 401) throw new Error("GitHub didn't accept the token. Forget it and paste a new one.");
-    if (res.status === 403 || res.status === 404) throw new Error("The token can't write to the repository. It needs Contents: Read and write.");
-    if (!res.ok) throw new Error(`GitHub answered ${res.status} when saving.`);
-    sha = (await res.json()).content.sha;
-    Object.assign(saved, sent);
-    for (const id of ids) {
-      if (counts[id] === sent[id]) {
-        dirty.delete(id);
-        delete pendingValues[id];
+    for (let attempt = 0; ; attempt++) {
+      const ids = [...dirty];
+      const sent = Object.fromEntries(ids.map((id) => [id, counts[id]]));
+      const res = await fetch(api, {
+        method: "PUT",
+        headers: { ...headers(), "Content-Type": "application/json" },
+        body: JSON.stringify({ message: commitMessage(ids), content: toBase64(serialise({ ...saved, ...sent })), sha, branch }),
+      });
+      if ((res.status === 409 || res.status === 422) && attempt === 0) {
+        // Saved from somewhere else since we last read: re-read, keep our changes, try again.
+        await load();
+        render();
+        continue;
       }
+      if (res.status === 401) throw new StopSaving("GitHub didn't accept the token. Forget it and paste a new one.");
+      if (res.status === 403 || res.status === 404) throw new StopSaving("The token can't write to the repository. It needs Contents: Read and write.");
+      if (!res.ok) throw new Error(`GitHub answered ${res.status} when saving. Trying again shortly.`);
+      sha = (await res.json()).content.sha;
+      Object.assign(saved, sent);
+      for (const id of ids) {
+        if (counts[id] === sent[id]) {
+          dirty.delete(id);
+          delete pendingValues[id];
+        }
+      }
+      break;
     }
+    retryDelay = SAVE_DELAY_MS;
     setStatus(dirty.size ? "Saving…" : "Saved");
   } catch (e) {
-    setStatus(e.message, true);
+    stop = e instanceof StopSaving;
+    retryDelay = Math.min(retryDelay * 2, 60_000);
+    setStatus(e instanceof TypeError ? "Couldn't reach GitHub. Trying again shortly." : e.message, true);
   } finally {
     saving = false;
   }
-  if (dirty.size) schedule();
+  // After an error that won't fix itself, wait for the next change or a new token.
+  if (dirty.size && !stop) schedule(retryDelay);
 }
 
-function schedule() {
+function schedule(delay = SAVE_DELAY_MS) {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(save, 1500);
+  saveTimer = setTimeout(save, delay);
 }
 
 function setCount(id, n) {
@@ -270,9 +283,11 @@ $("token-form").onsubmit = (e) => {
   writeToken(token);
   $("token").value = "";
   showConnection();
-  refresh();
+  // Save anything changed before the old token was forgotten.
+  refresh().then(() => dirty.size && schedule());
 };
 $("forget").onclick = () => {
+  clearTimeout(saveTimer);
   token = null;
   writeToken(null);
   showConnection();
