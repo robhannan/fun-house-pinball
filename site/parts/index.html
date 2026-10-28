@@ -13,13 +13,13 @@
 <div class="wrap">
   <header>
     <h1>Fun House Parts Bin</h1>
-    <p class="sub">What you've got from the <a id="list-link" href="#">shopping list</a>, part by part. Type a number or use − and +. Optional and "as needed" parts don't count towards the totals.</p>
+    <p class="sub">What you've got from the <a id="list-link" href="#">shopping list</a>, part by part. Type a number or use − and +, and mark what's on its way as <b>Ordered</b>. Optional and "as needed" parts don't count towards the totals.</p>
   </header>
 
   <div class="summary">
     <div class="stat"><span class="label">Parts complete</span><span class="value" id="s-done">–</span><div class="bar"><span id="s-bar"></span></div></div>
-    <div class="stat"><span class="label">Partly got</span><span class="value" id="s-partial">–</span></div>
-    <div class="stat"><span class="label">Not started</span><span class="value" id="s-none">–</span></div>
+    <div class="stat"><span class="label">On order</span><span class="value" id="s-ordered">–</span></div>
+    <div class="stat"><span class="label">To order</span><span class="value" id="s-to-order">–</span></div>
   </div>
 
   <details class="connect" id="connect">
@@ -44,7 +44,8 @@
   <div class="controls">
     <div class="filters" role="group" aria-label="Show">
       <button type="button" data-filter="all" aria-pressed="true">All</button>
-      <button type="button" data-filter="need" aria-pressed="false">Still to get</button>
+      <button type="button" data-filter="order" aria-pressed="false">To order</button>
+      <button type="button" data-filter="ordered" aria-pressed="false">On order</button>
       <button type="button" data-filter="got" aria-pressed="false">Got</button>
     </div>
     <input id="search" type="search" placeholder="Find a part" aria-label="Find a part">

@@ -29,7 +29,7 @@ await $`node sim/build.mjs`;
 await fs.emptyDir(out);
 await fs.copy(path.join(root, "sim/web"), path.join(out, "sim"));
 await fs.copy(path.join(root, "site/index.html"), path.join(out, "index.html"));
-await fs.copy(path.join(root, "site/parts"), path.join(out, "parts"));
+await fs.copy(path.join(root, "site/parts"), path.join(out, "parts"), { filter: (file) => !file.endsWith(".test.mjs") });
 await fs.writeJson(path.join(out, "parts/items.json"), { repo, branch: "parts-data", file: "got.json", sections });
 
 const items = sections.flatMap((s) => s.groups.flatMap((g) => g.items));
