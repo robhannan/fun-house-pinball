@@ -11,7 +11,5 @@
     "tactile-push-buttons": 1,
     "usb-a-to-b-cable": 1
   },
-  "ordered": [
-    "playfield-switches-leaf-rollover-pop-bumper-skirt"
-  ]
+  "ordered": []
 }
