@@ -38,7 +38,8 @@ The [parts tracker](https://robhannan.github.io/fun-house-pinball/parts/) shows
 every part on the [shopping list](docs/shopping-list.md) with how many you've
 got. It's built from the list's tables, and the counts are saved to `got.json`
 on the `parts-data` branch: connect a GitHub token on the page to change them.
-Preview it locally with `pnpm run build:site` and then `pnpm run serve:site`.
+Preview it locally with `pnpm run build:site` and then `pnpm run serve:site`;
+the build includes the simulator, so it needs Rust (see below).
 The token is kept in the browser's storage for `github.io`, where every
 GitHub Pages site under the same account can read it, and it can push to any
 branch, so give it a short expiry.

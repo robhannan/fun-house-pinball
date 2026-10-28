@@ -2,8 +2,8 @@ name: Pages
 
 # Builds the site: the browser simulator, and the parts tracker from
 # docs/shopping-list.md. Pull requests only build it, which fails on a table
-# row the tracker can't read; pushes to main also deploy it to GitHub Pages. The counts are on the parts-data branch, so
-# saving them doesn't run this.
+# row the tracker can't read; pushes to main also deploy it to GitHub Pages.
+# The counts are on the parts-data branch, so saving them doesn't run this.
 on:
   push:
     branches: [main]
@@ -23,6 +23,7 @@ on:
       - "docs/playfield.svg"
       - "docs/backboard.svg"
       - ".github/workflows/pages.yml"
+      - ".github/scripts/ci.mjs"
       - "package.json"
       - "pnpm-lock.yaml"
   pull_request:
@@ -42,6 +43,7 @@ on:
       - "docs/playfield.svg"
       - "docs/backboard.svg"
       - ".github/workflows/pages.yml"
+      - ".github/scripts/ci.mjs"
       - "package.json"
       - "pnpm-lock.yaml"
   workflow_dispatch:
@@ -88,7 +90,7 @@ jobs:
       id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}parts/
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
