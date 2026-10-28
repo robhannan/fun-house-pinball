@@ -27,6 +27,9 @@ ordering.
 
 ## How to use this list
 
+- **Track what you've bought** in the
+  [parts tracker](https://robhannan.github.io/fun-house-pinball/parts/), which
+  is built from the tables below.
 - **AliExpress links are searches, not specific listings.** Listings change and
   disappear all the time, so each link opens a search for the right part. Pick a
   seller with:

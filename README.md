@@ -15,6 +15,7 @@ driven by an Arduino Mega 2560 instead of relays and stepper units.
 ├── crates/pinball-core   # no_std game logic: switches, coils, lamps, rules (host-testable)
 ├── crates/pinball-sim    # the game logic compiled to WebAssembly for the simulator
 ├── sim/                  # browser simulator page and build script
+├── site/                 # GitHub Pages site: the parts tracker, built from the shopping list
 ├── firmware              # Arduino Mega 2560 binary: I/O + main loop (AVR, nightly)
 ├── hardware/3d           # OpenSCAD models of the 3D-printed ball return
 └── docs
@@ -30,6 +31,14 @@ the firmware scans the switches, hands them to `pinball_core::Machine::tick`,
 and shifts the returned coil and lamp bitmaps out to the driver boards. All the
 rules and safety limits live in `pinball-core`, so you can unit-test them on
 your laptop without an Arduino.
+
+## Parts tracker
+
+The [parts tracker](https://robhannan.github.io/fun-house-pinball/parts/) shows
+every part on the [shopping list](docs/shopping-list.md) with how many you've
+got. It's built from the list's tables, and the counts are saved to `got.json`
+on the `parts-data` branch: connect a GitHub token on the page to change them.
+Preview it locally with `pnpm run build:site` and then `pnpm run serve:site`.
 
 ## Getting started
 
