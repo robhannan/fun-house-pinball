@@ -106,16 +106,17 @@ The map has 25 matrix switches, including the three trapdoors in the
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
-| 74HC595 shift register, DIP-16 | 20 | 12 used. **Easier:** ready-made 74HC595 modules replace this (see below). | [AliExpress](https://www.aliexpress.com/w/wholesale-74hc595-dip16.html) | 2–5 |
-| DIP-16 IC sockets | 20 | So a dead chip can be swapped without soldering. **Easier:** not needed with 74HC595 modules (see below). | [AliExpress](https://www.aliexpress.com/w/wholesale-dip16-ic-socket.html) | 1–3 |
-| 100 nF ceramic capacitors ("104") | 100 | One per chip, plus spares. **Easier:** 74HC595 modules usually have theirs fitted; keep a few for any that don't (see below). | [AliExpress](https://www.aliexpress.com/w/wholesale-100nf-ceramic-capacitor-104.html) | 1–3 |
-| Stripboard / prototype PCB | 10 | Mount the chips and drivers on these. **Easier:** the 74HC595 modules and MOSFET driver boards below need little or none. | [AliExpress](https://www.aliexpress.com/w/wholesale-stripboard-prototype-pcb.html) | 4–8 |
+| 74HC595 shift register, DIP-16 | 20 | 12 used. **Easier:** the *74HC595 module* row below replaces this. | [AliExpress](https://www.aliexpress.com/w/wholesale-74hc595-dip16.html) | 2–5 |
+| DIP-16 IC sockets | 20 | So a dead chip can be swapped without soldering. **Easier:** not needed with the *74HC595 module* row below. | [AliExpress](https://www.aliexpress.com/w/wholesale-dip16-ic-socket.html) | 1–3 |
+| 100 nF ceramic capacitors ("104") | 100 | One per chip, plus spares. **Easier:** the *74HC595 module* row below usually has its own fitted; keep a few for any that don't. | [AliExpress](https://www.aliexpress.com/w/wholesale-100nf-ceramic-capacitor-104.html) | 1–3 |
+| Stripboard / prototype PCB | 10 | Mount the chips and drivers on these. **Easier:** with the *74HC595 module* row below and the *MOSFET driver board* row in section 5, you need little or none. | [AliExpress](https://www.aliexpress.com/w/wholesale-stripboard-prototype-pcb.html) | 4–8 |
 | 2.54 mm pin headers (male and female) | 1 pack each | Board-to-board connections | [AliExpress](https://www.aliexpress.com/w/wholesale-2.54mm-pin-header.html) | 3–6 |
 | JST-XH connector kit with crimper | 1 | Unpluggable connections between boards and the playfield harness | [AliExpress](https://www.aliexpress.com/w/wholesale-jst-xh-connector-kit-crimper.html) | 8–15 |
+| *Optional:* 74HC595 module, instead of the chips, sockets and capacitors above | 14 | 12 used, plus spares. Only buy modules with **OE (pin 13) on its own pin**, not wired to ground: see the checks under this table in the shopping list (*verify*). Not in the section estimate. | [AliExpress](https://www.aliexpress.com/w/wholesale-74hc595-module.html) | 7–28 |
 
 **Section estimate: £19–40**
 
-**Easier alternative:** ready-made 74HC595 modules, each a chip already
+**Easier alternative** (the *74HC595 module* row above): ready-made 74HC595 modules, each a chip already
 soldered to a small board with pin headers and, usually, its 100 nF capacitor.
 They replace the chips, sockets and capacitors above, and most of the
 soldering. Before buying, check the listing or the board's photos (*verify*):
@@ -145,14 +146,15 @@ instead (section 6c).
 
 | Item | Qty | Notes | Link | Est. £ |
 |---|---|---|---|---|
-| 🛡️ IRL540N logic-level N-channel MOSFET | 25 | Must be **logic level** (the "L" in IRL). Rated 100 V, suitable for coil supplies up to about 50 V. **Easier:** ready-made MOSFET driver boards replace this (see below). | [RS](https://uk.rs-online.com/web/c/?searchTerm=IRL540NPBF) | 30–40 |
+| 🛡️ IRL540N logic-level N-channel MOSFET | 25 | Must be **logic level** (the "L" in IRL). Rated 100 V, suitable for coil supplies up to about 50 V. **Easier:** the *MOSFET driver board* row below replaces this. | [RS](https://uk.rs-online.com/web/c/?searchTerm=IRL540NPBF) | 30–40 |
 | 1N4004 diodes | 100 | Flyback diode, one per coil winding, unless the coil already has one | [AliExpress](https://www.aliexpress.com/w/wholesale-1n4004-diode.html) | 1–3 |
-| 2-pin 5.08 mm PCB screw terminals | 40 | Coil wires to the driver board. **Easier:** MOSFET driver boards have their own (see below). | [AliExpress](https://www.aliexpress.com/w/wholesale-5.08mm-pcb-screw-terminal-2-pin.html) | 3–6 |
-| 220 Ω and 10 kΩ resistors | — | In the resistor kit from section 2. **Easier:** not needed with MOSFET driver boards (see below). | — | — |
+| 2-pin 5.08 mm PCB screw terminals | 40 | Coil wires to the driver board. **Easier:** the *MOSFET driver board* row below has its own. | [AliExpress](https://www.aliexpress.com/w/wholesale-5.08mm-pcb-screw-terminal-2-pin.html) | 3–6 |
+| 220 Ω and 10 kΩ resistors | — | In the resistor kit from section 2. **Easier:** not needed with the *MOSFET driver board* row below. | — | — |
+| *Optional:* 8-channel MOSFET driver board, instead of the MOSFETs, resistors and screw terminals above | 3 | For the 17 coil outputs (20 with the optional bells). Each channel must be **rated for the 48 V coil supply and about 10 A pulses** (many boards are sold for 36 V or less), its inputs must be **active high, with an unconnected input meaning off**, and **bench-test each board with an LED load before any coil**: see the checks under this table in the shopping list (*verify*). Not in the section estimate. | [AliExpress](https://www.aliexpress.com/w/wholesale-mosfet-driver-module-8-channel.html) | 15–45 |
 
 **Section estimate: £34–49**
 
-**Easier alternative:** ready-made multi-channel MOSFET driver boards that take
+**Easier alternative** (the *MOSFET driver board* row above): ready-made multi-channel MOSFET driver boards that take
 5 V logic inputs replace the MOSFETs, resistors and screw terminals above, and
 most of this section's soldering. Before buying, check (*verify*):
 
