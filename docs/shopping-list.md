@@ -108,7 +108,7 @@ The map has 25 matrix switches, including the three trapdoors in the
 |---|---|---|---|---|
 | 74HC595 shift register, DIP-16 | 20 | 12 used. **Easier:** ready-made 74HC595 modules replace this (see below). | [AliExpress](https://www.aliexpress.com/w/wholesale-74hc595-dip16.html) | 2–5 |
 | DIP-16 IC sockets | 20 | So a dead chip can be swapped without soldering. **Easier:** not needed with 74HC595 modules (see below). | [AliExpress](https://www.aliexpress.com/w/wholesale-dip16-ic-socket.html) | 1–3 |
-| 100 nF ceramic capacitors ("104") | 100 | One per chip, plus spares. **Easier:** 74HC595 modules usually have theirs fitted (see below). | [AliExpress](https://www.aliexpress.com/w/wholesale-100nf-ceramic-capacitor-104.html) | 1–3 |
+| 100 nF ceramic capacitors ("104") | 100 | One per chip, plus spares. **Easier:** 74HC595 modules usually have theirs fitted; keep a few for any that don't (see below). | [AliExpress](https://www.aliexpress.com/w/wholesale-100nf-ceramic-capacitor-104.html) | 1–3 |
 | Stripboard / prototype PCB | 10 | Mount the chips and drivers on these. **Easier:** the 74HC595 modules and MOSFET driver boards below need little or none. | [AliExpress](https://www.aliexpress.com/w/wholesale-stripboard-prototype-pcb.html) | 4–8 |
 | 2.54 mm pin headers (male and female) | 1 pack each | Board-to-board connections | [AliExpress](https://www.aliexpress.com/w/wholesale-2.54mm-pin-header.html) | 3–6 |
 | JST-XH connector kit with crimper | 1 | Unpluggable connections between boards and the playfield harness | [AliExpress](https://www.aliexpress.com/w/wholesale-jst-xh-connector-kit-crimper.html) | 8–15 |
@@ -121,14 +121,19 @@ They replace the chips, sockets and capacitors above, and most of the
 soldering. Before buying, check the listing or the board's photos (*verify*):
 
 - **OE (pin 13) must come out on its own pin.** Many modules wire it straight
-  to ground, which leaves every output on whenever the Arduino isn't driving
-  it: at power-on, while flashing and during a reset. That defeats the 10 kΩ
-  pull-up in [wiring guide section 7a](wiring-guide.md#7a-the-74hc595-chain),
-  so don't use a module like that.
-- **Data in, data out, the shift clock, the latch, MR, 5 V and GND** must also
-  be on pins, so 12 modules can be chained.
+  to ground, so the outputs are always enabled, even when the Arduino isn't
+  driving them: at power-on, while flashing and during a reset. The chip
+  powers up holding random values, so any coil could come on. That defeats
+  the 10 kΩ pull-up in
+  [wiring guide section 7a](wiring-guide.md#7a-the-74hc595-chain), so don't use
+  a module like that.
+- **Data in, data out, the shift clock, the latch, 5 V and GND** must also be
+  on pins, so 12 modules can be chained. MR (pin 10) can be on a pin or tied
+  to 5 V on the board.
 
-The wiring then follows section 7a pin for pin. Expect roughly £0.50–2 per
+The wiring then follows section 7a pin for pin. A module without its own
+100 nF capacitor gets one across its 5 V and GND pins, as close to the chip as
+you can. Expect roughly £0.50–2 per
 module (*verify*; not in the estimates above).
 [AliExpress](https://www.aliexpress.com/w/wholesale-74hc595-module.html)
 
@@ -153,10 +158,23 @@ most of this section's soldering. Before buying, check (*verify*):
 
 - **The inputs are active high:** a low or unconnected input means off. On an
   active-low board, every coil would be on whenever the 74HC595 outputs are
-  off, including at power-on.
+  off. "Unconnected" matters as much as "low": while OE holds the 74HC595
+  outputs off (power-on, flashing, reset) they float, and only a pull-down on
+  the board's inputs keeps the coils off then. The discrete circuit's 10 kΩ
+  gate resistor does that job (wiring guide section 7b).
+- Each input draws no more than a few mA at 5 V. A 74HC595 output is only
+  meant to supply about 6 mA, and 70 mA across all 8, so an optocoupler board
+  with small input resistors could overload it.
 - They're rated for your coil voltage and current (a kicker draws about 10 A
   for its pulse; section 7).
 - They include flyback diodes, or allow them to be fitted.
+
+**Bench-test every board before it goes near a coil:** connect a test LED and
+1 kΩ resistor as each channel's load, from a 5 V supply rather than the coil
+supply, and leave its inputs unconnected. Every LED must stay dark, and light
+only while you hold that channel's input at 5 V. A board that fails this must
+not be used: the first-coil test in wiring guide section 9 (step 6) assumes
+outputs that are off unless driven.
 
 Expect roughly £5–15 per 8-channel board.
 [AliExpress](https://www.aliexpress.com/w/wholesale-mosfet-driver-module-8-channel.html)
