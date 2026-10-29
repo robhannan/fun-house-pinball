@@ -150,7 +150,7 @@ instead (section 6c).
 | 1N4004 diodes | 100 | Flyback diode, one per coil winding, unless the coil already has one | [AliExpress](https://www.aliexpress.com/w/wholesale-1n4004-diode.html) | 1–3 |
 | 2-pin 5.08 mm PCB screw terminals | 40 | Coil wires to the driver board. **Easier:** the *MOSFET driver board* row below has its own. | [AliExpress](https://www.aliexpress.com/w/wholesale-5.08mm-pcb-screw-terminal-2-pin.html) | 3–6 |
 | 220 Ω and 10 kΩ resistors | — | In the resistor kit from section 2. **Easier:** not needed with the *MOSFET driver board* row below. | — | — |
-| *Optional:* 8-channel MOSFET driver board, instead of the MOSFETs, resistors and screw terminals above | 3 | For the 17 coil outputs, plus spare channels. Its inputs must be **active high, with an unconnected input meaning off**, and **bench-test each board with an LED load before any coil**: see the checks under this table in the shopping list (*verify*). Not in the section estimate. | [AliExpress](https://www.aliexpress.com/w/wholesale-mosfet-driver-module-8-channel.html) | 15–45 |
+| *Optional:* 8-channel MOSFET driver board, instead of the MOSFETs, resistors and screw terminals above | 3 | For the 17 coil outputs (20 with the optional bells). Each channel must be **rated for the 48 V coil supply and about 10 A pulses** (many boards are sold for 36 V or less), its inputs must be **active high, with an unconnected input meaning off**, and **bench-test each board with an LED load before any coil**: see the checks under this table in the shopping list (*verify*). Not in the section estimate. | [AliExpress](https://www.aliexpress.com/w/wholesale-mosfet-driver-module-8-channel.html) | 15–45 |
 
 **Section estimate: £34–49**
 
