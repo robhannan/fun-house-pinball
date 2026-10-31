@@ -12,7 +12,7 @@
     "build:sim": "node sim/build.mjs",
     "serve:sim": "node sim/serve.mjs",
     "build:site": "node site/build.mjs",
-    "test:site": "node --test site/shopping-list.test.mjs site/parts/counts.test.mjs sim/serve.test.mjs",
+    "test:site": "node --test site/shopping-list.test.mjs site/parts/counts.test.mjs sim/serve.test.mjs sim/web/trace/homography.test.mjs sim/web/trace/shapes.test.mjs",
     "serve:site": "node sim/serve.mjs --dir=../site/generated",
     "render:sounds": "node sim/render-sounds.mjs",
     "check:sounds": "node sim/render-sounds.mjs --check",

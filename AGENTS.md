@@ -78,6 +78,10 @@ make changes here.
     and says so. When moving or adding anything solid, leave a ball's width
     (27 mm) wherever the ball should pass, and run the slow trap search:
     `cargo test -p pinball-sim --release -- --ignored`.
+  - Parts measured on the table carry `data-measured="<label>"`; the
+    playfield tracer (`sim/web/trace/`) lines a photo up with the map by
+    their centres. Don't commit photos of the table: they show the original
+    artwork.
 - **3D-printed ball return:** OpenSCAD models in `hardware/3d/`. Every table
   measurement lives in `measurements.scad` (placeholders until measured), and
   shared geometry in `common.scad`, so the parts always fit each other;

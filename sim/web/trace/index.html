@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Playfield Tracer</title>
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --panel: #ffffff;
+      --text: #1f2328;
+      --muted: #57606a;
+      --border: #d0d7de;
+      --accent: #d73a49;
+      --good: #1a7f37;
+      --map-opacity: 0.6;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --panel: #161b22;
+        --text: #e6edf3;
+        --muted: #8d96a0;
+        --border: #30363d;
+        --good: #3fb950;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    main { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; align-items: flex-start; }
+    #panel { flex: 0 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+    #view { flex: 1 1 500px; min-width: 0; }
+    section, #view {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 8px; }
+    p, li { font-size: 14px; line-height: 1.45; }
+    p { margin: 0 0 8px; }
+    ul, ol { margin: 0 0 8px; padding-left: 20px; }
+    .muted { color: var(--muted); }
+    .hidden { display: none !important; }
+    button {
+      font: inherit;
+      font-size: 14px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.5; cursor: default; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #ffffff; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+    #prompt { font-weight: 600; }
+    #guide svg { width: 100%; height: auto; max-height: 300px; display: block; }
+    #guide .background { fill: none; }
+    #guide-ring { fill: none; stroke: var(--accent); stroke-width: 6; }
+    #points { list-style: none; padding: 0; max-height: 260px; overflow: auto; }
+    #points li { padding: 2px 6px; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; }
+    #points li:hover { background: var(--bg); }
+    #points li.current { outline: 2px solid var(--accent); }
+    #points .state { color: var(--muted); white-space: nowrap; }
+    #points li.done .state { color: var(--good); }
+    #points li.far .state { color: var(--accent); font-weight: 600; }
+    #changes { font-size: 13px; }
+    /* The views: the photo while clicking points, the straightened photo with
+       the map over it while tracing. Both scroll when zoomed in. */
+    .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+    .scroller { overflow: auto; max-height: calc(100vh - 120px); border: 1px solid var(--border); border-radius: 6px; background: #000000; }
+    .stage { position: relative; display: block; margin: 0 auto; }
+    .stage img, .stage canvas { display: block; width: 100%; height: auto; }
+    #photo { cursor: crosshair; }
+    .marker {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      margin: -7px 0 0 -7px;
+      border: 2px solid #ffeb3b;
+      border-radius: 50%;
+      box-shadow: 0 0 0 1px #000000;
+      pointer-events: none;
+    }
+    .marker span {
+      position: absolute;
+      left: 12px;
+      top: -8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #ffeb3b;
+      text-shadow: 0 0 2px #000000, 0 0 2px #000000;
+    }
+    #overlay { position: absolute; inset: 0; }
+    #overlay svg { width: 100%; height: 100%; display: block; }
+    #overlay .background, #overlay [data-board] { fill: none; }
+    #overlay svg > :not(#handles) { opacity: var(--map-opacity); }
+    #overlay.hide-labels text { display: none; }
+    #overlay * { pointer-events: none; }
+    #overlay svg { pointer-events: auto; }
+    #overlay .editable { pointer-events: visiblePainted; cursor: pointer; }
+    #overlay .editable:hover { filter: drop-shadow(0 0 3px #ffeb3b); }
+    #overlay .selected { stroke: #ffeb3b !important; stroke-width: 3px !important; }
+    #overlay .measured { stroke: #0969da !important; }
+    #handles circle { pointer-events: all; fill: #ffffff; stroke: #d73a49; stroke-width: 1.2; cursor: move; }
+    #handles circle.arc { fill: #ffeb3b; }
+  </style>
+</head>
+<body>
+  <main>
+    <div id="panel">
+      <section>
+        <h1>Playfield tracer</h1>
+        <p class="muted">Lines a photo of the real playfield up with the map, so you can drag the map's assumed shapes onto it. The photo stays in your browser: nothing is uploaded.</p>
+      </section>
+
+      <section id="step-photo">
+        <h2>1. Photo</h2>
+        <p><input type="file" id="photo-file" accept="image/*"></p>
+        <ul class="muted">
+          <li>Glass off, the whole board in the frame.</li>
+          <li>Straight down, from as high as you can.</li>
+          <li>Use the phone's 2× lens: the wide one bends the edges.</li>
+          <li>Even light, no flash glare.</li>
+        </ul>
+      </section>
+
+      <section id="step-points" class="hidden">
+        <h2>2. Line it up</h2>
+        <p id="prompt"></p>
+        <div id="guide"></div>
+        <div class="row">
+          <button id="skip">Skip</button>
+          <button id="clear">Clear this point</button>
+          <button id="fit" class="primary" disabled>Line up</button>
+        </div>
+        <p class="muted">Click each part's centre on the photo. Skip any you can't see. Click a row to redo it. At least four are needed; more is better.</p>
+        <ol id="points"></ol>
+        <p id="fit-result"></p>
+      </section>
+
+      <section id="step-trace" class="hidden">
+        <h2>3. Trace</h2>
+        <p class="muted">Click a shape to select it, then drag its handles onto the photo. Double-click an edge to add a corner, or a corner to remove it. A curve's yellow handle bends it. Blue parts were measured and are locked.</p>
+        <div class="row">
+          <label>Map <input type="range" id="opacity" min="0" max="1" step="0.05" value="0.6"></label>
+          <label><input type="checkbox" id="labels" checked> Labels</label>
+        </div>
+        <p id="selection" class="muted">Nothing selected.</p>
+        <div class="row">
+          <button id="reset-one" disabled>Undo this part</button>
+          <button id="reset-all">Undo all</button>
+          <button id="back">Back to the points</button>
+        </div>
+        <ul id="changes"></ul>
+        <div class="row">
+          <button id="download" class="primary" disabled>Download playfield.svg</button>
+        </div>
+        <p class="muted">Save it over <code>docs/playfield.svg</code>, then run the simulator's tests and the slow trap search (see AGENTS.md).</p>
+      </section>
+    </div>
+
+    <div id="view">
+      <div class="toolbar">
+        <button id="zoom-out" title="Zoom out (-)">−</button>
+        <button id="zoom-in" title="Zoom in (+)">+</button>
+        <button id="zoom-fit">Fit</button>
+        <span id="status" class="muted">Loading the map…</span>
+      </div>
+      <div id="photo-view" class="scroller hidden">
+        <div id="photo-stage" class="stage"><img id="photo" alt="your photo of the playfield"></div>
+      </div>
+      <div id="trace-view" class="scroller hidden">
+        <div id="trace-stage" class="stage">
+          <canvas id="straightened"></canvas>
+          <div id="overlay"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script type="module" src="trace.js"></script>
+</body>
+</html>
