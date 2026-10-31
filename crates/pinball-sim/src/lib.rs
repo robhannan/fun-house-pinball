@@ -831,9 +831,9 @@ mod tests {
         let mut sim = served();
         sim.set_switch(sw::LEFT_FLIPPER_BUTTON, true);
         run(&mut sim, 100);
-        // Drop the ball onto the raised left flipper.
+        // Drop the ball onto the raised left flipper, by its pivot.
         let pivot = left_flipper_pivot();
-        sim.place_ball(pivot + Vec2::new(27.5, -63.5), Vec2::default());
+        sim.place_ball(pivot + Vec2::new(-5.0, -45.0), Vec2::default());
         run(&mut sim, 3_000);
         assert_eq!(sim.physics().state(), BallState::Rolling);
         let ball = sim.physics().ball();
@@ -856,9 +856,9 @@ mod tests {
             run(&mut sim, 10);
             highest = highest.min(sim.physics().ball().y);
         }
-        // At least a third of the way up the table. The measured flippers rest
-        // steeply (about 49° below level), so their swing is assumed to end
-        // about level and they don't send the ball as far as a modern flipper.
+        // At least a third of the way up the table. The ball leaves early in
+        // the swing, so how far it goes depends on the flipper's speed, which
+        // is assumed.
         assert!(highest < pivot.y - 350.0, "only reached y = {highest}");
     }
 

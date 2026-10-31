@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -70 600 1290" width="600" height="1290" font-family="Helvetica, Arial, sans-serif">
   <title>Fun House (1956) playfield wiring reference</title>
-  <desc>Drawn to scale in millimetres: x from the board's left edge, y from its back edge (the end by the backbox). The board, the arch's ends, the shooter lane and the centres of the bumpers, trapdoors, rollovers, bonus wheel, flipper pivots, centre post and outhole were measured on the table with a tape; everything else is assumed. hardware/3d/measurements.scad measures from the front edge instead, and the simulator's tests check the two agree. Labels give each part's switch matrix position (C = column, R = row), coil number and lamp number, matching crates/pinball-core/src/playfield.rs. The data-switch, data-coil and data-lamp attributes drive the simulator in sim/ and are checked against playfield.rs by its tests. The simulator's ball physics also takes its geometry from this file: data-wall marks solid walls and posts, and data-gate a one-way gate. data-board marks the board's edge.</desc>
+  <desc>Drawn to scale in millimetres: x from the board's left edge, y from its back edge (the end by the backbox). The board, the arch's ends, the shooter lane and the centres of the bumpers, trapdoors, rollovers, bonus wheel, flipper pivots, centre post and outhole, the bumper caps' and outhole's sizes, the flippers' length and the gap between their tips (at rest and held up) were measured on the table with a tape; everything else is assumed. hardware/3d/measurements.scad measures y from the front edge instead. Labels give each part's switch matrix position (C = column, R = row), coil number and lamp number, matching crates/pinball-core/src/playfield.rs. The data-switch, data-coil and data-lamp attributes drive the simulator in sim/ and are checked against playfield.rs by its tests. The simulator's ball physics also takes its geometry from this file: data-wall marks solid walls and posts, and data-gate a one-way gate. data-board marks the board's edge.</desc>
 
   <style>
     .label { font-size: 10px; fill: #1f2328; }
@@ -15,7 +15,7 @@
   <rect x="-40" y="-70" width="600" height="1290" fill="#ffffff"/>
 
   <text x="240" y="-46" class="title mid">Fun House (Williams, 1956): wiring reference</text>
-  <text x="240" y="-30" class="sub mid">To scale, in mm. Measured: board, arch ends, shooter lane, part centres.</text>
+  <text x="240" y="-30" class="sub mid">To scale, in mm. Measured: board, arch ends, shooter lane, part centres and caps.</text>
   <text x="240" y="-16" class="sub mid">Shapes, walls, lamps and parts marked * are assumed: verify on the table.</text>
 
   <!-- The board, 520 x 1079 mm -->
@@ -212,8 +212,8 @@
   <text x="235" y="838" class="label mid">Bonus wheel (lamps only): 10 → L8 … 100 → L17</text>
 
   <!-- Kicking rubbers (assumed) -->
-  <polygon points="46,782 46,846 141,866" fill="#ffffff" stroke="#1f2328" stroke-width="3" data-switch="C1R0" data-coil="1"/>
-  <polygon points="410,782 410,846 331,866" fill="#ffffff" stroke="#1f2328" stroke-width="3" data-switch="C1R1" data-coil="2"/>
+  <polygon points="46,782 46,846 126,853" fill="#ffffff" stroke="#1f2328" stroke-width="3" data-switch="C1R0" data-coil="1"/>
+  <polygon points="410,782 410,846 345,851" fill="#ffffff" stroke="#1f2328" stroke-width="3" data-switch="C1R1" data-coil="2"/>
   <text x="92" y="800" class="label">Left kicker</text>
   <text x="92" y="811" class="tag">C1·R0 · coil 1</text>
   <text x="380" y="800" class="label end">Right kicker</text>
@@ -224,18 +224,18 @@
   <g stroke="#8a6d3b" stroke-width="3" stroke-linecap="round">
     <line x1="0" y1="762" x2="46" y2="782" data-wall=""/>
     <line x1="456" y1="762" x2="410" y2="782" data-wall=""/>
-    <line x1="141" y1="866" x2="151" y2="886" data-wall=""/>
-    <line x1="331" y1="866" x2="321" y2="886" data-wall=""/>
+    <line x1="126" y1="853" x2="160" y2="878" data-wall=""/>
+    <line x1="345" y1="851" x2="312" y2="878" data-wall=""/>
     <line x1="150" y1="912" x2="219" y2="1003" data-wall=""/>
     <line x1="322" y1="912" x2="255" y2="1003" data-wall=""/>
   </g>
   <rect x="0" y="1012" width="456" height="67" fill="#c9d1d9" stroke="#57606a" stroke-width="1"/>
 
   <!-- Flippers (inward facing): pivots 162 mm apart, 63 mm long, tips 80 mm
-       apart at rest; the shape is assumed -->
+       apart at rest and 83 mm held up; the shape is assumed -->
   <g fill="#ffffff" stroke="#1f2328" stroke-width="3" stroke-linejoin="round">
-    <path d="M 148.2 894.9 L 188.2 936.2 L 196.6 929 L 161.8 883.1 Z" data-coil="8 9" data-flipper="left"/>
-    <path d="M 310.2 883.1 L 275.4 929 L 283.8 936.2 L 323.8 894.9 Z" data-coil="10 11" data-flipper="right"/>
+    <path d="M 147.9 894.6 L 186.2 937.6 L 194.8 930.8 L 162.1 883.4 Z" data-coil="8 9" data-flipper="left"/>
+    <path d="M 309.9 883.4 L 277.2 930.8 L 285.8 937.6 L 324.1 894.6 Z" data-coil="10 11" data-flipper="right"/>
   </g>
   <circle cx="155" cy="889" r="7" fill="#57606a"/>
   <circle cx="317" cy="889" r="7" fill="#57606a"/>

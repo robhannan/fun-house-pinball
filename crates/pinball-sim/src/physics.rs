@@ -55,8 +55,10 @@ const KICK_WINDOW_MS: u32 = 15;
 /// Shortest time a touched switch stays closed, so the debouncer sees it.
 const MIN_CLOSED_MS: u32 = 10;
 
-/// How far a flipper turns from rest, and how fast (rad/s).
-const FLIPPER_STROKE: f32 = 0.9;
+/// How far a flipper turns from rest, and how fast (rad/s). On the real table
+/// the tips are 80 mm apart at rest and 83 mm held up, so each swings about
+/// 106°, from 52° below level to 54° above. The speeds are assumed.
+const FLIPPER_STROKE: f32 = 1.84;
 const FLIPPER_UP_SPEED: f32 = 22.0;
 const FLIPPER_DOWN_SPEED: f32 = 14.0;
 
@@ -66,6 +68,8 @@ const PLUNGER_MIN: f32 = 1_350.0;
 const PLUNGER_MAX: f32 = 2_400.0;
 /// How long a ball takes to roll from a trapdoor to the outhole underneath.
 const UNDER_PLAYFIELD_MS: u32 = 800;
+/// How far off the board the ball must be to count as lost.
+const LOST_MARGIN: f32 = 50.0;
 
 const SVG: &str = include_str!("../../../docs/playfield.svg");
 
@@ -461,6 +465,8 @@ pub struct Table {
     flippers: Vec<Flipper>,
     outhole: Vec2,
     shooter_rest: Vec2,
+    /// The playfield board's corners.
+    board: (Vec2, Vec2),
 }
 
 impl Table {
@@ -468,7 +474,7 @@ impl Table {
     ///
     /// # Panics
     ///
-    /// If the map has no outhole, shooter-lane switch or flippers.
+    /// If the map has no board, outhole, shooter-lane switch or flippers.
     #[must_use]
     pub fn from_map() -> Self {
         Self::from_svg(SVG)
@@ -483,7 +489,9 @@ impl Table {
             flippers: Vec::new(),
             outhole: Vec2::default(),
             shooter_rest: Vec2::default(),
+            board: (Vec2::default(), Vec2::default()),
         };
+        let mut found_board = false;
         let mut found_outhole = false;
         let mut found_shooter = false;
         for tag in tags(svg) {
@@ -493,7 +501,14 @@ impl Table {
             let switch = switch_of(&tag);
             let coils = coils_of(&tag);
 
-            if tag.get("data-flipper").is_some() {
+            if tag.get("data-board").is_some() {
+                let (x, y) = (tag.num("x"), tag.num("y"));
+                table.board = (
+                    Vec2::new(x, y),
+                    Vec2::new(x + tag.num("width"), y + tag.num("height")),
+                );
+                found_board = true;
+            } else if tag.get("data-flipper").is_some() {
                 table.flippers.extend(Flipper::from_tag(&tag));
             } else if tag.get("data-gate").is_some() {
                 if let Shape::Edges(e) = shape {
@@ -559,6 +574,7 @@ impl Table {
                 });
             }
         }
+        assert!(found_board, "the map has no board");
         assert!(found_outhole, "the map has no outhole");
         assert!(found_shooter, "the map has no shooter-lane switch");
         assert_eq!(table.flippers.len(), 2, "the map should have two flippers");
@@ -870,7 +886,11 @@ impl Physics {
             }
         }
         let outhole = self.table.outhole;
-        let lost = !(0.0..=600.0).contains(&p.x) || !(0.0..=1_100.0).contains(&p.y);
+        // Well off the board: the ball got through a wall. The margin lets the
+        // tests see it escape before it's put back.
+        let (min, max) = self.table.board;
+        let lost = !(min.x - LOST_MARGIN..=max.x + LOST_MARGIN).contains(&p.x)
+            || !(min.y - LOST_MARGIN..=max.y + LOST_MARGIN).contains(&p.y);
         if (p - outhole).len() < BALL_RADIUS + 6.0 || lost {
             self.state = BallState::InOuthole;
             self.pos = outhole;
@@ -997,5 +1017,13 @@ mod tests {
         // Up, both tips are above their pivots.
         assert!(left.tip(FLIPPER_STROKE).y < left.pivot.y);
         assert!(right.tip(FLIPPER_STROKE).y < right.pivot.y);
+        // The gap between the tips' ends, as measured on the table: 80 mm at
+        // rest and 83 mm held up.
+        let gap = |turn: f32| {
+            (right.tip(turn) - left.tip(turn)).len() - left.tip_radius - right.tip_radius
+        };
+        assert!((gap(0.0) - 80.0).abs() < 3.0, "at rest {}", gap(0.0));
+        let up = gap(FLIPPER_STROKE);
+        assert!((up - 83.0).abs() < 3.0, "held up {up}");
     }
 }
