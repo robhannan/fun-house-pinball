@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -70 600 1290" width="600" height="1290" font-family="Helvetica, Arial, sans-serif">
   <title>Fun House (1956) playfield wiring reference</title>
-  <desc>Drawn to scale in millimetres: x from the board's left edge, y from its back edge (the end by the backbox). The board, the arch's ends, the shooter lane and the centres of the bumpers, trapdoors, rollovers, bonus wheel, flipper pivots, centre post and outhole, the bumper caps' and outhole's sizes, the flippers' length and the gap between their tips (at rest and held up) were measured on the table with a tape, and the trapdoor holes, shooter lane walls, flippers' widths, centre post, outhole and rollover buttons with calipers; everything else is assumed. hardware/3d/measurements.scad measures y from the front edge instead. Labels give each part's switch matrix position (C = column, R = row), coil number and lamp number, matching crates/pinball-core/src/playfield.rs. The data-switch, data-coil and data-lamp attributes drive the simulator in sim/ and are checked against playfield.rs by its tests. The simulator's ball physics also takes its geometry from this file: data-wall marks solid walls and posts, and data-gate a one-way gate. data-board marks the board's edge.</desc>
+  <desc>Drawn to scale in millimetres: x from the board's left edge, y from its back edge (the end by the backbox). The board, the arch's ends, the shooter lane and the centres of the bumpers, trapdoors, rollovers, bonus wheel, flipper pivots, centre post and outhole, the bumper caps' and outhole's sizes, the flippers' length and the gap between their tips (at rest and held up) were measured on the table with a tape, and the trapdoor holes, the left wall and the shooter lane's walls, the flippers' widths, centre post, outhole and rollover buttons with calipers; everything else is assumed. hardware/3d/measurements.scad measures y from the front edge instead. Labels give each part's switch matrix position (C = column, R = row), coil number and lamp number, matching crates/pinball-core/src/playfield.rs. The data-switch, data-coil and data-lamp attributes drive the simulator in sim/ and are checked against playfield.rs by its tests. The simulator's ball physics also takes its geometry from this file: data-wall marks solid walls and posts, and data-gate a one-way gate. data-board marks the board's edge.</desc>
 
   <style>
     .label { font-size: 10px; fill: #1f2328; }
@@ -15,7 +15,7 @@
   <rect x="-40" y="-70" width="600" height="1290" fill="#ffffff"/>
 
   <text x="240" y="-46" class="title mid">Fun House (Williams, 1956): wiring reference</text>
-  <text x="240" y="-30" class="sub mid">To scale, in mm. Measured: board, arch ends, shooter lane, part centres and sizes.</text>
+  <text x="240" y="-30" class="sub mid">To scale, in mm. Measured: board, walls, arch ends, shooter lane, part centres and sizes.</text>
   <text x="240" y="-16" class="sub mid">Shapes, walls, lamps and parts marked * are assumed: verify on the table.</text>
 
   <!-- The board, 520 x 1079 mm -->
