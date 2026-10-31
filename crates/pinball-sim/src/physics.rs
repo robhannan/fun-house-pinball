@@ -50,6 +50,10 @@ const IMPACT_GRIP: f32 = 0.05;
 /// How fast a pop bumper and a kicker throw the ball when they fire.
 const POP_KICK: f32 = 1_600.0;
 const KICKER_KICK: f32 = 1_400.0;
+/// A kicker's corners are posts: the ball touching one this close to a corner
+/// bounces off without closing the switch, which only the rubber between the
+/// posts does.
+const POST_MM: f32 = 8.0;
 /// A coil only kicks the ball if it touched the part this recently.
 const KICK_WINDOW_MS: u32 = 15;
 /// Shortest time a touched switch stays closed, so the debouncer sees it.
@@ -377,6 +381,17 @@ impl Shape {
                 }
                 (best.0, 0.0)
             }
+        }
+    }
+
+    /// Whether the surface point `q` is within `r` of one of the shape's
+    /// corners.
+    fn near_corner(&self, q: Vec2, r: f32) -> bool {
+        match self {
+            Self::Circle { .. } => false,
+            Self::Edges(edges) => edges
+                .iter()
+                .any(|&(a, b)| (q - a).len() < r || (q - b).len() < r),
         }
     }
 
@@ -810,9 +825,14 @@ impl Physics {
             let (q, thickness) = self.table.solids[i].shape.closest(self.pos);
             let bounce = self.table.solids[i].bounce;
             if self.collide(q, thickness, bounce, Vec2::default()) {
-                self.touched[i] = Some(self.now);
-                if let Some(s) = self.table.solids[i].switch {
-                    self.close(s);
+                let solid = &self.table.solids[i];
+                let on_post = solid.kick.is_some() && solid.shape.near_corner(q, POST_MM);
+                let switch = solid.switch;
+                if !on_post {
+                    self.touched[i] = Some(self.now);
+                    if let Some(s) = switch {
+                        self.close(s);
+                    }
                 }
             }
         }
@@ -968,10 +988,10 @@ mod tests {
         // Top lanes, side lanes and the shooter lane.
         assert_eq!(t.rollovers.len(), 7);
         // The outline (with the apron's edge), the shooter lane's inner wall
-        // (straight and curved), the roller, four lane rails, the centre post
-        // and four walls joining the kickers, rubbers and flippers.
+        // (straight and curved), the roller, four lane rails and the centre
+        // post.
         let walls = t.solids.iter().filter(|s| s.switch.is_none()).count();
-        assert_eq!(walls, 13);
+        assert_eq!(walls, 9);
     }
 
     #[test]
@@ -1006,6 +1026,29 @@ mod tests {
         assert!(closed);
         assert_eq!(p.len(), 10);
         assert_eq!(p[8], Vec2::new(10.0, 10.0));
+    }
+
+    #[test]
+    fn a_kickers_corners_are_posts() {
+        // Touching near a corner is the post; only the rubber between closes
+        // the switch.
+        let kicker = Shape::Edges(edges(
+            &[
+                Vec2::new(0.0, 0.0),
+                Vec2::new(100.0, 0.0),
+                Vec2::new(50.0, 50.0),
+            ],
+            true,
+        ));
+        assert!(kicker.near_corner(Vec2::new(3.0, 0.0), POST_MM));
+        assert!(!kicker.near_corner(Vec2::new(50.0, 0.0), POST_MM));
+        assert!(
+            !Shape::Circle {
+                centre: Vec2::default(),
+                radius: 30.0
+            }
+            .near_corner(Vec2::new(30.0, 0.0), POST_MM)
+        );
     }
 
     #[test]

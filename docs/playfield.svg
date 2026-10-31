@@ -171,8 +171,8 @@
 
   <!-- Side kickers: striped, under the lower pop bumpers (assumed) -->
   <g fill="#f6c6cb" stroke="#1f2328" stroke-width="3" stroke-linejoin="round">
-    <polygon points="21.5,576.5 33.5,576.5 73.5,678.5 32.5,777 22,778" data-switch="C1R2" data-coil="19"/>
-    <polygon points="451,581 436,581 406,677 439,776.5 451,776.5" data-switch="C1R3" data-coil="20"/>
+    <polygon points="21.5,576.5 73.5,678.5 32.5,777 22,778" data-switch="C1R2" data-coil="19"/>
+    <polygon points="451,581 406,677 439,776.5 451,776.5" data-switch="C1R3" data-coil="20"/>
   </g>
   <text x="-22" y="677" class="label mid" transform="rotate(-90 -22 677)">Left side kicker: C1·R2 · coil 19</text>
   <text x="-8" y="677" class="tag mid" transform="rotate(-90 -8 677)">Pop 4: advance bonus when lit *</text>
@@ -223,22 +223,17 @@
   <text x="235" y="838" class="label mid">Bonus wheel (lamps only): 10 → L8 … 100 → L17</text>
 
   <!-- Kicking rubbers (assumed) -->
-  <polygon points="22.5,787 20.5,846.5 121,906.5 127.2,855.1" fill="#ffffff" stroke="#1f2328" stroke-width="3" data-switch="C1R0" data-coil="1"/>
-  <polygon points="446.5,788 449.5,847.5 353,904.5 347.4,856.6" fill="#ffffff" stroke="#1f2328" stroke-width="3" data-switch="C1R1" data-coil="2"/>
+  <polygon points="22.5,787 20.5,846.5 121,906.5 149,869.3" fill="#ffffff" stroke="#1f2328" stroke-width="3" data-switch="C1R0" data-coil="1"/>
+  <polygon points="446.5,788 449.5,847.5 353,904.5 326.8,870.9" fill="#ffffff" stroke="#1f2328" stroke-width="3" data-switch="C1R1" data-coil="2"/>
   <text x="92" y="800" class="label">Left kicker</text>
   <text x="92" y="811" class="tag">C1·R0 · coil 1</text>
   <text x="380" y="800" class="label end">Right kicker</text>
   <text x="380" y="811" class="tag end">C1·R1 · coil 2</text>
 
-  <!-- No outlanes: short walls join the side kickers to the kicking rubbers,
-       and lead from the rubbers to over the flippers (assumed). The apron's
-       edge below funnels a drained ball into the outhole. -->
-  <g stroke="#8a6d3b" stroke-width="3" stroke-linecap="round">
-    <line x1="22" y1="778" x2="22.5" y2="787" data-wall=""/>
-    <line x1="451" y1="776.5" x2="446.5" y2="788" data-wall=""/>
-    <line x1="127.2" y1="855.1" x2="160" y2="878" data-wall=""/>
-    <line x1="347.4" y1="856.6" x2="312" y2="878" data-wall=""/>
-  </g>
+  <!-- No outlanes or inlanes: each kicking rubber runs from beside its side
+       kicker to about 10 mm from its flipper's pivot, too close for a ball to
+       pass, and the apron's edge below funnels a drained ball into the
+       outhole. -->
   <path d="M 12.7 859 L 212.6 978.4 A 25 25 0 1 0 260.7 976.1 L 459 859 L 459 1079 L 12.7 1079 Z" fill="#c9d1d9" stroke="#57606a" stroke-width="1"/>
 
   <!-- Flippers (inward facing): pivots 162 mm apart, 63 mm long end to end,
