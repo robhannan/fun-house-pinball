@@ -836,8 +836,10 @@ mod tests {
         sim.place_ball(pivot + Vec2::new(-5.0, -45.0), Vec2::default());
         run(&mut sim, 3_000);
         assert_eq!(sim.physics().state(), BallState::Rolling);
+        // Resting by the pivot, not thrown somewhere else on the table.
         let ball = sim.physics().ball();
-        assert!(ball.y < pivot.y + 16.5, "{ball:?}");
+        let (dx, dy) = (ball.x - pivot.x, ball.y - pivot.y);
+        assert!(dx * dx + dy * dy < 40.0 * 40.0, "{ball:?}");
         // Let go and it rolls off and drains.
         sim.set_switch(sw::LEFT_FLIPPER_BUTTON, false);
         run(&mut sim, 3_000);
