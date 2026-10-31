@@ -72,9 +72,12 @@ make changes here.
   against `PARTS`. Keep simulator-only code out of `pinball-core`.
   - The ball physics (`crates/pinball-sim/src/physics.rs`) takes its geometry
     from `docs/playfield.svg` too: `data-wall` for walls and posts, `data-gate`
-    for the one-way shooter gate. When moving or adding anything solid, leave
-    a ball's width (20 px) wherever the ball should pass, and run the slow trap
-    search: `cargo test -p pinball-sim --release -- --ignored`.
+    for the one-way shooter gate. The map is to scale: one unit is a
+    millimetre, x from the board's left edge and y from its back edge. Parts
+    measured on the real table go in as measured; anything else is assumed
+    and says so. When moving or adding anything solid, leave a ball's width
+    (27 mm) wherever the ball should pass, and run the slow trap search:
+    `cargo test -p pinball-sim --release -- --ignored`.
 - **3D-printed ball return:** OpenSCAD models in `hardware/3d/`. Every table
   measurement lives in `measurements.scad` (placeholders until measured), and
   shared geometry in `common.scad`, so the parts always fit each other;
