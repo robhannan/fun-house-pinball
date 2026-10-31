@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
 
-import { SHAPE_TAG, arcMidpoint, arcThrough, circleHandles, formatPath, parsePath, rewriteSvg } from "./shapes.js";
+import { SHAPE_TAG, arcCentre, arcMidpoint, arcThrough, circleHandles, formatPath, parsePath, rewriteSvg } from "./shapes.js";
 
 const MAP = await readFile(path.join(import.meta.dirname, "../../../docs/playfield.svg"), "utf8");
 
@@ -58,4 +58,37 @@ test("rewriting changes only the edited attributes", () => {
   assert.equal(changed.length, 1);
   assert.match(changed[0], /points="20,600 90,680 20,760" fill="#ffd33d"/);
   assert.equal(rewriteSvg(MAP, new Map()), MAP);
+});
+
+test("rounded kickers and rubbers meet their sides smoothly", () => {
+  // Each switch's rounded outline is straight sides joined by arcs round its
+  // corner posts. An arc must leave each side at a tangent (no kink), and
+  // they must all turn the same way, as the shapes have no inward corners.
+  const paths = [...MAP.matchAll(/<path d="([^"]+)"[^>]*data-switch="([^"]+)"/g)];
+  assert.ok(paths.length >= 8, `only ${paths.length} rounded switches`);
+  for (const [, d, sw] of paths) {
+    const commands = parsePath(d);
+    assert.ok(commands, `${sw}: a path the tracer can edit`);
+    const ends = commands.filter((c) => c.cmd !== "Z");
+    const sweeps = new Set(ends.filter((c) => c.cmd === "A").map((c) => c.sweep));
+    assert.equal(sweeps.size, 1, `${sw}: arcs turn both ways`);
+    ends.forEach((c, i) => {
+      if (c.cmd !== "A") return;
+      const before = ends[i - 1];
+      // The side after the arc runs to the next point somewhere else (the
+      // last arc ends back at the path's start).
+      let next = ends[(i + 1) % ends.length];
+      for (let j = i + 2; Math.hypot(next.x - c.x, next.y - c.y) < 1e-6; j++) next = ends[j % ends.length];
+      const centre = arcCentre([before.x, before.y], [c.x, c.y], c.r, c.large, c.sweep);
+      // At each end the radius is square to the side: their dot product is 0.
+      const square = (on, other) => {
+        const radius = [on[0] - centre[0], on[1] - centre[1]];
+        const side = [other[0] - on[0], other[1] - on[1]];
+        return Math.abs(radius[0] * side[0] + radius[1] * side[1]) / (Math.hypot(...radius) * Math.hypot(...side));
+      };
+      const previous = ends[i - 2] ?? ends.at(-1);
+      assert.ok(square([before.x, before.y], [previous.x, previous.y]) < 0.05, `${sw}: kink before arc ${i}`);
+      assert.ok(square([c.x, c.y], [next.x, next.y]) < 0.05, `${sw}: kink after arc ${i}`);
+    });
+  }
 });
