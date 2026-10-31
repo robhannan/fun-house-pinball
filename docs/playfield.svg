@@ -30,9 +30,13 @@
   <!-- The 12.7 mm wall along the left edge -->
   <rect x="0" y="219" width="12.7" height="793" fill="#c4a26a" stroke="#8a6d3b" stroke-width="1"/>
 
-  <!-- Shooter lane (right edge): 35 mm wide, between 12.9 mm walls -->
+  <!-- Shooter lane (right edge): 35 mm wide between 12.9 mm walls. Above
+       the straight, the inner wall curves round with the arch, keeping the
+       lane's width, to the gate on the curve, level with the right
+       jack-in-the-box's top corner (traced; verify) -->
   <rect x="459" y="269" width="13" height="765" fill="#c4a26a" stroke="#8a6d3b" stroke-width="1" data-wall=""/>
-  <line x1="473" y1="266" x2="498" y2="258" stroke="#57606a" stroke-width="2" stroke-dasharray="4 3" data-gate=""/>
+  <path d="M 472 269 A 218.3 218.3 0 0 0 429.2 163.5 L 418.9 171.2 A 205.4 205.4 0 0 1 459 269 Z" fill="#c4a26a" stroke="#8a6d3b" stroke-width="1" data-wall=""/>
+  <line x1="430" y1="163" x2="455" y2="144" stroke="#57606a" stroke-width="2" stroke-dasharray="4 3" data-gate=""/>
   <circle cx="489.5" cy="1020" r="7" fill="#c9d1d9" stroke="#57606a" data-switch="C0R1"/>
   <text x="494" y="990" class="label" transform="rotate(-90 494 990)">Shooter lane: C0·R1 *</text>
 

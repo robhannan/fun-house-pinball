@@ -966,10 +966,10 @@ mod tests {
         assert_eq!(t.gates.len(), 1);
         // Top lanes, side lanes and the shooter lane.
         assert_eq!(t.rollovers.len(), 7);
-        // The outline, the shooter lane wall, the roller, four lane rails, the
-        // centre post and six apron walls.
+        // The outline, the shooter lane's inner wall (straight and curved),
+        // the roller, four lane rails, the centre post and six apron walls.
         let walls = t.solids.iter().filter(|s| s.switch.is_none()).count();
-        assert_eq!(walls, 14);
+        assert_eq!(walls, 15);
     }
 
     #[test]
