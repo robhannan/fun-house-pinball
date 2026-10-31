@@ -52,10 +52,10 @@ test("a circle's centre handle is drawn on top of its radius handle", () => {
 
 test("rewriting changes only the edited attributes", () => {
   const shapes = [...MAP.matchAll(SHAPE_TAG)];
-  const index = shapes.findIndex((m) => m[0].includes('data-switch="C1R2"'));
+  const index = shapes.findIndex((m) => m[0].includes('data-switch="C3R0"'));
   const out = rewriteSvg(MAP, new Map([[index, { points: "20,600 90,680 20,760" }]]));
   const changed = out.split("\n").filter((line, n) => line !== MAP.split("\n")[n]);
   assert.equal(changed.length, 1);
-  assert.match(changed[0], /points="20,600 90,680 20,760" data-switch="C1R2"/);
+  assert.match(changed[0], /points="20,600 90,680 20,760" data-switch="C3R0"/);
   assert.equal(rewriteSvg(MAP, new Map()), MAP);
 });

@@ -73,6 +73,8 @@ const PLUNGER_MIN: f32 = 1_350.0;
 const PLUNGER_MAX: f32 = 2_400.0;
 /// How long a ball takes to roll from a trapdoor to the outhole underneath.
 const UNDER_PLAYFIELD_MS: u32 = 800;
+/// Arcs are flattened into straight pieces about this long.
+const ARC_PIECE_MM: f32 = 3.0;
 /// How far off the board the ball must be to count as lost.
 const LOST_MARGIN: f32 = 50.0;
 
@@ -217,6 +219,34 @@ fn points(text: &str) -> Vec<Vec2> {
         .collect()
 }
 
+/// The end point of each `M`, `L`, `Q` and `A` command in an SVG path: a
+/// shape's corners, ignoring how the curves between them bend. A closed
+/// path's last point is dropped if it's back at the first.
+pub(crate) fn path_ends(d: &str) -> Vec<Vec2> {
+    let tokens: Vec<&str> = d.split_whitespace().collect();
+    let mut out = Vec::new();
+    let mut i = 0;
+    while i < tokens.len() {
+        // How many numbers each command takes; the last two are its end.
+        let count = match tokens[i] {
+            "M" | "L" => 2,
+            "Q" => 4,
+            "A" => 7,
+            _ => 0,
+        };
+        if count > 0 && i + count < tokens.len() {
+            let x = tokens[i + count - 1].parse().unwrap_or(0.0);
+            let y = tokens[i + count].parse().unwrap_or(0.0);
+            out.push(Vec2::new(x, y));
+        }
+        i += count + 1;
+    }
+    if out.len() > 1 && out.first() == out.last() {
+        out.pop();
+    }
+    out
+}
+
 /// The outline of an SVG path with absolute `M`, `L`, `Q`, `A` and `Z`
 /// commands, with each curve flattened into straight pieces. Arcs must be
 /// circular and unrotated (`A r r 0 large sweep x y`). Returns the points and
@@ -283,9 +313,16 @@ fn arc_points(start: Vec2, end: Vec2, radius: f32, large: bool, sweep: bool) -> 
     } else if !sweep && turn > 0.0 {
         turn -= std::f32::consts::TAU;
     }
-    (1..=32_u8)
+    // Pieces about ARC_PIECE_MM long, so a kicker's rounded corner is a few
+    // and the arch is at most 32.
+    let pieces = ((radius * turn.abs()) / ARC_PIECE_MM)
+        .ceil()
+        .clamp(1.0, 32.0);
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let count = pieces as u8;
+    (1..=count)
         .map(|i| {
-            let a = a0 + turn * f32::from(i) / 32.0;
+            let a = a0 + turn * f32::from(i) / pieces;
             centre + Vec2::new(a.cos(), a.sin()) * radius
         })
         .collect()
@@ -444,7 +481,9 @@ struct Flipper {
 
 impl Flipper {
     fn from_tag(tag: &Tag) -> Option<Self> {
-        let (p, _) = path_points(tag.get("d")?);
+        // The bat's four corners: base, tip, tip, base. Its ends may be drawn
+        // round; the physics rounds them anyway.
+        let p = path_ends(tag.get("d")?);
         if p.len() != 4 {
             return None;
         }
@@ -1018,6 +1057,20 @@ mod tests {
             let r = (*q - Vec2::new(300.0, 330.0)).len();
             assert!((r - 260.0).abs() < 0.01, "{q:?}");
         }
+    }
+
+    #[test]
+    fn a_path_ends_at_its_corners() {
+        let p = path_ends("M 0 0 L 10 0 A 5 5 0 0 1 10 10 L 0 10 A 5 5 0 0 1 0 0 Z");
+        assert_eq!(
+            p,
+            [
+                Vec2::new(0.0, 0.0),
+                Vec2::new(10.0, 0.0),
+                Vec2::new(10.0, 10.0),
+                Vec2::new(0.0, 10.0)
+            ]
+        );
     }
 
     #[test]
