@@ -94,6 +94,24 @@ pnpm run build:sim
 pnpm run serve:sim     # then open http://localhost:8000
 ```
 
+#### Tracing the playfield from a photo
+
+`docs/playfield.svg` is drawn to scale in millimetres. The parts measured on
+the real table carry a `data-measured` label; the rest of the shapes are
+assumed. The **playfield tracer** (`/trace/` beside the simulator, online or
+locally) corrects them from a photo of the table:
+
+1. Take the glass off and photograph the playfield straight down, from as high
+   as you can, with the phone's 2× lens.
+2. Load the photo and click the measured parts it asks for. It lines the photo
+   up with the map and shows how far off each click is, in millimetres.
+3. Drag the map's shapes onto the photo, then download the corrected
+   `playfield.svg` and save it over `docs/playfield.svg`. Only the shapes you
+   edited change.
+
+The photo stays in the browser. It shows the original artwork, so don't commit
+it.
+
 Controls:
 
 - <kbd>Enter</kbd>: start
