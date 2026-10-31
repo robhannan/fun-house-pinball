@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -70 600 1290" width="600" height="1290" font-family="Helvetica, Arial, sans-serif">
   <title>Fun House (1956) playfield wiring reference</title>
-  <desc>Drawn to scale in millimetres: x from the board's left edge, y from its back edge (the end by the backbox). The board, the arch's ends, the shooter lane and the centres of the bumpers, trapdoors, rollovers, bonus wheel, flipper pivots, centre post and outhole, the bumper caps' and outhole's sizes, the flippers' length and the gap between their tips (at rest and held up) were measured on the table with a tape, and the trapdoor holes, the left wall and the shooter lane's walls, the flippers' widths, centre post, outhole and rollover buttons with calipers. The arch, kickers, rubbers and lamps were traced from a photo with the playfield tracer, by eye; everything else is assumed. hardware/3d/measurements.scad measures y from the front edge instead. Labels give each part's switch matrix position (C = column, R = row), coil number and lamp number, matching crates/pinball-core/src/playfield.rs. The data-switch, data-coil and data-lamp attributes drive the simulator in sim/ and are checked against playfield.rs by its tests. The simulator's ball physics also takes its geometry from this file: data-wall marks solid walls and posts, and data-gate a one-way gate. data-board marks the board's edge, and data-measured labels the parts whose centres were measured, which the trace page (sim/web/trace/) uses to line a photo up with this map.</desc>
+  <desc>Drawn to scale in millimetres: x from the board's left edge, y from its back edge (the end by the backbox). The board, the arch's ends, the shooter lane and the centres of the bumpers, trapdoors, rollovers, bonus wheel, flipper pivots, centre post and outhole, the bumper caps' and outhole's sizes, the flippers' length and the gap between their tips (at rest and held up) and the apron's edge were measured on the table with a tape, and the trapdoor holes, the left wall and the shooter lane's walls, the flippers' widths, centre post, outhole and rollover buttons with calipers. The arch, kickers, rubbers and lamps were traced from a photo with the playfield tracer, by eye; everything else is assumed. hardware/3d/measurements.scad measures y from the front edge instead. Labels give each part's switch matrix position (C = column, R = row), coil number and lamp number, matching crates/pinball-core/src/playfield.rs. The data-switch, data-coil and data-lamp attributes drive the simulator in sim/ and are checked against playfield.rs by its tests. The simulator's ball physics also takes its geometry from this file: data-wall marks solid walls and posts, and data-gate a one-way gate. data-board marks the board's edge, and data-measured labels the parts whose centres were measured, which the trace page (sim/web/trace/) uses to line a photo up with this map.</desc>
 
   <style>
     .label { font-size: 10px; fill: #1f2328; }
@@ -16,7 +16,7 @@
 
   <text x="240" y="-46" class="title mid">Fun House (Williams, 1956): wiring reference</text>
   <text x="240" y="-30" class="sub mid">To scale, in mm. Measured: board, walls, arch ends, shooter lane, part centres and sizes.</text>
-  <text x="240" y="-16" class="sub mid">Kickers, rubbers and lamps traced by eye (verify). Lane rails, apron and parts marked * are assumed.</text>
+  <text x="240" y="-16" class="sub mid">Kickers, rubbers and lamps traced by eye (verify). Lane rails and parts marked * are assumed.</text>
 
   <!-- The board, 520 x 1079 mm -->
   <rect x="0" y="0" width="520" height="1079" fill="#e9dcc0" stroke="#8a6d3b" stroke-width="1" data-board=""/>
@@ -24,9 +24,11 @@
   <!-- Playfield outline, inside the 12.7 mm left wall and the shooter lane's
        12.9 mm outer wall: the arch meets the left wall 860 mm from the front,
        and the shooter lane's outer wall 805 mm from the front; its radius is
-       traced from a photo. The bottom edge is the apron (assumed), stepping down in the
-       shooter lane to the plunger's tip. -->
-  <path d="M 12.7 1012 L 12.7 219 A 253.3 253.3 0 0 1 507 274 L 507 1034 L 459 1034 L 459 1012 Z" fill="#fdf6e3" stroke="#8a6d3b" stroke-width="3" data-wall=""/>
+       traced from a photo. The bottom edge is the apron's: 220 mm up from the front at each
+       wall, angled straight down to a rounded cup round the outhole
+       (measured; the cup's 22 mm radius is assumed). In the shooter lane it
+       steps down to the plunger's tip. -->
+  <path d="M 12.7 859 L 12.7 219 A 253.3 253.3 0 0 1 507 274 L 507 1034 L 459 1034 L 459 859 L 249.4 1002.2 A 22 22 0 0 1 224.7 1002.2 Z" fill="#fdf6e3" stroke="#8a6d3b" stroke-width="3" data-wall=""/>
   <!-- The 12.7 mm wall along the left edge -->
   <rect x="0" y="219" width="12.7" height="793" fill="#c4a26a" stroke="#8a6d3b" stroke-width="1"/>
 
@@ -228,17 +230,16 @@
   <text x="380" y="800" class="label end">Right kicker</text>
   <text x="380" y="811" class="tag end">C1·R1 · coil 2</text>
 
-  <!-- Apron: no outlanes, so the kickers meet the walls, and a V under the
-       flippers funnels a drained ball into the outhole (all assumed) -->
+  <!-- No outlanes: short walls join the side kickers to the kicking rubbers,
+       and lead from the rubbers to over the flippers (assumed). The apron's
+       edge below funnels a drained ball into the outhole. -->
   <g stroke="#8a6d3b" stroke-width="3" stroke-linecap="round">
     <line x1="22" y1="778" x2="22.5" y2="787" data-wall=""/>
     <line x1="451" y1="776.5" x2="446.5" y2="788" data-wall=""/>
     <line x1="127.2" y1="855.1" x2="160" y2="878" data-wall=""/>
     <line x1="347.4" y1="856.6" x2="312" y2="878" data-wall=""/>
-    <line x1="150" y1="912" x2="219" y2="1003" data-wall=""/>
-    <line x1="322" y1="912" x2="255" y2="1003" data-wall=""/>
   </g>
-  <rect x="12.7" y="1012" width="446.3" height="67" fill="#c9d1d9" stroke="#57606a" stroke-width="1"/>
+  <path d="M 12.7 859 L 224.7 1002.2 A 22 22 0 0 0 249.4 1002.2 L 459 859 L 459 1079 L 12.7 1079 Z" fill="#c9d1d9" stroke="#57606a" stroke-width="1"/>
 
   <!-- Flippers (inward facing): pivots 162 mm apart, 63 mm long, 21.3 mm
        wide at the pivot and 15.4 mm at the tip; the tips are 80 mm apart at
@@ -249,15 +250,15 @@
   </g>
   <circle cx="155" cy="889" r="7" fill="#57606a" data-measured="Left flipper pivot"/>
   <circle cx="317" cy="889" r="7" fill="#57606a" data-measured="Right flipper pivot"/>
-  <text x="100" y="925" class="label mid">Left flipper</text>
-  <text x="100" y="938" class="tag mid">coils 8 (power), 9 (hold)</text>
-  <text x="372" y="925" class="label mid">Right flipper</text>
-  <text x="372" y="938" class="tag mid">coils 10 (power), 11 (hold)</text>
+  <text x="90" y="925" class="label mid">Left flipper</text>
+  <text x="90" y="938" class="tag mid">coils 8 (power), 9 (hold)</text>
+  <text x="384" y="925" class="label mid">Right flipper</text>
+  <text x="384" y="938" class="tag mid">coils 10 (power), 11 (hold)</text>
 
   <!-- Centre post (18.7 mm across, with its rubber) and outhole (37.8 mm) -->
   <circle cx="235" cy="934" r="9.35" fill="#ffffff" stroke="#1f2328" stroke-width="2" data-wall="" data-measured="Centre post"/>
   <circle cx="237" cy="984" r="18.9" fill="#1f2328" data-switch="C0R0" data-coil="0" data-measured="Outhole centre"/>
-  <text x="228" y="1032" class="label mid">Apron * · the outhole's switch C0·R0 and ball serve</text>
+  <text x="228" y="1032" class="label mid">Apron · the outhole's switch C0·R0 and ball serve</text>
   <text x="228" y="1045" class="label mid">coil 0 are on the ball lift, under it</text>
 
   <!-- Legend -->
