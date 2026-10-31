@@ -21,11 +21,14 @@
   <!-- The board, 520 x 1079 mm -->
   <rect x="0" y="0" width="520" height="1079" fill="#e9dcc0" stroke="#8a6d3b" stroke-width="1" data-board=""/>
 
-  <!-- Playfield outline: the arch meets the left wall 860 mm from the front,
+  <!-- Playfield outline, inside the 12.7 mm left wall and the shooter lane's
+       12.9 mm outer wall: the arch meets the left wall 860 mm from the front,
        and the shooter lane's outer wall 805 mm from the front; its radius is
        assumed. The bottom edge is the apron (assumed), stepping down in the
        shooter lane to the plunger's tip. -->
-  <path d="M 0 1012 L 0 219 A 258 258 0 0 1 507 274 L 507 1034 L 459 1034 L 459 1012 Z" fill="#fdf6e3" stroke="#8a6d3b" stroke-width="3" data-wall=""/>
+  <path d="M 12.7 1012 L 12.7 219 A 250 250 0 0 1 507 274 L 507 1034 L 459 1034 L 459 1012 Z" fill="#fdf6e3" stroke="#8a6d3b" stroke-width="3" data-wall=""/>
+  <!-- The 12.7 mm wall along the left edge -->
+  <rect x="0" y="219" width="12.7" height="793" fill="#c4a26a" stroke="#8a6d3b" stroke-width="1"/>
 
   <!-- Shooter lane (right edge): 35 mm wide, between 12.9 mm walls -->
   <rect x="459" y="269" width="13" height="765" fill="#c4a26a" stroke="#8a6d3b" stroke-width="1" data-wall=""/>
@@ -34,14 +37,14 @@
   <text x="494" y="990" class="label" transform="rotate(-90 494 990)">Shooter lane: C0·R1 *</text>
 
   <!-- Top corners: jack-in-the-box kickers (assumed) -->
-  <circle cx="51" cy="141" r="10" fill="#57606a" data-wall=""/>
-  <text x="66" y="138" class="tag">roller</text>
+  <circle cx="57" cy="147" r="10" fill="#57606a" data-wall=""/>
+  <text x="72" y="144" class="tag">roller</text>
   <g fill="#fff3b0" stroke="#1f2328" stroke-width="3" stroke-linejoin="round">
     <polygon points="34,194 82,181 93,227 45,246" data-switch="C1R4" data-coil="21"/>
     <polygon points="426,194 378,181 367,227 415,246" data-switch="C1R5" data-coil="22"/>
   </g>
-  <text x="8" y="262" class="tag">Jack-in-the-box</text>
-  <text x="8" y="273" class="tag">C1·R4 · coil 21</text>
+  <text x="18" y="262" class="tag">Jack-in-the-box</text>
+  <text x="18" y="273" class="tag">C1·R4 · coil 21</text>
   <text x="448" y="262" class="tag end">Jack-in-the-box</text>
   <text x="448" y="273" class="tag end">C1·R5 · coil 22</text>
 
@@ -162,7 +165,7 @@
 
   <!-- Side kickers: striped, under the lower pop bumpers (assumed) -->
   <g fill="#f6c6cb" stroke="#1f2328" stroke-width="3" stroke-linejoin="round">
-    <polygon points="0,597 84,677 0,757" data-switch="C1R2" data-coil="19"/>
+    <polygon points="12.7,597 84,677 12.7,757" data-switch="C1R2" data-coil="19"/>
     <polygon points="459,597 388,677 459,757" data-switch="C1R3" data-coil="20"/>
   </g>
   <text x="-22" y="677" class="label mid" transform="rotate(-90 -22 677)">Left side kicker: C1·R2 · coil 19</text>
@@ -224,14 +227,14 @@
   <!-- Apron: no outlanes, so the kickers meet the walls, and a V under the
        flippers funnels a drained ball into the outhole (all assumed) -->
   <g stroke="#8a6d3b" stroke-width="3" stroke-linecap="round">
-    <line x1="0" y1="762" x2="46" y2="782" data-wall=""/>
+    <line x1="12.7" y1="762" x2="46" y2="782" data-wall=""/>
     <line x1="459" y1="762" x2="410" y2="782" data-wall=""/>
     <line x1="126" y1="853" x2="160" y2="878" data-wall=""/>
     <line x1="345" y1="851" x2="312" y2="878" data-wall=""/>
     <line x1="150" y1="912" x2="219" y2="1003" data-wall=""/>
     <line x1="322" y1="912" x2="255" y2="1003" data-wall=""/>
   </g>
-  <rect x="0" y="1012" width="459" height="67" fill="#c9d1d9" stroke="#57606a" stroke-width="1"/>
+  <rect x="12.7" y="1012" width="446.3" height="67" fill="#c9d1d9" stroke="#57606a" stroke-width="1"/>
 
   <!-- Flippers (inward facing): pivots 162 mm apart, 63 mm long, 21.3 mm
        wide at the pivot and 15.4 mm at the tip; the tips are 80 mm apart at
