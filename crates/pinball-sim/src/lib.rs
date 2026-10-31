@@ -405,13 +405,19 @@ mod exports {
         })
     }
 
-    /// The ball's position across the table, in playfield-map pixels.
+    /// The ball's radius, in millimetres (playfield-map units).
+    #[unsafe(no_mangle)]
+    pub extern "C" fn sim_ball_radius() -> f32 {
+        super::physics::BALL_RADIUS
+    }
+
+    /// The ball's position across the table, in millimetres (playfield-map units).
     #[unsafe(no_mangle)]
     pub extern "C" fn sim_ball_x() -> f32 {
         with(|sim| sim.physics().ball().x)
     }
 
-    /// The ball's position down the table, in playfield-map pixels.
+    /// The ball's position down the table, in millimetres (playfield-map units).
     #[unsafe(no_mangle)]
     pub extern "C" fn sim_ball_y() -> f32 {
         with(|sim| sim.physics().ball().y)
@@ -548,7 +554,7 @@ mod tests {
     // Ball physics, driven through the whole simulator so the real rules fire
     // the coils.
 
-    use super::physics::{BallState, Vec2};
+    use super::physics::{BALL_RADIUS, BallState, Vec2};
 
     fn run(sim: &mut Simulator, ms: u32) {
         for _ in 0..ms / 10 {
@@ -571,6 +577,54 @@ mod tests {
         sim.plunger(false);
     }
 
+    // These tests find parts on the playfield map rather than hard-coding
+    // where they are, so they keep working as parts are measured and moved.
+
+    /// The playfield map's first tag containing `marker`, such as
+    /// `data-switch="C2R0"`.
+    fn map_tag(marker: &str) -> &'static str {
+        SVG.split('<')
+            .find(|tag| tag.contains(marker))
+            .unwrap_or_else(|| panic!("no {marker} on the playfield map"))
+    }
+
+    /// A number attribute of the map's first tag containing `marker`.
+    fn map_number(marker: &str, name: &str) -> f32 {
+        let tag = map_tag(marker);
+        let start = tag
+            .find(&format!(" {name}=\""))
+            .unwrap_or_else(|| panic!("{marker} has no {name}"))
+            + name.len()
+            + 3;
+        tag[start..]
+            .split('"')
+            .next()
+            .and_then(|value| value.parse().ok())
+            .unwrap_or_else(|| panic!("{marker}'s {name} isn't a number"))
+    }
+
+    /// The left flipper's pivot: the middle of its base end, as the physics
+    /// finds it.
+    fn left_flipper_pivot() -> Vec2 {
+        let tag = map_tag("data-flipper=\"left\"");
+        let d = tag
+            .split(" d=\"")
+            .nth(1)
+            .and_then(|rest| rest.split('"').next());
+        let p: Vec<f32> = d
+            .expect("the left flipper has a path")
+            .split(|c: char| !(c.is_ascii_digit() || c == '.' || c == '-'))
+            .filter_map(|n| n.parse().ok())
+            .collect();
+        Vec2::new(f32::midpoint(p[0], p[6]), f32::midpoint(p[1], p[7]))
+    }
+
+    /// Whether the ball is still on the playfield board.
+    fn on_board(p: Vec2) -> bool {
+        (0.0..=map_number("data-board=\"\"", "width")).contains(&p.x)
+            && (0.0..=map_number("data-board=\"\"", "height")).contains(&p.y)
+    }
+
     #[test]
     fn starting_a_game_serves_the_ball_to_the_shooter_lane() {
         let mut sim = Simulator::new();
@@ -589,13 +643,15 @@ mod tests {
     fn a_full_plunge_sends_the_ball_round_the_top_and_onto_the_playfield() {
         let mut sim = served();
         plunge(&mut sim, 900);
+        // The gate is at the top of the shooter lane's wall.
+        let lane_wall = map_number("data-gate=\"\"", "x1");
         let mut highest = f32::MAX;
         let mut reached_playfield = false;
         for _ in 0..300 {
             run(&mut sim, 10);
             let ball = sim.physics().ball();
             highest = highest.min(ball.y);
-            reached_playfield |= ball.x < 500.0 && ball.y < 600.0;
+            reached_playfield |= ball.x < lane_wall - BALL_RADIUS && ball.y < 600.0;
         }
         assert!(highest < 120.0, "only reached y = {highest}");
         assert!(reached_playfield);
@@ -623,10 +679,7 @@ mod tests {
                 run(&mut sim, 10);
                 ms += 10;
                 let p = sim.physics().ball();
-                assert!(
-                    (35.0..=565.0).contains(&p.x) && (60.0..=1_045.0).contains(&p.y),
-                    "pull {pull_ms}: ball escaped to {p:?}"
-                );
+                assert!(on_board(p), "pull {pull_ms}: ball escaped to {p:?}");
             }
             assert_eq!(
                 sim.machine().ball(),
@@ -675,10 +728,7 @@ mod tests {
                 }
                 run(&mut sim, 10);
                 let p = sim.physics().ball();
-                assert!(
-                    (35.0..=565.0).contains(&p.x) && (60.0..=1_045.0).contains(&p.y),
-                    "seed {seed}: ball escaped to {p:?}"
-                );
+                assert!(on_board(p), "seed {seed}: ball escaped to {p:?}");
                 let waiting =
                     sim.physics().state() != BallState::Rolling || sim.physics().ready_to_plunge();
                 let (dx, dy) = (p.x - anchor.x, p.y - anchor.y);
@@ -724,8 +774,13 @@ mod tests {
     #[test]
     fn a_pop_bumper_scores_and_kicks_the_ball_away() {
         let mut sim = served();
-        // Pop 1 is at (160, 320), radius 30. Roll the ball gently into it.
-        sim.place_ball(Vec2::new(160.0, 265.0), Vec2::new(0.0, 150.0));
+        // Roll the ball gently into pop 1 from above.
+        let pop = "data-switch=\"C2R0\"";
+        let top = map_number(pop, "cy") - map_number(pop, "r") - BALL_RADIUS;
+        sim.place_ball(
+            Vec2::new(map_number(pop, "cx"), top - 25.0),
+            Vec2::new(0.0, 150.0),
+        );
         let mut fastest: f32 = 0.0;
         for _ in 0..40 {
             run(&mut sim, 10);
@@ -736,12 +791,20 @@ mod tests {
         assert!(fastest > 1_000.0, "fastest {fastest}");
     }
 
+    fn just_above_the_middle_trapdoor() -> Vec2 {
+        let door = "data-trapdoor=\"1\"";
+        Vec2::new(
+            map_number(door, "x") + map_number(door, "width") / 2.0,
+            map_number(door, "y") - 6.0,
+        )
+    }
+
     #[test]
     fn an_open_trapdoor_swallows_the_ball_and_scores_the_bonus() {
         let mut sim = served();
         sim.set_trapdoor(1, true);
         run(&mut sim, 20);
-        sim.place_ball(Vec2::new(280.0, 405.0), Vec2::new(0.0, 100.0));
+        sim.place_ball(just_above_the_middle_trapdoor(), Vec2::new(0.0, 100.0));
         run(&mut sim, 100);
         assert!(matches!(
             sim.physics().state(),
@@ -755,10 +818,12 @@ mod tests {
     #[test]
     fn a_closed_trapdoor_lets_the_ball_roll_over() {
         let mut sim = served();
-        sim.place_ball(Vec2::new(280.0, 405.0), Vec2::new(0.0, 100.0));
-        run(&mut sim, 200);
+        sim.place_ball(just_above_the_middle_trapdoor(), Vec2::new(0.0, 100.0));
+        run(&mut sim, 300);
         assert_eq!(sim.physics().state(), BallState::Rolling);
-        assert!(sim.physics().ball().y > 435.0);
+        let door = "data-trapdoor=\"1\"";
+        let bottom = map_number(door, "y") + map_number(door, "height");
+        assert!(sim.physics().ball().y > bottom - 6.0);
     }
 
     #[test]
@@ -767,10 +832,12 @@ mod tests {
         sim.set_switch(sw::LEFT_FLIPPER_BUTTON, true);
         run(&mut sim, 100);
         // Drop the ball onto the raised left flipper.
-        sim.place_ball(Vec2::new(200.0, 880.0), Vec2::default());
+        let pivot = left_flipper_pivot();
+        sim.place_ball(pivot + Vec2::new(27.5, -63.5), Vec2::default());
         run(&mut sim, 3_000);
         assert_eq!(sim.physics().state(), BallState::Rolling);
-        assert!(sim.physics().ball().y < 960.0, "{:?}", sim.physics().ball());
+        let ball = sim.physics().ball();
+        assert!(ball.y < pivot.y + 16.5, "{ball:?}");
         // Let go and it rolls off and drains.
         sim.set_switch(sw::LEFT_FLIPPER_BUTTON, false);
         run(&mut sim, 3_000);
@@ -780,7 +847,8 @@ mod tests {
     #[test]
     fn a_flipper_hits_the_ball_up_the_table() {
         let mut sim = served();
-        sim.place_ball(Vec2::new(215.0, 940.0), Vec2::default());
+        let pivot = left_flipper_pivot();
+        sim.place_ball(pivot + Vec2::new(42.5, -3.5), Vec2::default());
         run(&mut sim, 30);
         sim.set_switch(sw::LEFT_FLIPPER_BUTTON, true);
         let mut highest = f32::MAX;
@@ -788,7 +856,10 @@ mod tests {
             run(&mut sim, 10);
             highest = highest.min(sim.physics().ball().y);
         }
-        assert!(highest < 500.0, "only reached y = {highest}");
+        // At least a third of the way up the table. The measured flippers rest
+        // steeply (about 49° below level), so their swing is assumed to end
+        // about level and they don't send the ball as far as a modern flipper.
+        assert!(highest < pivot.y - 350.0, "only reached y = {highest}");
     }
 
     #[test]

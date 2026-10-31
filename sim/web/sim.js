@@ -19,6 +19,7 @@ const PHASES = ["Attract", "Playing", "Tilted", "Test"];
 /// WebAssembly exports this script needs; an older build lacks some of them.
 const REQUIRED_EXPORTS = [
   "sim_advance",
+  "sim_ball_radius",
   "sim_ball_x",
   "sim_ball_y",
   "sim_ball_shown",
@@ -85,7 +86,7 @@ function start(sim) {
   const svg = document.querySelector("#playfield svg");
   const ballEl = document.createElementNS("http://www.w3.org/2000/svg", "circle");
   ballEl.id = "sim-ball";
-  ballEl.setAttribute("r", "10");
+  ballEl.setAttribute("r", String(sim.sim_ball_radius()));
   ballEl.setAttribute("fill", "#b8c0c8");
   ballEl.setAttribute("stroke", "#4b535b");
   ballEl.setAttribute("stroke-width", "2");

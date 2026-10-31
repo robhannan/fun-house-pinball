@@ -18,8 +18,8 @@
 //!
 //! So nothing is scripted: a ball touching a pop bumper closes its switch, the
 //! real rules in `pinball-core` fire the coil, and the coil output kicks the
-//! ball. Units are SVG pixels (about a millimetre on the real table) and
-//! seconds.
+//! ball. The map is drawn to scale, so units are millimetres on the real table
+//! (one SVG unit each) and seconds.
 
 use std::ops::{Add, Mul, Neg, Sub};
 
@@ -28,10 +28,9 @@ use pinball_core::{Instant, SwitchId, SwitchStates};
 
 use crate::switch_from_index;
 
-/// The ball's radius. A real ball is 27 mm across; the map isn't to scale, and
-/// 20 px fits its lanes.
-pub const BALL_RADIUS: f32 = 10.0;
-/// Pull down the table: g × sin 6.5°, the usual playfield slope, in px/s².
+/// The ball's radius: a real ball is 1 1/16 inches (27 mm) across.
+pub const BALL_RADIUS: f32 = 13.5;
+/// Pull down the table: g × sin 6.5°, the usual playfield slope, in mm/s².
 pub const GRAVITY: f32 = 1_100.0;
 /// Physics steps per 1 ms machine tick.
 const SUBSTEPS: u8 = 4;
@@ -639,7 +638,7 @@ impl Physics {
         self.pos
     }
 
-    /// The ball's velocity, in px/s.
+    /// The ball's velocity, in mm/s.
     #[must_use]
     pub const fn velocity(&self) -> Vec2 {
         self.vel
