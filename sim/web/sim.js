@@ -41,6 +41,20 @@ function switchIndex(label) {
   throw new Error(`bad switch label ${label}`);
 }
 
+// The end point of each command in an SVG path (M, L, Q and A): its corners,
+// ignoring how curves between them bend. Matches path_ends in physics.rs.
+function pathCorners(d) {
+  const tokens = d.trim().split(/\s+/);
+  const counts = { M: 2, L: 2, Q: 4, A: 7 };
+  const out = [];
+  for (let i = 0; i < tokens.length; ) {
+    const count = counts[tokens[i]] ?? 0;
+    if (count) out.push([Number(tokens[i + count - 1]), Number(tokens[i + count])]);
+    i += count + 1;
+  }
+  return out;
+}
+
 async function load() {
   // Never use cached copies: after a rebuild, the page, this script and the
   // WebAssembly must all be from the same build.
@@ -73,10 +87,10 @@ function start(sim) {
     lastOn: -Infinity,
   }));
   const flippers = [...document.querySelectorAll("#playfield [data-flipper]")].map((el) => {
-    // Turn about the pivot: the middle of the base end (the first and last
-    // points of the path), as the physics does.
-    const p = el.getAttribute("d").match(/-?[\d.]+/g).map(Number);
-    return { el, n: el.dataset.flipper === "left" ? 0 : 1, pivot: [(p[0] + p[6]) / 2, (p[1] + p[7]) / 2] };
+    // Turn about the pivot: the middle of the base end (the path's first and
+    // fourth corners), as the physics does.
+    const p = pathCorners(el.getAttribute("d"));
+    return { el, n: el.dataset.flipper === "left" ? 0 : 1, pivot: [(p[0][0] + p[3][0]) / 2, (p[0][1] + p[3][1]) / 2] };
   });
 
   // The trapdoors glow while their flaps are open.

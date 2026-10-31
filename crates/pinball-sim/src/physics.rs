@@ -9,7 +9,8 @@
 //! * a circle or polygon with a switch and a coil is a pop bumper or kicker:
 //!   touching it closes the switch, and when the game fires the coil the part
 //!   kicks the ball away
-//! * a polygon with only a switch is a rubber that closes its switch on contact
+//! * a polygon or path with only a switch is a rubber that closes its switch on
+//!   contact
 //! * a circle or rectangle with only a switch is a rollover the ball runs over
 //! * `data-trapdoor` swallows the ball while its flap is open
 //! * `data-flipper` rises while either of its coils is on
@@ -50,15 +51,20 @@ const IMPACT_GRIP: f32 = 0.05;
 /// How fast a pop bumper and a kicker throw the ball when they fire.
 const POP_KICK: f32 = 1_600.0;
 const KICKER_KICK: f32 = 1_400.0;
+/// A kicker's corners are posts: the ball touching one this close to a corner
+/// bounces off without closing the switch, which only the rubber between the
+/// posts does.
+const POST_MM: f32 = 8.0;
 /// A coil only kicks the ball if it touched the part this recently.
 const KICK_WINDOW_MS: u32 = 15;
 /// Shortest time a touched switch stays closed, so the debouncer sees it.
 const MIN_CLOSED_MS: u32 = 10;
 
 /// How far a flipper turns from rest, and how fast (rad/s). On the real table
-/// the tips are 80 mm apart at rest and 83 mm held up, so each swings about
-/// 108°, from 53° below level to 55° above. The speeds are assumed.
-const FLIPPER_STROKE: f32 = 1.88;
+/// the flippers rest parallel to the apron's edge, about 31° below level, and
+/// their tips are about as far apart held up as at rest, so each swings to
+/// about 31° above level: 62° in all. The speeds are assumed.
+const FLIPPER_STROKE: f32 = 1.075;
 const FLIPPER_UP_SPEED: f32 = 22.0;
 const FLIPPER_DOWN_SPEED: f32 = 14.0;
 
@@ -68,6 +74,8 @@ const PLUNGER_MIN: f32 = 1_350.0;
 const PLUNGER_MAX: f32 = 2_400.0;
 /// How long a ball takes to roll from a trapdoor to the outhole underneath.
 const UNDER_PLAYFIELD_MS: u32 = 800;
+/// Arcs are flattened into straight pieces about this long.
+const ARC_PIECE_MM: f32 = 3.0;
 /// How far off the board the ball must be to count as lost.
 const LOST_MARGIN: f32 = 50.0;
 
@@ -212,6 +220,34 @@ fn points(text: &str) -> Vec<Vec2> {
         .collect()
 }
 
+/// The end point of each `M`, `L`, `Q` and `A` command in an SVG path: a
+/// shape's corners, ignoring how the curves between them bend. A closed
+/// path's last point is dropped if it's back at the first.
+pub(crate) fn path_ends(d: &str) -> Vec<Vec2> {
+    let tokens: Vec<&str> = d.split_whitespace().collect();
+    let mut out = Vec::new();
+    let mut i = 0;
+    while i < tokens.len() {
+        // How many numbers each command takes; the last two are its end.
+        let count = match tokens[i] {
+            "M" | "L" => 2,
+            "Q" => 4,
+            "A" => 7,
+            _ => 0,
+        };
+        if count > 0 && i + count < tokens.len() {
+            let x = tokens[i + count - 1].parse().unwrap_or(0.0);
+            let y = tokens[i + count].parse().unwrap_or(0.0);
+            out.push(Vec2::new(x, y));
+        }
+        i += count + 1;
+    }
+    if out.len() > 1 && out.first() == out.last() {
+        out.pop();
+    }
+    out
+}
+
 /// The outline of an SVG path with absolute `M`, `L`, `Q`, `A` and `Z`
 /// commands, with each curve flattened into straight pieces. Arcs must be
 /// circular and unrotated (`A r r 0 large sweep x y`). Returns the points and
@@ -278,9 +314,16 @@ fn arc_points(start: Vec2, end: Vec2, radius: f32, large: bool, sweep: bool) -> 
     } else if !sweep && turn > 0.0 {
         turn -= std::f32::consts::TAU;
     }
-    (1..=32_u8)
+    // Pieces about ARC_PIECE_MM long, so a kicker's rounded corner is a few
+    // and the arch is at most 32.
+    let pieces = ((radius * turn.abs()) / ARC_PIECE_MM)
+        .ceil()
+        .clamp(1.0, 32.0);
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let count = pieces as u8;
+    (1..=count)
         .map(|i| {
-            let a = a0 + turn * f32::from(i) / 32.0;
+            let a = a0 + turn * f32::from(i) / pieces;
             centre + Vec2::new(a.cos(), a.sin()) * radius
         })
         .collect()
@@ -379,6 +422,17 @@ impl Shape {
         }
     }
 
+    /// Whether the surface point `q` is within `r` of one of the shape's
+    /// corners.
+    fn near_corner(&self, q: Vec2, r: f32) -> bool {
+        match self {
+            Self::Circle { .. } => false,
+            Self::Edges(edges) => edges
+                .iter()
+                .any(|&(a, b)| (q - a).len() < r || (q - b).len() < r),
+        }
+    }
+
     /// How far `p` is from the surface (negative inside a circle).
     fn distance(&self, p: Vec2) -> f32 {
         let (q, thickness) = self.closest(p);
@@ -428,7 +482,9 @@ struct Flipper {
 
 impl Flipper {
     fn from_tag(tag: &Tag) -> Option<Self> {
-        let (p, _) = path_points(tag.get("d")?);
+        // The bat's four corners: base, tip, tip, base. Its ends may be drawn
+        // round; the physics rounds them anyway.
+        let p = path_ends(tag.get("d")?);
         if p.len() != 4 {
             return None;
         }
@@ -541,7 +597,9 @@ impl Table {
                 });
             } else if let Some(switch) = switch {
                 let is_circle = matches!(shape, Shape::Circle { .. });
-                let is_polygon = tag.name == "polygon";
+                // A rubber is any closed outline: a polygon, or a path such as
+                // one with rounded corners.
+                let is_polygon = matches!(tag.name.as_str(), "polygon" | "path");
                 match (coils.first(), is_circle, is_polygon) {
                     // Pop bumpers and kickers.
                     (Some(&c), _, _) => table.solids.push(Solid {
@@ -809,9 +867,14 @@ impl Physics {
             let (q, thickness) = self.table.solids[i].shape.closest(self.pos);
             let bounce = self.table.solids[i].bounce;
             if self.collide(q, thickness, bounce, Vec2::default()) {
-                self.touched[i] = Some(self.now);
-                if let Some(s) = self.table.solids[i].switch {
-                    self.close(s);
+                let solid = &self.table.solids[i];
+                let on_post = solid.kick.is_some() && solid.shape.near_corner(q, POST_MM);
+                let switch = solid.switch;
+                if !on_post {
+                    self.touched[i] = Some(self.now);
+                    if let Some(s) = switch {
+                        self.close(s);
+                    }
                 }
             }
         }
@@ -966,10 +1029,11 @@ mod tests {
         assert_eq!(t.gates.len(), 1);
         // Top lanes, side lanes and the shooter lane.
         assert_eq!(t.rollovers.len(), 7);
-        // The outline, the shooter lane wall, the roller, four lane rails, the
-        // centre post and six apron walls.
+        // The outline (with the apron's edge), the shooter lane's inner wall
+        // (straight and curved), the roller, four lane rails and the centre
+        // post.
         let walls = t.solids.iter().filter(|s| s.switch.is_none()).count();
-        assert_eq!(walls, 14);
+        assert_eq!(walls, 9);
     }
 
     #[test]
@@ -999,11 +1063,48 @@ mod tests {
     }
 
     #[test]
+    fn a_path_ends_at_its_corners() {
+        let p = path_ends("M 0 0 L 10 0 A 5 5 0 0 1 10 10 L 0 10 A 5 5 0 0 1 0 0 Z");
+        assert_eq!(
+            p,
+            [
+                Vec2::new(0.0, 0.0),
+                Vec2::new(10.0, 0.0),
+                Vec2::new(10.0, 10.0),
+                Vec2::new(0.0, 10.0)
+            ]
+        );
+    }
+
+    #[test]
     fn paths_with_curves_are_flattened() {
         let (p, closed) = path_points("M 0 0 Q 10 0 10 10 L 0 10 Z");
         assert!(closed);
         assert_eq!(p.len(), 10);
         assert_eq!(p[8], Vec2::new(10.0, 10.0));
+    }
+
+    #[test]
+    fn a_kickers_corners_are_posts() {
+        // Touching near a corner is the post; only the rubber between closes
+        // the switch.
+        let kicker = Shape::Edges(edges(
+            &[
+                Vec2::new(0.0, 0.0),
+                Vec2::new(100.0, 0.0),
+                Vec2::new(50.0, 50.0),
+            ],
+            true,
+        ));
+        assert!(kicker.near_corner(Vec2::new(3.0, 0.0), POST_MM));
+        assert!(!kicker.near_corner(Vec2::new(50.0, 0.0), POST_MM));
+        assert!(
+            !Shape::Circle {
+                centre: Vec2::default(),
+                radius: 30.0
+            }
+            .near_corner(Vec2::new(30.0, 0.0), POST_MM)
+        );
     }
 
     #[test]
@@ -1017,13 +1118,12 @@ mod tests {
         // Up, both tips are above their pivots.
         assert!(left.tip(FLIPPER_STROKE).y < left.pivot.y);
         assert!(right.tip(FLIPPER_STROKE).y < right.pivot.y);
-        // The gap between the tips' ends, as measured on the table: 80 mm at
-        // rest and 83 mm held up.
-        let gap = |turn: f32| {
-            (right.tip(turn) - left.tip(turn)).len() - left.tip_radius - right.tip_radius
-        };
-        assert!((gap(0.0) - 80.0).abs() < 3.0, "at rest {}", gap(0.0));
-        let up = gap(FLIPPER_STROKE);
-        assert!((up - 83.0).abs() < 3.0, "held up {up}");
+        // On the table the tips are about as far apart held up as at rest, so
+        // each flipper swings as far above level as it rests below it.
+        for f in [left, right] {
+            let below = f.tip(0.0).y - f.pivot.y;
+            let above = f.pivot.y - f.tip(FLIPPER_STROKE).y;
+            assert!((below - above).abs() < 2.0, "{below} below, {above} above");
+        }
     }
 }

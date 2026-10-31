@@ -603,20 +603,26 @@ mod tests {
             .unwrap_or_else(|| panic!("{marker}'s {name} isn't a number"))
     }
 
-    /// The left flipper's pivot: the middle of its base end, as the physics
-    /// finds it.
-    fn left_flipper_pivot() -> Vec2 {
-        let tag = map_tag("data-flipper=\"left\"");
+    /// The corners of the path of the map's first tag containing `marker`.
+    fn path_corners(marker: &str) -> Vec<Vec2> {
+        let tag = map_tag(marker);
         let d = tag
             .split(" d=\"")
             .nth(1)
             .and_then(|rest| rest.split('"').next());
-        let p: Vec<f32> = d
-            .expect("the left flipper has a path")
-            .split(|c: char| !(c.is_ascii_digit() || c == '.' || c == '-'))
-            .filter_map(|n| n.parse().ok())
-            .collect();
-        Vec2::new(f32::midpoint(p[0], p[6]), f32::midpoint(p[1], p[7]))
+        physics::path_ends(d.unwrap_or_else(|| panic!("{marker} has no path")))
+    }
+
+    /// A flipper's pivot and tip: the middles of its base and tip ends, as
+    /// the physics finds them.
+    fn flipper_ends(side: &str) -> (Vec2, Vec2) {
+        let p = path_corners(&format!("data-flipper=\"{side}\""));
+        let middle = |a: Vec2, b: Vec2| Vec2::new(f32::midpoint(a.x, b.x), f32::midpoint(a.y, b.y));
+        (middle(p[0], p[3]), middle(p[1], p[2]))
+    }
+
+    fn left_flipper_pivot() -> Vec2 {
+        flipper_ends("left").0
     }
 
     /// Whether the ball is still on the playfield board.
@@ -836,12 +842,61 @@ mod tests {
         sim.place_ball(pivot + Vec2::new(-5.0, -45.0), Vec2::default());
         run(&mut sim, 3_000);
         assert_eq!(sim.physics().state(), BallState::Rolling);
+        // Resting by the pivot, not thrown somewhere else on the table.
         let ball = sim.physics().ball();
-        assert!(ball.y < pivot.y + 16.5, "{ball:?}");
+        let (dx, dy) = (ball.x - pivot.x, ball.y - pivot.y);
+        assert!(dx * dx + dy * dy < 40.0 * 40.0, "{ball:?}");
         // Let go and it rolls off and drains.
         sim.set_switch(sw::LEFT_FLIPPER_BUTTON, false);
         run(&mut sim, 3_000);
         assert_eq!(sim.machine().ball(), 2);
+    }
+
+    #[test]
+    fn flippers_rest_parallel_to_the_apron() {
+        // On the table the flippers lie parallel to the apron's edge at rest,
+        // with just room for a ball between. The outline starts at the left
+        // wall and closes from the cutout back to it, so its first and last
+        // corners are the apron's left edge; the right edge runs from the
+        // lane wall to the cutout, its third- and second-last corners.
+        let outline = path_corners("data-wall=\"\"");
+        let n = outline.len();
+        let len = |v: Vec2| v.x.hypot(v.y);
+        let angle = |v: Vec2| v.y.atan2(v.x).to_degrees();
+        for (side, start, end) in [
+            ("left", outline[0], outline[n - 1]),
+            ("right", outline[n - 3], outline[n - 2]),
+        ] {
+            let (pivot, tip) = flipper_ends(side);
+            // Both run from the wall end, so compare their slopes.
+            let (edge, bat) = (end - start, tip - pivot);
+            let slope = |v: Vec2| angle(Vec2::new(v.x.abs(), v.y));
+            let apart = slope(edge) - slope(bat);
+            assert!(apart.abs() < 2.0, "{side}: {apart}° off parallel");
+            // The gap under the base: room for a 27 mm ball, not much more.
+            let corner = path_corners(&format!("data-flipper=\"{side}\""))[0];
+            let gap = ((pivot - start).x * edge.y - (pivot - start).y * edge.x).abs() / len(edge)
+                - len(corner - pivot);
+            assert!(
+                (BALL_RADIUS * 2.0..45.0).contains(&gap),
+                "{side}: gap {gap}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_fast_ball_cant_get_stuck_on_the_left_jack_in_the_box() {
+        // A fast ball along the kicker's top could once squeeze under the
+        // roller into a pocket by the arch, and bounce there for ever.
+        let mut sim = served();
+        sim.place_ball(Vec2::new(95.0, 173.0), Vec2::new(-3_500.0, 0.0));
+        run(&mut sim, 6_000);
+        let p = sim.physics().ball();
+        let (dx, dy) = (p.x - 55.0, p.y - 170.0);
+        assert!(
+            dx * dx + dy * dy > 40.0 * 40.0 || sim.physics().state() != BallState::Rolling,
+            "{p:?}"
+        );
     }
 
     #[test]
