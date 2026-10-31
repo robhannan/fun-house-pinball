@@ -59,8 +59,8 @@
 
   <!-- Top rubbers: "advance bonus when lit" (assumed) -->
   <g fill="#f6c6cb" stroke="#d73a49" stroke-width="3" stroke-linejoin="round">
-    <polygon points="132,191.5 142.5,190.5 168,302.5 154.5,305 130,247.5" data-switch="C3R0"/>
-    <polygon points="337.5,192 326.5,190.5 302,298 314,304.5 338.5,248" data-switch="C3R1"/>
+    <path d="M 135.8 189.6 L 138.4 189.4 A 6 6 0 0 1 144.8 194 L 168.8 297.9 A 6 6 0 0 1 163.5 305.2 L 157.9 305.7 A 6 6 0 0 1 151.8 302 L 130.3 248.6 A 6 6 0 0 1 129.9 246.3 L 130.4 195.6 A 6 6 0 0 1 135.8 189.6 Z" data-switch="C3R0"/>
+    <path d="M 334.1 190.1 L 331 189.5 A 6 6 0 0 0 324.1 194.1 L 301.6 294.2 A 6 6 0 0 0 304 300.4 L 308.5 303.7 A 6 6 0 0 0 317.6 301 L 338.2 249 A 6 6 0 0 0 338.6 246.9 L 339 196 A 6 6 0 0 0 334.1 190.1 Z" data-switch="C3R1"/>
   </g>
   <g fill="#ffd33d" stroke="#9a6700" stroke-width="2">
     <circle cx="195" cy="303" r="9" data-lamp="6"/>

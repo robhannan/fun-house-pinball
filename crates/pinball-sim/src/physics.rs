@@ -9,7 +9,8 @@
 //! * a circle or polygon with a switch and a coil is a pop bumper or kicker:
 //!   touching it closes the switch, and when the game fires the coil the part
 //!   kicks the ball away
-//! * a polygon with only a switch is a rubber that closes its switch on contact
+//! * a polygon or path with only a switch is a rubber that closes its switch on
+//!   contact
 //! * a circle or rectangle with only a switch is a rollover the ball runs over
 //! * `data-trapdoor` swallows the ball while its flap is open
 //! * `data-flipper` rises while either of its coils is on
@@ -596,7 +597,9 @@ impl Table {
                 });
             } else if let Some(switch) = switch {
                 let is_circle = matches!(shape, Shape::Circle { .. });
-                let is_polygon = tag.name == "polygon";
+                // A rubber is any closed outline: a polygon, or a path such as
+                // one with rounded corners.
+                let is_polygon = matches!(tag.name.as_str(), "polygon" | "path");
                 match (coils.first(), is_circle, is_polygon) {
                     // Pop bumpers and kickers.
                     (Some(&c), _, _) => table.solids.push(Solid {
