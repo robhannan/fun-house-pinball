@@ -61,6 +61,7 @@ jobs:
               - '.cargo/**'
               # Host tests embed these files with include_str!.
               - 'docs/playfield.svg'
+              - 'hardware/3d/measurements.scad'
               - 'docs/backboard.svg'
               - 'sim/web/index.html'
               - 'sim/web/sounds.js'

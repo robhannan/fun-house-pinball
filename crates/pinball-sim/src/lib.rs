@@ -1056,6 +1056,93 @@ mod tests {
         }
     }
 
+    /// The 3D-printed ball return's measurements of the table.
+    const MEASUREMENTS: &str = include_str!("../../../hardware/3d/measurements.scad");
+
+    /// A number from `hardware/3d/measurements.scad`, by name.
+    fn measurement(name: &str) -> f32 {
+        MEASUREMENTS
+            .lines()
+            .find_map(|line| {
+                line.strip_prefix(name)?
+                    .trim_start()
+                    .strip_prefix('=')?
+                    .trim()
+                    .trim_end_matches(';')
+                    .parse()
+                    .ok()
+            })
+            .unwrap_or_else(|| panic!("measurements.scad has no {name}"))
+    }
+
+    #[test]
+    fn the_3d_measurements_match_the_playfield_map() {
+        // The printed parts and the map must agree on the table. The map's y
+        // runs from the board's back edge, measurements.scad's from its front.
+        let near = |scad: f32, map: f32, what: &str| {
+            assert!(
+                (scad - map).abs() <= 0.5,
+                "{what}: measurements.scad says {scad}, the map {map}"
+            );
+        };
+        let board = "data-board=\"\"";
+        let length = map_number(board, "height");
+        near(
+            measurement("playfield_width"),
+            map_number(board, "width"),
+            "board width",
+        );
+        near(measurement("playfield_length"), length, "board length");
+        let door = |n: u8, name: &str| map_number(&format!("data-trapdoor=\"{n}\""), name);
+        let centre_x = |n: u8| door(n, "x") + door(n, "width") / 2.0;
+        near(
+            measurement("trapdoor_x"),
+            centre_x(1),
+            "middle trapdoor across",
+        );
+        near(
+            measurement("trapdoor_y"),
+            length - (door(1, "y") + door(1, "height") / 2.0),
+            "middle trapdoor up the table",
+        );
+        near(
+            measurement("trapdoor_spacing"),
+            centre_x(1) - centre_x(0),
+            "trapdoor spacing",
+        );
+        near(
+            measurement("trapdoor_spacing"),
+            centre_x(2) - centre_x(1),
+            "trapdoor spacing",
+        );
+        near(
+            measurement("hole_width"),
+            door(1, "width"),
+            "trapdoor hole width",
+        );
+        near(
+            measurement("hole_length"),
+            door(1, "height"),
+            "trapdoor hole length",
+        );
+        let outhole = "data-switch=\"C0R0\"";
+        near(
+            measurement("outhole_x"),
+            map_number(outhole, "cx"),
+            "outhole across",
+        );
+        near(
+            measurement("outhole_y"),
+            length - map_number(outhole, "cy"),
+            "outhole up the table",
+        );
+        near(
+            measurement("outhole_diameter"),
+            2.0 * map_number(outhole, "r"),
+            "outhole diameter",
+        );
+    }
+
     #[test]
     fn measured_points_can_line_up_a_photo() {
         // The trace page (sim/web/trace/) lines a photo up with the map by the

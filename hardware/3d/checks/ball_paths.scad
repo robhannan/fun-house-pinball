@@ -39,14 +39,16 @@ function trough_floor(x) =
     let(end = max(abs(catch_x[0]), abs(catch_x[2])) + channel_inner / 2)
     trough_floor_centre + (trough_floor_end - trough_floor_centre) * min(abs(x) / end, 1);
 
-// Down through each open trapdoor into its catch box, forward over its outlet's
-// edge, and down into the trough.
+// Down through each open trapdoor into its catch box, forward off its outlet's
+// edge, and down into the trough: like a real ball, it stays level until it's
+// out over the trough, then drops.
 module trapdoors() {
     at_trapdoors() for (cx = catch_x) {
         sweep([cx, (catch_front + catch_back) / 2, playfield_thickness + lift],
               [cx, (catch_front + catch_back) / 2, catch_floor((catch_front + catch_back) / 2) + lift + 1]);
         along([[cx, catch_front + lift, catch_floor(catch_front + lift)],
                [cx, catch_front - 2 * wall, catch_floor_front],
+               [cx, trough_y, catch_floor_front],
                [cx, trough_y, trough_floor(cx)]]);
     }
 }

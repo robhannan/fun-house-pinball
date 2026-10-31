@@ -51,7 +51,7 @@ assert_on_playfield("shooter lane", [lane_x + lane_width / 2, lift_hole_y], [lan
 // Everything that doesn't move, apart from the servos.
 module fixed_parts() {
     at_trapdoors() {
-        frame();
+        for (dx = trapdoor_offsets) translate([dx, 0, 0]) frame();
         collector();
         for (dx = trapdoor_offsets) translate([dx, 0, 0]) hanger_part();
     }
