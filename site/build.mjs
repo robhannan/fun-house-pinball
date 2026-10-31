@@ -27,7 +27,7 @@ const repo = remote.match(/([^/:]+\/[^/]+?)(?:\.git)?$/)[1];
 await $`node sim/build.mjs`;
 
 await fs.emptyDir(out);
-await fs.copy(path.join(root, "sim/web"), path.join(out, "sim"));
+await fs.copy(path.join(root, "sim/web"), path.join(out, "sim"), { filter: (file) => !file.endsWith(".test.mjs") });
 await fs.copy(path.join(root, "site/index.html"), path.join(out, "index.html"));
 await fs.copy(path.join(root, "site/parts"), path.join(out, "parts"), { filter: (file) => !file.endsWith(".test.mjs") });
 // Counts and orders are saved to parts.json. got.json holds counts from

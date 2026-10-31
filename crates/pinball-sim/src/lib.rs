@@ -1002,6 +1002,29 @@ mod tests {
     }
 
     #[test]
+    fn measured_points_can_line_up_a_photo() {
+        // The trace page (sim/web/trace/) lines a photo up with the map by the
+        // centres of the parts marked data-measured: at least four, each a
+        // circle or rectangle with its own label.
+        let mut labels = BTreeSet::new();
+        for tag in SVG.split('<').filter(|t| t.contains(" data-measured=\"")) {
+            let name = tag.split_whitespace().next();
+            assert!(
+                matches!(name, Some("circle" | "rect")),
+                "data-measured on a {name:?}: the page needs a centre"
+            );
+            let label = tag
+                .split(" data-measured=\"")
+                .nth(1)
+                .and_then(|rest| rest.split('"').next())
+                .unwrap_or_default();
+            assert!(!label.is_empty(), "a measured point without a label");
+            assert!(labels.insert(label), "two points labelled {label}");
+        }
+        assert!(labels.len() >= 4, "only {} measured points", labels.len());
+    }
+
+    #[test]
     fn backboard_has_three_score_reels_per_player_and_a_credit_window() {
         for player in 0..MAX_PLAYERS {
             for digit in 0..3 {
