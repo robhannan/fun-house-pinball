@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -70 600 1290" width="600" height="1290" font-family="Helvetica, Arial, sans-serif">
   <title>Fun House (1956) playfield wiring reference</title>
-  <desc>Drawn to scale in millimetres: x from the board's left edge, y from its back edge (the end by the backbox). The board, the arch's ends, the shooter lane and the centres of the bumpers, trapdoors, rollovers, bonus wheel, flipper pivots, centre post and outhole, the bumper caps' and outhole's sizes, the flippers' length and the gap between their tips (at rest and held up) were measured on the table with a tape; everything else is assumed. hardware/3d/measurements.scad measures y from the front edge instead. Labels give each part's switch matrix position (C = column, R = row), coil number and lamp number, matching crates/pinball-core/src/playfield.rs. The data-switch, data-coil and data-lamp attributes drive the simulator in sim/ and are checked against playfield.rs by its tests. The simulator's ball physics also takes its geometry from this file: data-wall marks solid walls and posts, and data-gate a one-way gate. data-board marks the board's edge.</desc>
+  <desc>Drawn to scale in millimetres: x from the board's left edge, y from its back edge (the end by the backbox). The board, the arch's ends, the shooter lane and the centres of the bumpers, trapdoors, rollovers, bonus wheel, flipper pivots, centre post and outhole, the bumper caps' and outhole's sizes, the flippers' length and the gap between their tips (at rest and held up) were measured on the table with a tape, and the trapdoor holes, shooter lane walls, flippers' widths, centre post, outhole and rollover buttons with calipers; everything else is assumed. hardware/3d/measurements.scad measures y from the front edge instead. Labels give each part's switch matrix position (C = column, R = row), coil number and lamp number, matching crates/pinball-core/src/playfield.rs. The data-switch, data-coil and data-lamp attributes drive the simulator in sim/ and are checked against playfield.rs by its tests. The simulator's ball physics also takes its geometry from this file: data-wall marks solid walls and posts, and data-gate a one-way gate. data-board marks the board's edge.</desc>
 
   <style>
     .label { font-size: 10px; fill: #1f2328; }
@@ -15,7 +15,7 @@
   <rect x="-40" y="-70" width="600" height="1290" fill="#ffffff"/>
 
   <text x="240" y="-46" class="title mid">Fun House (Williams, 1956): wiring reference</text>
-  <text x="240" y="-30" class="sub mid">To scale, in mm. Measured: board, arch ends, shooter lane, part centres and caps.</text>
+  <text x="240" y="-30" class="sub mid">To scale, in mm. Measured: board, arch ends, shooter lane, part centres and sizes.</text>
   <text x="240" y="-16" class="sub mid">Shapes, walls, lamps and parts marked * are assumed: verify on the table.</text>
 
   <!-- The board, 520 x 1079 mm -->
@@ -25,13 +25,13 @@
        and the shooter lane's outer wall 805 mm from the front; its radius is
        assumed. The bottom edge is the apron (assumed), stepping down in the
        shooter lane to the plunger's tip. -->
-  <path d="M 0 1012 L 0 219 A 250 250 0 0 1 491 274 L 491 1034 L 456 1034 L 456 1012 Z" fill="#fdf6e3" stroke="#8a6d3b" stroke-width="3" data-wall=""/>
+  <path d="M 0 1012 L 0 219 A 258 258 0 0 1 507 274 L 507 1034 L 459 1034 L 459 1012 Z" fill="#fdf6e3" stroke="#8a6d3b" stroke-width="3" data-wall=""/>
 
-  <!-- Shooter lane (right edge): inner wall 456 mm from the left, 35 mm wide -->
-  <line x1="456" y1="269" x2="456" y2="1012" stroke="#8a6d3b" stroke-width="2" data-wall=""/>
-  <line x1="457" y1="266" x2="482" y2="258" stroke="#57606a" stroke-width="2" stroke-dasharray="4 3" data-gate=""/>
-  <circle cx="473.5" cy="1020" r="7" fill="#c9d1d9" stroke="#57606a" data-switch="C0R1"/>
-  <text x="478" y="990" class="label" transform="rotate(-90 478 990)">Shooter lane: C0·R1 *</text>
+  <!-- Shooter lane (right edge): 35 mm wide, between 12.9 mm walls -->
+  <rect x="459" y="269" width="13" height="765" fill="#c4a26a" stroke="#8a6d3b" stroke-width="1" data-wall=""/>
+  <line x1="473" y1="266" x2="498" y2="258" stroke="#57606a" stroke-width="2" stroke-dasharray="4 3" data-gate=""/>
+  <circle cx="489.5" cy="1020" r="7" fill="#c9d1d9" stroke="#57606a" data-switch="C0R1"/>
+  <text x="494" y="990" class="label" transform="rotate(-90 494 990)">Shooter lane: C0·R1 *</text>
 
   <!-- Top corners: jack-in-the-box kickers (assumed) -->
   <circle cx="51" cy="141" r="10" fill="#57606a" data-wall=""/>
@@ -59,15 +59,16 @@
   <text x="310" y="318" class="tag">Top rubber *: C3·R1</text>
   <text x="310" y="329" class="tag">advance bonus: L7</text>
 
-  <!-- Top lanes: "10 points" rollover slots outside the rubbers (assumed) -->
+  <!-- Top lanes: "10 points" rollover buttons outside the rubbers (position
+       assumed) -->
   <g fill="#c9d1d9" stroke="#57606a">
-    <rect x="99" y="239" width="8" height="40" rx="3" data-switch="C3R2"/>
-    <rect x="363" y="239" width="8" height="40" rx="3" data-switch="C3R3"/>
+    <circle cx="103" cy="259" r="2.7" data-switch="C3R2"/>
+    <circle cx="367" cy="259" r="2.7" data-switch="C3R3"/>
   </g>
-  <text x="103" y="291" class="tag mid">10</text>
-  <text x="367" y="291" class="tag mid">10</text>
-  <text x="103" y="301" class="tag mid">C3·R2</text>
-  <text x="367" y="301" class="tag mid">C3·R3</text>
+  <text x="103" y="276" class="tag mid">10</text>
+  <text x="367" y="276" class="tag mid">10</text>
+  <text x="103" y="286" class="tag mid">C3·R2</text>
+  <text x="367" y="286" class="tag mid">C3·R3</text>
 
   <!-- Top bumper: "10 points", 80 mm cap -->
   <circle cx="235" cy="219" r="40" fill="#ffffff" stroke="#d73a49" stroke-width="3" data-switch="C2R5" data-coil="18" data-lamp="29"/>
@@ -94,25 +95,26 @@
 
   <!-- Trapdoor lamps: "trap door open when lite is lit" (assumed) -->
   <g fill="#ffd33d" stroke="#9a6700" stroke-width="1.5">
-    <rect x="170" y="455" width="4" height="12"/>
-    <rect x="233" y="455" width="4" height="12"/>
-    <rect x="296" y="455" width="4" height="12"/>
-    <circle cx="172" cy="451" r="7" data-lamp="3"/>
-    <circle cx="235" cy="451" r="7" data-lamp="4"/>
-    <circle cx="298" cy="451" r="7" data-lamp="5"/>
+    <rect x="167.5" y="444" width="4" height="14"/>
+    <rect x="233" y="444" width="4" height="14"/>
+    <rect x="298.5" y="444" width="4" height="14"/>
+    <circle cx="169.5" cy="440" r="7" data-lamp="3"/>
+    <circle cx="235" cy="440" r="7" data-lamp="4"/>
+    <circle cx="300.5" cy="440" r="7" data-lamp="5"/>
   </g>
 
-  <!-- "Scores Bonus" box with its three trapdoors, 63 mm apart. The holes'
-       size comes from hardware/3d/measurements.scad. -->
-  <rect x="132" y="470" width="206" height="88" rx="4" fill="#ffffff" stroke="#d73a49" stroke-width="3"/>
-  <text x="235" y="482" class="tag mid">TRAP DOOR OPEN WHEN LITE IS LIT</text>
+  <!-- "Scores Bonus" box with its three trapdoors: holes 30.5 x 65 mm, their
+       centres 65.5 mm apart -->
+  <rect x="136" y="458" width="198" height="108" rx="4" fill="#ffffff" stroke="#d73a49" stroke-width="3"/>
+  <text x="235" y="472" class="tag mid">TRAP DOOR OPEN WHEN LITE IS LIT</text>
   <g fill="#1f2328">
-    <rect x="150" y="490" width="44" height="48" rx="2" data-switch="C4R5" data-trapdoor="0"/>
-    <rect x="213" y="490" width="44" height="48" rx="2" data-switch="C4R6" data-trapdoor="1"/>
-    <rect x="276" y="490" width="44" height="48" rx="2" data-switch="C4R7" data-trapdoor="2"/>
+    <rect x="154.25" y="481.5" width="30.5" height="65" rx="2" data-switch="C4R5" data-trapdoor="0"/>
+    <rect x="219.75" y="481.5" width="30.5" height="65" rx="2" data-switch="C4R6" data-trapdoor="1"/>
+    <rect x="285.25" y="481.5" width="30.5" height="65" rx="2" data-switch="C4R7" data-trapdoor="2"/>
   </g>
-  <text x="235" y="551" class="label mid">SCORES BONUS</text>
-  <text x="235" y="620" class="tag mid">Trapdoors 1–3: C4·R5–R7 · flap servos on D5, D2, D3 · lamps L3–L5</text>
+  <text x="235" y="560" class="label mid">SCORES BONUS</text>
+  <text x="235" y="577" class="tag mid">Trapdoors 1–3: C4·R5–R7</text>
+  <text x="235" y="587" class="tag mid">servos D5, D2, D3 · L3–L5</text>
 
   <!-- "10 points" lanes, two either side of the box (rails assumed) -->
   <g stroke="#8a6d3b" stroke-width="3">
@@ -128,13 +130,13 @@
     <text x="418" y="486">10</text>
   </g>
   <g fill="#c9d1d9" stroke="#57606a">
-    <circle cx="50" cy="514" r="7" data-switch="C4R0"/>
-    <circle cx="108" cy="514" r="7" data-switch="C4R1"/>
-    <circle cx="358" cy="514" r="7" data-switch="C4R2"/>
-    <circle cx="418" cy="514" r="7" data-switch="C4R3"/>
+    <circle cx="50" cy="514" r="2.7" data-switch="C4R0"/>
+    <circle cx="108" cy="514" r="2.7" data-switch="C4R1"/>
+    <circle cx="358" cy="514" r="2.7" data-switch="C4R2"/>
+    <circle cx="418" cy="514" r="2.7" data-switch="C4R3"/>
   </g>
-  <text x="79" y="463" class="tag mid">"10 points" lanes 1–2: C4·R0, R1</text>
-  <text x="388" y="463" class="tag mid">lanes 3–4: C4·R2, R3</text>
+  <text x="79" y="455" class="tag mid">lanes 1–2: C4·R0, R1</text>
+  <text x="388" y="455" class="tag mid">lanes 3–4: C4·R2, R3</text>
 
   <!-- "30 points when lit": a lamp below each lane (assumed) -->
   <g fill="#57606a">
@@ -155,13 +157,13 @@
   <text x="388" y="597" class="tag mid">30 points when lit: L22, L23</text>
 
   <!-- Special when lit (assumed) -->
-  <polygon points="235,566 255,598 215,598" fill="#ffd33d" stroke="#9a6700" stroke-width="2" data-lamp="2"/>
-  <text x="235" y="610" class="tag mid">Special when lit: L2</text>
+  <polygon points="235,592 252,618 218,618" fill="#ffd33d" stroke="#9a6700" stroke-width="2" data-lamp="2"/>
+  <text x="258" y="612" class="tag">Special when lit: L2</text>
 
   <!-- Side kickers: striped, under the lower pop bumpers (assumed) -->
   <g fill="#f6c6cb" stroke="#1f2328" stroke-width="3" stroke-linejoin="round">
     <polygon points="0,597 84,677 0,757" data-switch="C1R2" data-coil="19"/>
-    <polygon points="456,597 388,677 456,757" data-switch="C1R3" data-coil="20"/>
+    <polygon points="459,597 388,677 459,757" data-switch="C1R3" data-coil="20"/>
   </g>
   <text x="-22" y="677" class="label mid" transform="rotate(-90 -22 677)">Left side kicker: C1·R2 · coil 19</text>
   <text x="-8" y="677" class="tag mid" transform="rotate(-90 -8 677)">Pop 4: advance bonus when lit *</text>
@@ -223,19 +225,20 @@
        flippers funnels a drained ball into the outhole (all assumed) -->
   <g stroke="#8a6d3b" stroke-width="3" stroke-linecap="round">
     <line x1="0" y1="762" x2="46" y2="782" data-wall=""/>
-    <line x1="456" y1="762" x2="410" y2="782" data-wall=""/>
+    <line x1="459" y1="762" x2="410" y2="782" data-wall=""/>
     <line x1="126" y1="853" x2="160" y2="878" data-wall=""/>
     <line x1="345" y1="851" x2="312" y2="878" data-wall=""/>
     <line x1="150" y1="912" x2="219" y2="1003" data-wall=""/>
     <line x1="322" y1="912" x2="255" y2="1003" data-wall=""/>
   </g>
-  <rect x="0" y="1012" width="456" height="67" fill="#c9d1d9" stroke="#57606a" stroke-width="1"/>
+  <rect x="0" y="1012" width="459" height="67" fill="#c9d1d9" stroke="#57606a" stroke-width="1"/>
 
-  <!-- Flippers (inward facing): pivots 162 mm apart, 63 mm long, tips 80 mm
-       apart at rest and 83 mm held up; the shape is assumed -->
+  <!-- Flippers (inward facing): pivots 162 mm apart, 63 mm long, 21.3 mm
+       wide at the pivot and 15.4 mm at the tip; the tips are 80 mm apart at
+       rest and 83 mm held up -->
   <g fill="#ffffff" stroke="#1f2328" stroke-width="3" stroke-linejoin="round">
-    <path d="M 147.9 894.6 L 186.2 937.6 L 194.8 930.8 L 162.1 883.4 Z" data-coil="8 9" data-flipper="left"/>
-    <path d="M 309.9 883.4 L 277.2 930.8 L 285.8 937.6 L 324.1 894.6 Z" data-coil="10 11" data-flipper="right"/>
+    <path d="M 146.5 895.4 L 182.2 937.8 L 194.4 928.5 L 163.5 882.6 Z" data-coil="8 9" data-flipper="left"/>
+    <path d="M 308.5 882.6 L 277.6 928.5 L 289.8 937.8 L 325.5 895.4 Z" data-coil="10 11" data-flipper="right"/>
   </g>
   <circle cx="155" cy="889" r="7" fill="#57606a"/>
   <circle cx="317" cy="889" r="7" fill="#57606a"/>
@@ -244,9 +247,9 @@
   <text x="372" y="925" class="label mid">Right flipper</text>
   <text x="372" y="938" class="tag mid">coils 10 (power), 11 (hold)</text>
 
-  <!-- Centre post and outhole (40 mm across) -->
-  <circle cx="235" cy="934" r="7" fill="#ffffff" stroke="#1f2328" stroke-width="2" data-wall=""/>
-  <circle cx="237" cy="984" r="20" fill="#1f2328" data-switch="C0R0" data-coil="0"/>
+  <!-- Centre post (18.7 mm across, with its rubber) and outhole (37.8 mm) -->
+  <circle cx="235" cy="934" r="9.35" fill="#ffffff" stroke="#1f2328" stroke-width="2" data-wall=""/>
+  <circle cx="237" cy="984" r="18.9" fill="#1f2328" data-switch="C0R0" data-coil="0"/>
   <text x="228" y="1032" class="label mid">Apron * · the outhole's switch C0·R0 and ball serve</text>
   <text x="228" y="1045" class="label mid">coil 0 are on the ball lift, under it</text>
 
@@ -258,7 +261,7 @@
     <circle cx="8" cy="36" r="7" fill="#ffd33d" stroke="#9a6700"/>
     <text x="22" y="40" class="label">Lamp</text>
     <circle cx="8" cy="56" r="6" fill="#c9d1d9" stroke="#57606a"/>
-    <text x="22" y="60" class="label">Rollover switch (top lanes: slots)</text>
+    <text x="22" y="60" class="label">Rollover button</text>
     <rect x="1" y="70" width="14" height="10" rx="2" fill="#1f2328"/>
     <text x="22" y="80" class="label">Trapdoor (switch + flap servo)</text>
     <rect x="1" y="90" width="14" height="10" fill="#f6c6cb" stroke="#d73a49" stroke-width="2"/>

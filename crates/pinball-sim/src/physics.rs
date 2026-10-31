@@ -57,8 +57,8 @@ const MIN_CLOSED_MS: u32 = 10;
 
 /// How far a flipper turns from rest, and how fast (rad/s). On the real table
 /// the tips are 80 mm apart at rest and 83 mm held up, so each swings about
-/// 106°, from 52° below level to 54° above. The speeds are assumed.
-const FLIPPER_STROKE: f32 = 1.84;
+/// 108°, from 53° below level to 55° above. The speeds are assumed.
+const FLIPPER_STROKE: f32 = 1.88;
 const FLIPPER_UP_SPEED: f32 = 22.0;
 const FLIPPER_DOWN_SPEED: f32 = 14.0;
 
