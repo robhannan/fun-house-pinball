@@ -16,7 +16,7 @@
 
   <text x="240" y="-46" class="title mid">Fun House (Williams, 1956): wiring reference</text>
   <text x="240" y="-30" class="sub mid">To scale, in mm. Measured: board, walls, arch ends, shooter lane, part centres and sizes.</text>
-  <text x="240" y="-16" class="sub mid">Kickers, rubbers and lamps traced from a photo. Parts marked * are assumed.</text>
+  <text x="240" y="-16" class="sub mid">Kickers, rubbers and lamps traced by eye (verify). Lane rails, apron and parts marked * are assumed.</text>
 
   <!-- The board, 520 x 1079 mm -->
   <rect x="0" y="0" width="520" height="1079" fill="#e9dcc0" stroke="#8a6d3b" stroke-width="1" data-board=""/>
@@ -33,7 +33,10 @@
   <!-- Shooter lane (right edge): 35 mm wide between 12.9 mm walls. Above
        the straight, the inner wall curves round with the arch, keeping the
        lane's width, to the gate on the curve. The gate's middle was
-       measured 935 mm from the front edge and 450 mm from the left wall -->
+       measured at 935 mm from the front edge and 450 mm from the board's
+       left edge; the gate is drawn across the lane at that point's angle on
+       the arch, centred in the lane. The point itself is 7 mm inside the
+       traced arch, not mid-lane: verify the arch here -->
   <rect x="459" y="269" width="13" height="765" fill="#c4a26a" stroke="#8a6d3b" stroke-width="1" data-wall=""/>
   <path d="M 472 269 A 218.3 218.3 0 0 0 427.5 161.3 L 417.3 169.2 A 205.4 205.4 0 0 1 459 269 Z" fill="#c4a26a" stroke="#8a6d3b" stroke-width="1" data-wall=""/>
   <line x1="428.5" y1="160.6" x2="453.4" y2="141.4" stroke="#57606a" stroke-width="2" stroke-dasharray="4 3" data-gate=""/>
@@ -120,7 +123,6 @@
     <rect x="285.25" y="481.5" width="30.5" height="65" rx="2" data-switch="C4R7" data-trapdoor="2" data-measured="Right trapdoor hole centre"/>
   </g>
   <text x="235" y="476" class="label mid">SCORES BONUS</text>
-    
   <!-- "10 points" lanes, two either side of the box (rails assumed) -->
   <g stroke="#8a6d3b" stroke-width="3">
     <line x1="79" y1="470" x2="79" y2="539" data-wall=""/>
