@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
 
-import { SHAPE_TAG, arcMidpoint, arcThrough, formatPath, parsePath, rewriteSvg } from "./shapes.js";
+import { SHAPE_TAG, arcMidpoint, arcThrough, circleHandles, formatPath, parsePath, rewriteSvg } from "./shapes.js";
 
 const MAP = await readFile(path.join(import.meta.dirname, "../../../docs/playfield.svg"), "utf8");
 
@@ -40,6 +40,14 @@ test("an arc through its own middle is the same arc", () => {
     assert.deepEqual([arc.large, arc.sweep], [large, sweep]);
   }
   assert.equal(arcThrough([0, 0], [1, 1], [2, 2]), null);
+});
+
+test("a circle's centre handle is drawn on top of its radius handle", () => {
+  // A 5.4 mm rollover is smaller than a handle, so the two overlap; the one
+  // drawn last gets the click.
+  const handles = circleHandles(103, 259, 2.7);
+  assert.equal(handles.at(-1).kind, "centre");
+  assert.deepEqual([handles.at(-1).x, handles.at(-1).y], [103, 259]);
 });
 
 test("rewriting changes only the edited attributes", () => {

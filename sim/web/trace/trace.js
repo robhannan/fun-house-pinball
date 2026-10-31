@@ -13,7 +13,7 @@
 // localStorage, so a reload doesn't lose them.
 
 import { applyHomography, fitHomography, invertHomography } from "./homography.js";
-import { SHAPE_TAG, arcMidpoint, arcThrough, formatNumber, formatPath, parsePath, rewriteSvg } from "./shapes.js";
+import { SHAPE_TAG, arcMidpoint, arcThrough, circleHandles, formatNumber, formatPath, parsePath, rewriteSvg } from "./shapes.js";
 
 const MAP_FILE = "../generated/playfield.svg";
 const PX_PER_MM = 2; // the straightened photo's resolution
@@ -177,8 +177,14 @@ function nextPoint(from) {
   return points.length;
 }
 
+// Saves the clicks. The last fit's errors no longer match them, so they're
+// cleared until the photo is lined up again.
 function saveClicks() {
   store.set(photo.key, { clicks: [...clicks], skipped: [...skipped] });
+  if (fitted?.errors.size) {
+    fitted.errors = new Map();
+    $("fit-result").textContent = "The points have changed: line the photo up again.";
+  }
 }
 
 $("photo").addEventListener("click", (event) => {
@@ -292,9 +298,11 @@ $("fit").addEventListener("click", () => {
   const [worst] = [...errors].sort((a, b) => b[1] - a[1]);
   $("fit-result").textContent =
     `Average error ${mean.toFixed(1)} mm; worst ${worst[1].toFixed(1)} mm (${worst[0]}). ` +
-    (worst[1] > FAR_MM
-      ? "Check the red ones: redo a misclick, or skip a part that's moved. Errors growing towards the edges mean lens distortion: take the photo from further away with the 2× lens."
-      : "Good enough to trace from.");
+    (used.length === 4
+      ? "Four points always fit exactly, so a misclick can't show: add more points to check the fit."
+      : worst[1] > FAR_MM
+        ? "Check the red ones: redo a misclick, or skip a part that's moved. Errors growing towards the edges mean lens distortion: take the photo from further away with the 2× lens."
+        : "Good enough to trace from.");
   showPoints();
   straighten();
   showStep("trace");
@@ -390,10 +398,14 @@ function modelFor(el) {
     case "circle": {
       let [cx, cy, r] = [n("cx"), n("cy"), n("r")];
       return {
-        handles: () => [
-          { x: cx, y: cy, set: (x, y) => ([cx, cy] = [x, y]) },
-          { x: cx + r, y: cy, set: (x, y) => (r = Math.max(1, Math.hypot(x - cx, y - cy))) },
-        ],
+        handles: () =>
+          circleHandles(cx, cy, r).map((h) => ({
+            ...h,
+            set:
+              h.kind === "centre"
+                ? (x, y) => ([cx, cy] = [x, y])
+                : (x, y) => (r = Math.max(1, Math.hypot(x - cx, y - cy))),
+          })),
         attributes: () => ({ cx: formatNumber(cx), cy: formatNumber(cy), r: formatNumber(r) }),
       };
     }
@@ -457,9 +469,12 @@ function modelFor(el) {
         insert: (x, y) => {
           const from = starts();
           let best = null;
+          let subpath = null;
           commands.forEach((c, i) => {
+            if (c.cmd === "M") subpath = c;
             if (c.cmd !== "L" && c.cmd !== "Z") return;
-            const to = c.cmd === "Z" ? commands[0] : c;
+            // A closing edge runs back to its own subpath's start.
+            const to = c.cmd === "Z" ? subpath : c;
             const d = segmentDistance([x, y], from[i], [to.x, to.y]);
             if (!best || d < best.d) best = { d, i };
           });

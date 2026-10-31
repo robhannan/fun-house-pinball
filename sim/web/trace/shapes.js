@@ -86,6 +86,19 @@ export function arcThrough(a, m, b) {
 }
 
 /**
+ * Where a circle's handles go, in drawing order: the radius handle on its
+ * right edge, then the centre. The centre is drawn last, so on a circle
+ * smaller than a handle, dragging from the middle still moves it rather than
+ * resizing it.
+ */
+export function circleHandles(cx, cy, r) {
+  return [
+    { kind: "radius", x: cx + r, y: cy },
+    { kind: "centre", x: cx, y: cy },
+  ];
+}
+
+/**
  * The map's source text with some shapes' attributes changed. `edits` maps a
  * shape's index (its position among SHAPE_TAG matches) to the attributes to
  * set; everything else, including formatting, stays as it was.
