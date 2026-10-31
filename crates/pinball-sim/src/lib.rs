@@ -603,19 +603,23 @@ mod tests {
             .unwrap_or_else(|| panic!("{marker}'s {name} isn't a number"))
     }
 
-    /// The left flipper's pivot: the middle of its base end, as the physics
-    /// finds it.
-    fn left_flipper_pivot() -> Vec2 {
-        let tag = map_tag("data-flipper=\"left\"");
+    /// The numbers in the path data of the map's first tag containing `marker`.
+    fn path_numbers(marker: &str) -> Vec<f32> {
+        let tag = map_tag(marker);
         let d = tag
             .split(" d=\"")
             .nth(1)
             .and_then(|rest| rest.split('"').next());
-        let p: Vec<f32> = d
-            .expect("the left flipper has a path")
+        d.unwrap_or_else(|| panic!("{marker} has no path"))
             .split(|c: char| !(c.is_ascii_digit() || c == '.' || c == '-'))
             .filter_map(|n| n.parse().ok())
-            .collect();
+            .collect()
+    }
+
+    /// The left flipper's pivot: the middle of its base end, as the physics
+    /// finds it.
+    fn left_flipper_pivot() -> Vec2 {
+        let p = path_numbers("data-flipper=\"left\"");
         Vec2::new(f32::midpoint(p[0], p[6]), f32::midpoint(p[1], p[7]))
     }
 
@@ -844,6 +848,31 @@ mod tests {
         sim.set_switch(sw::LEFT_FLIPPER_BUTTON, false);
         run(&mut sim, 3_000);
         assert_eq!(sim.machine().ball(), 2);
+    }
+
+    #[test]
+    fn flippers_rest_parallel_to_the_apron() {
+        // On the table the left flipper lies parallel to the apron's edge at
+        // rest, with just room for a ball between them. The apron's left edge
+        // runs from the outline's start to its last point before it closes.
+        let outline = path_numbers("data-wall=\"\"");
+        let n = outline.len();
+        let (start, end) = (
+            Vec2::new(outline[0], outline[1]),
+            Vec2::new(outline[n - 2], outline[n - 1]),
+        );
+        let p = path_numbers("data-flipper=\"left\"");
+        let pivot = left_flipper_pivot();
+        let tip = Vec2::new(f32::midpoint(p[2], p[4]), f32::midpoint(p[3], p[5]));
+        let angle = |v: Vec2| v.y.atan2(v.x).to_degrees();
+        let apart = angle(end - start) - angle(tip - pivot);
+        assert!(apart.abs() < 2.0, "{apart}° off parallel");
+        // The gap under the flipper's base: room for a 27 mm ball, not much more.
+        let len = |v: Vec2| v.x.hypot(v.y);
+        let edge = end - start;
+        let gap = ((pivot - start).x * edge.y - (pivot - start).y * edge.x) / len(edge)
+            - len(Vec2::new(p[0], p[1]) - pivot);
+        assert!((BALL_RADIUS * 2.0..45.0).contains(&gap), "gap {gap}");
     }
 
     #[test]

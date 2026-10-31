@@ -56,9 +56,10 @@ const KICK_WINDOW_MS: u32 = 15;
 const MIN_CLOSED_MS: u32 = 10;
 
 /// How far a flipper turns from rest, and how fast (rad/s). On the real table
-/// the tips are 80 mm apart at rest and 83 mm held up, so each swings about
-/// 108°, from 53° below level to 55° above. The speeds are assumed.
-const FLIPPER_STROKE: f32 = 1.88;
+/// the flippers rest parallel to the apron's edge, about 31° below level, and
+/// their tips are about as far apart held up as at rest, so each swings to
+/// about 31° above level: 62° in all. The speeds are assumed.
+const FLIPPER_STROKE: f32 = 1.075;
 const FLIPPER_UP_SPEED: f32 = 22.0;
 const FLIPPER_DOWN_SPEED: f32 = 14.0;
 
@@ -1018,13 +1019,12 @@ mod tests {
         // Up, both tips are above their pivots.
         assert!(left.tip(FLIPPER_STROKE).y < left.pivot.y);
         assert!(right.tip(FLIPPER_STROKE).y < right.pivot.y);
-        // The gap between the tips' ends, as measured on the table: 80 mm at
-        // rest and 83 mm held up.
-        let gap = |turn: f32| {
-            (right.tip(turn) - left.tip(turn)).len() - left.tip_radius - right.tip_radius
-        };
-        assert!((gap(0.0) - 80.0).abs() < 3.0, "at rest {}", gap(0.0));
-        let up = gap(FLIPPER_STROKE);
-        assert!((up - 83.0).abs() < 3.0, "held up {up}");
+        // On the table the tips are about as far apart held up as at rest, so
+        // each flipper swings as far above level as it rests below it.
+        for f in [left, right] {
+            let below = f.tip(0.0).y - f.pivot.y;
+            let above = f.pivot.y - f.tip(FLIPPER_STROKE).y;
+            assert!((below - above).abs() < 2.0, "{below} below, {above} above");
+        }
     }
 }

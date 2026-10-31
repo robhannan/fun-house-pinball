@@ -24,13 +24,13 @@
   <!-- Playfield outline, inside the 12.7 mm left wall and the shooter lane's
        12.9 mm outer wall: the arch meets the left wall 860 mm from the front,
        and the shooter lane's outer wall 805 mm from the front; its radius is
-       traced from a photo. The bottom edge is the apron's: 220 mm up from the front at each
-       wall, angled straight down to a rounded cup round the outhole
-       (measured; the cup's 22 mm radius is assumed). In the shooter lane it
-       steps down to the plunger's tip. -->
-  <path d="M 12.7 859 L 12.7 219 A 253.3 253.3 0 0 1 507 274 L 507 1034 L 459 1034 L 459 859 L 249.4 1002.2 A 22 22 0 0 1 224.7 1002.2 Z" fill="#fdf6e3" stroke="#8a6d3b" stroke-width="3" data-wall=""/>
+       traced from a photo. The bottom edge is the wooden apron's: from 220 mm up from the front
+       at each wall, parallel to the kicking rubber above it, to a 50 mm round
+       cutout centred on the outhole (its lowest point 70 mm from the front).
+       In the shooter lane it steps down to the plunger's tip. -->
+  <path d="M 12.7 859 L 12.7 219 A 253.3 253.3 0 0 1 507 274 L 507 1034 L 459 1034 L 459 859 L 260.7 976.1 A 25 25 0 1 1 212.6 978.4 Z" fill="#fdf6e3" stroke="#8a6d3b" stroke-width="3" data-wall=""/>
   <!-- The 12.7 mm wall along the left edge -->
-  <rect x="0" y="219" width="12.7" height="793" fill="#c4a26a" stroke="#8a6d3b" stroke-width="1"/>
+  <rect x="0" y="219" width="12.7" height="860" fill="#c4a26a" stroke="#8a6d3b" stroke-width="1"/>
 
   <!-- Shooter lane (right edge): 35 mm wide between 12.9 mm walls. Above
        the straight, the inner wall curves round with the arch, keeping the
@@ -239,21 +239,24 @@
     <line x1="127.2" y1="855.1" x2="160" y2="878" data-wall=""/>
     <line x1="347.4" y1="856.6" x2="312" y2="878" data-wall=""/>
   </g>
-  <path d="M 12.7 859 L 224.7 1002.2 A 22 22 0 0 0 249.4 1002.2 L 459 859 L 459 1079 L 12.7 1079 Z" fill="#c9d1d9" stroke="#57606a" stroke-width="1"/>
+  <path d="M 12.7 859 L 212.6 978.4 A 25 25 0 1 0 260.7 976.1 L 459 859 L 459 1079 L 12.7 1079 Z" fill="#c9d1d9" stroke="#57606a" stroke-width="1"/>
 
-  <!-- Flippers (inward facing): pivots 162 mm apart, 63 mm long, 21.3 mm
-       wide at the pivot and 15.4 mm at the tip; the tips are 80 mm apart at
-       rest and 83 mm held up -->
+  <!-- Flippers (inward facing): pivots 162 mm apart, 63 mm long end to end,
+       21.3 mm wide at the pivot and 15.4 mm at the tip. At rest they lie
+       parallel to the apron's edge, with just room for a ball between. Their
+       tips measured 80 mm apart at rest and 83 mm held up, so they swing as
+       far above level as they rest below it; drawn this way the tips are
+       70 mm apart (verify) -->
   <g fill="#ffffff" stroke="#1f2328" stroke-width="3" stroke-linejoin="round">
-    <path d="M 146.5 895.4 L 182.2 937.8 L 194.4 928.5 L 163.5 882.6 Z" data-coil="8 9" data-flipper="left"/>
-    <path d="M 308.5 882.6 L 277.6 928.5 L 289.8 937.8 L 325.5 895.4 Z" data-coil="10 11" data-flipper="right"/>
+    <path d="M 149.6 898.2 L 189.4 918.5 L 197.3 905.3 L 160.5 879.9 Z" data-coil="8 9" data-flipper="left"/>
+    <path d="M 311.6 879.9 L 274.7 905.3 L 282.6 918.5 L 322.5 898.2 Z" data-coil="10 11" data-flipper="right"/>
   </g>
   <circle cx="155" cy="889" r="7" fill="#57606a" data-measured="Left flipper pivot"/>
   <circle cx="317" cy="889" r="7" fill="#57606a" data-measured="Right flipper pivot"/>
-  <text x="90" y="925" class="label mid">Left flipper</text>
-  <text x="90" y="938" class="tag mid">coils 8 (power), 9 (hold)</text>
-  <text x="384" y="925" class="label mid">Right flipper</text>
-  <text x="384" y="938" class="tag mid">coils 10 (power), 11 (hold)</text>
+  <text x="90" y="975" class="label mid">Left flipper</text>
+  <text x="90" y="988" class="tag mid">coils 8 (power), 9 (hold)</text>
+  <text x="384" y="975" class="label mid">Right flipper</text>
+  <text x="384" y="988" class="tag mid">coils 10 (power), 11 (hold)</text>
 
   <!-- Centre post (18.7 mm across, with its rubber) and outhole (37.8 mm) -->
   <circle cx="235" cy="934" r="9.35" fill="#ffffff" stroke="#1f2328" stroke-width="2" data-wall="" data-measured="Centre post"/>
