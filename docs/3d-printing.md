@@ -9,16 +9,19 @@ Making them fit means measuring the table and typing the numbers in.
 
 ![the whole ball return under the playfield: the trapdoors at the back, the return run down to the outhole funnel, and the serve run across to the ball lift](images/ball-return.png)
 
-*The whole return, seen from above with the playfield hidden, with the
-placeholder measurements: the trapdoors (top right), the return run down the
+*The whole return, seen from above with the playfield hidden, sized for this
+table: the trapdoors (top right), the return run down the
 table, the outhole funnel (left), and the serve run across to the ball lift,
 with its exit on top.*
 
 ## How it works
 
-1. **The trapdoors.** Each flap is hinged along its back edge. When the game
-   opens it, its servo swings it down through a link and crank until it hangs
-   straight down, clearing the hole. Closed, the servo holds it flush.
+1. **The trapdoors.** Each hole has its own frame, whose thin sleeve slides up
+   into the hole. The flap, topped with a 1 mm metal plate so it's flush with
+   the playfield, is hinged along its back edge. When the game opens it, its
+   servo swings it down through a rib under its middle, a link and a crank,
+   until it hangs straight down, clearing the hole. Closed, the servo holds it
+   flush.
 2. **The catch boxes.** A ball dropping through lands in that trapdoor's own
    box, rolls forward over that trapdoor's microswitch, and drops into the
    collector trough across the front.
@@ -54,16 +57,17 @@ rises through the playfield and bends over towards the shooter lane's wall
 |---|---|
 | ![a trapdoor's drive, cut away: the link runs from the rib under the closed flap down to the crank on the servo](images/trapdoor-closed.png) | ![the same drive with the trapdoor open: the crank has turned and the rib has swung back as the flap hangs down](images/trapdoor-open.png) |
 
-*The right-hand trapdoor's drive, cut away beside it: the rib under the flap
-(top left), the link, and the crank on the servo. Opening, the servo turns the
-crank about 80 degrees and the flap swings down to hang straight.*
+*The right-hand trapdoor's drive, cut away beside it: the rib under the middle
+of the flap (top), the link, and the crank on the servo. Opening, the servo
+turns the crank about 80 degrees and the flap swings down to hang straight,
+with the rib swung back behind it.*
 
 ## The parts
 
 | Part | File | Print | What it does |
 |---|---|---|---|
-| Trapdoor frame | `trapdoor_frame.scad` | 1 | Slides up into all three trapdoor holes and screws on underneath. Holds the flaps' hinge pins. |
-| Trapdoor flap | `trapdoor_flap.scad` | 3 | Sits flush in the frame and pivots on its pin. The rib underneath joins the link. |
+| Trapdoor frame | `trapdoor_frame.scad` | 3 | Slides up into a trapdoor hole and screws on underneath. Holds the flap's hinge pin. Its sleeve's walls are 1 mm thick: print with a 0.4 mm nozzle. |
+| Trapdoor flap | `trapdoor_flap.scad` | 3 | Sits in the frame, with a metal plate glued on top, and pivots on its pin. The rib underneath joins the link. |
 | Trapdoor link | `trapdoor_link.scad` | 3 | Joins a flap's rib to its crank. |
 | Trapdoor crank | `trapdoor_crank.scad` | 3 | Screws to the servo's horn and turns the link. |
 | Servo hanger | `trapdoor_servo_hanger.scad` | 3 | Screws under the playfield behind a trapdoor and holds its servo. |
@@ -91,14 +95,19 @@ brew install --cask openscad@snapshot
 
 ## 2. Measure your table
 
-The sizes in `hardware/3d/measurements.scad` are placeholders. With digital
-calipers and a tape measure (see the [shopping list](shopping-list.md#9-tools)),
-measure, on the underside of the playfield:
+Most sizes in `hardware/3d/measurements.scad` are measured from this table
+(the playfield, trapdoors, outhole and shooter lane); the rest, such as the ball
+lift and the ball-serve coil, are placeholders, and the file says which. A test
+checks the playfield, trapdoors, outhole and shooter lane agree with the
+playfield map, `docs/playfield.svg`, so change both together. With digital calipers and a tape measure (see the
+[shopping list](shopping-list.md#9-tools)), measure, on the underside of the
+playfield:
 
 - **The playfield's thickness** at the trapdoor holes.
 - **Each trapdoor hole's width** (across the table) **and length** (up the
   table), and the distance between the holes' centres. If the holes differ,
   use the smallest.
+- **The metal plates' thickness**, for the tops of the flaps.
 - **Where things are**, measured from the playfield's **bottom-left corner**
   (nearest the player's left hand): the centre of the middle trapdoor hole,
   the centre of the outhole and its diameter, and the centre of the hole beside
@@ -114,7 +123,7 @@ measure, on the underside of the playfield:
 Also check what's already under the playfield along the route: the return run
 goes straight from the trapdoors to the outhole, and the serve run straight
 across to the shooter lane. `pnpm run export:3d` prints how far below the
-playfield the deepest part reaches (about 105 mm with the placeholders), and
+playfield the deepest part reaches (about 120 mm on this table), and
 the ball-serve coil hangs below that. Note anything in the way (coils, wiring,
 old brackets, the old outhole mechanism) and the depth to the cabinet floor.
 
@@ -183,7 +192,10 @@ Whichever you use, ask for:
 
 - **Material: PETG**, not PLA. It's tougher, and it won't soften in the warmth
   under a playfield; PLA starts to at about 55 °C.
-- **0.2 mm layers, 4 walls (perimeters), 30% infill.**
+- **0.2 mm layers, 4 walls (perimeters), 30% infill.** The trapdoor frames'
+  sleeves are only 1 mm thick, so they get 2 walls: printing at home, use a
+  0.4 mm nozzle; with a service, check its minimum wall thickness for FDM is
+  1 mm or less.
 - **Supports** for the collector, the outhole funnel and the ball lift. The
   other parts print without.
 
@@ -197,19 +209,27 @@ rest.
 
 ## 7. Fit it
 
-1. **Trapdoors.** Push each flap's hinge pin (2 mm steel rod) through the
-   frame, the flap's knuckle and out the other side, and trim it flush. If the
-   frame's holes are too tight, open them with a 2 mm drill. Slide the frame up
-   into the holes and screw it on with 3.5 × 9.5 mm wood screws: **no longer
-   than 9.5 mm**, or they'll come through the playfield's artwork.
+1. **Trapdoors.** Cut each metal plate to the size `trapdoor_flap.scad` prints
+   in OpenSCAD's console (26.3 × 58.3 mm on this table), and file the edges
+   smooth. Glue it to the top of its flap, centred with about 0.5 mm of flap
+   showing all round, with a thin layer of epoxy or contact adhesive, so it
+   ends up flush with the playfield. Cut each hinge pin (2 mm steel rod) to the
+   length the flap file prints (29.7 mm here) before fitting it: there's only
+   0.2 mm spare each side once the frame is in, so it can't be trimmed after.
+   Push it through its frame, the flap's knuckle and out the other side, with
+   an even amount showing each side. If the frame's holes are too tight, open
+   them with a 2 mm drill. Slide each
+   frame up into its hole and screw it on with 3.5 × 9.5 mm wood screws: **no
+   longer than 9.5 mm**, or they'll come through the playfield's artwork. The
+   wood either side of the sleeve keeps the pin from sliding out.
 2. **Servos.** Screw each servo into its hanger, shaft pointing left, and screw
    the hanger under the playfield behind its trapdoor. Screw a crank to each
    servo's single-arm horn and press it onto the shaft. Join the flap's rib to
    the crank with a link, with an M2 × 10 mm screw at each end (into the rib
    and into the crank). Set the angles in test mode (wiring guide section 7f).
 3. **Collector.** Screw a lever microswitch under each catch box, its lever up
-   through the slot, and screw the collector to the frame's front flange with
-   M3 × 6 mm self-tapping screws.
+   through the slot, and screw the collector to the frames' front flanges with
+   M3 × 6 mm self-tapping screws, one into each frame.
 4. **Runs.** Fit the return run's segments in order from the collector, each
    socket over the end of the part before, and screw their posts to the
    playfield. Then the outhole funnel under the outhole, the serve run's

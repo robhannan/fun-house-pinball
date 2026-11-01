@@ -590,17 +590,21 @@ mod tests {
 
     /// A number attribute of the map's first tag containing `marker`.
     fn map_number(marker: &str, name: &str) -> f32 {
-        let tag = map_tag(marker);
+        tag_number(map_tag(marker), name)
+    }
+
+    /// A number attribute of a tag.
+    fn tag_number(tag: &str, name: &str) -> f32 {
         let start = tag
             .find(&format!(" {name}=\""))
-            .unwrap_or_else(|| panic!("{marker} has no {name}"))
+            .unwrap_or_else(|| panic!("{tag} has no {name}"))
             + name.len()
             + 3;
         tag[start..]
             .split('"')
             .next()
             .and_then(|value| value.parse().ok())
-            .unwrap_or_else(|| panic!("{marker}'s {name} isn't a number"))
+            .unwrap_or_else(|| panic!("{tag}'s {name} isn't a number"))
     }
 
     /// The corners of the path of the map's first tag containing `marker`.
@@ -1054,6 +1058,115 @@ mod tests {
                 );
             }
         }
+    }
+
+    /// The 3D-printed ball return's measurements of the table.
+    const MEASUREMENTS: &str = include_str!("../../../hardware/3d/measurements.scad");
+
+    /// A number from `hardware/3d/measurements.scad`, by name.
+    fn measurement(name: &str) -> f32 {
+        MEASUREMENTS
+            .lines()
+            .find_map(|line| {
+                line.strip_prefix(name)?
+                    .trim_start()
+                    .strip_prefix('=')?
+                    .trim()
+                    .trim_end_matches(';')
+                    .parse()
+                    .ok()
+            })
+            .unwrap_or_else(|| panic!("measurements.scad has no {name}"))
+    }
+
+    #[test]
+    fn the_3d_measurements_match_the_playfield_map() {
+        // The printed parts and the map must agree on the table. The map's y
+        // runs from the board's back edge, measurements.scad's from its front.
+        let near = |scad: f32, map: f32, what: &str| {
+            assert!(
+                (scad - map).abs() <= 0.5,
+                "{what}: measurements.scad says {scad}, the map {map}"
+            );
+        };
+        let board = "data-board=\"\"";
+        let length = map_number(board, "height");
+        near(
+            measurement("playfield_width"),
+            map_number(board, "width"),
+            "board width",
+        );
+        near(measurement("playfield_length"), length, "board length");
+        let door = |n: u8, name: &str| map_number(&format!("data-trapdoor=\"{n}\""), name);
+        let centre_x = |n: u8| door(n, "x") + door(n, "width") / 2.0;
+        near(
+            measurement("trapdoor_x"),
+            centre_x(1),
+            "middle trapdoor across",
+        );
+        near(
+            measurement("trapdoor_y"),
+            length - (door(1, "y") + door(1, "height") / 2.0),
+            "middle trapdoor up the table",
+        );
+        near(
+            measurement("trapdoor_spacing"),
+            centre_x(1) - centre_x(0),
+            "trapdoor spacing",
+        );
+        near(
+            measurement("trapdoor_spacing"),
+            centre_x(2) - centre_x(1),
+            "trapdoor spacing",
+        );
+        near(
+            measurement("hole_width"),
+            door(1, "width"),
+            "trapdoor hole width",
+        );
+        near(
+            measurement("hole_length"),
+            door(1, "height"),
+            "trapdoor hole length",
+        );
+        let outhole = "data-switch=\"C0R0\"";
+        near(
+            measurement("outhole_x"),
+            map_number(outhole, "cx"),
+            "outhole across",
+        );
+        near(
+            measurement("outhole_y"),
+            length - map_number(outhole, "cy"),
+            "outhole up the table",
+        );
+        near(
+            measurement("outhole_diameter"),
+            2.0 * map_number(outhole, "r"),
+            "outhole diameter",
+        );
+        // The shooter lane: its inner wall is the map's only rectangular wall,
+        // and the lane runs from that to the outline's right-hand edge.
+        let lane_wall = SVG
+            .split('<')
+            .find(|tag| tag.starts_with("rect ") && tag.contains("data-wall"))
+            .expect("the shooter lane's inner wall");
+        let x = tag_number(lane_wall, "x");
+        let thickness = tag_number(lane_wall, "width");
+        let outer = path_corners("data-wall=\"\"")
+            .iter()
+            .fold(0.0_f32, |m, p| m.max(p.x));
+        near(measurement("lane_wall_x"), x, "shooter lane wall");
+        near(
+            measurement("lane_wall_thickness"),
+            thickness,
+            "shooter lane wall thickness",
+        );
+        near(
+            measurement("lane_width"),
+            outer - x - thickness,
+            "shooter lane width",
+        );
     }
 
     #[test]

@@ -8,7 +8,7 @@ include <../placement.scad>
 // Each part in place, by number.
 part_count = 8 + return_segments + serve_segments;
 module part(i) {
-    if (i == 0) at_trapdoors() frame();
+    if (i == 0) at_trapdoors() for (dx = trapdoor_offsets) translate([dx, 0, 0]) frame();
     else if (i == 1) at_trapdoors() collector();
     else if (i <= 4) at_trapdoors() translate([trapdoor_offsets[i - 2], 0, 0]) { hanger_part(); servo_body(); }
     else if (i == 5) outhole_funnel();

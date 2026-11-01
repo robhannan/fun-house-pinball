@@ -1,12 +1,12 @@
 // Trapdoor collector: one piece under all three trapdoors. Each trapdoor has its
-// own catch box, kept clear of the flap as it swings down and of the drive
-// beside it. A ball lands in the box, rolls forward over that trapdoor's
+// own catch box, kept clear of the flap as it swings down; the drive's link
+// passes over its low back wall. A ball lands in the box, rolls forward over that trapdoor's
 // microswitch and out into the trough across the front, which runs it to the
 // middle and out down the table into the return run.
 //
 // A lever microswitch (KW11 type) screws to the tab under each box's floor,
 // with its lever poking up through the slot. The collector screws to the
-// frame's front flange with M3 x 6 mm self-tapping screws.
+// frames' front flanges with M3 x 6 mm self-tapping screws.
 //
 // Print it upside down (the flat rim on the bed), with supports ("supports:
 // on" in the slicer, or ask the printing service).
@@ -15,7 +15,7 @@ include <common.scad>
 
 collector();
 
-// The front rim, under the frame's front flange.
+// The front rim, under the frames' front flanges.
 rim_y = [-outer_length / 2 - flange_width, catch_front - wall];
 
 module collector() {
@@ -44,24 +44,14 @@ module collector() {
     }
 }
 
-// The flap's swing, as a curve: the highest a wall inside the flap's width
-// can reach at `y` without being hit.
-function wall_top(y) =
-    let(d = pin_y - y)
-    d >= sweep_radius ? collector_top : min(collector_top, pin_z - sqrt(sweep_radius * sweep_radius - d * d));
-
 module catch_box() {
     bottom = catch_floor_front - wall - 14;
-    // Left and front walls: outside the flap's swing, up to the frame.
-    translate([catch_left - wall, catch_front - wall, bottom])
-        cube([wall, catch_back - catch_front + 2 * wall, collector_top - bottom]);
+    // Side and front walls: outside the flap's swing, up to the frame.
+    for (x = [catch_left - wall, catch_right])
+        translate([x, catch_front - wall, bottom])
+            cube([wall, catch_back - catch_front + 2 * wall, collector_top - bottom]);
     translate([catch_left - wall, catch_front - wall, bottom])
         cube([catch_right - catch_left + 2 * wall, wall, collector_top - bottom]);
-    // Right wall: inside the flap's width, so its top follows the swing.
-    ys = [for (i = [0 : 12]) catch_front - wall + (catch_back - catch_front + 2 * wall) * i / 12];
-    multmatrix([[0, 0, 1, catch_right], [1, 0, 0, 0], [0, 1, 0, 0]])
-        linear_extrude(height = wall)
-            polygon(concat([[ys[0], bottom]], [for (y = ys) [y, wall_top(y)]], [[ys[12], bottom]]));
     // Back wall: low, under where the flap hangs.
     translate([catch_left - wall, catch_back, bottom])
         cube([catch_right - catch_left + 2 * wall, wall, catch_floor_back + 2 - bottom]);

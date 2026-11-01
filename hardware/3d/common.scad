@@ -35,26 +35,38 @@ m2_free = 2.4;
 
 // --- Trapdoors: frame and flap (trapdoor coordinates) -----------------------
 
-// The frame's sleeves slide up into the holes.
-frame_wall = 2;
+// Each frame's sleeve slides up into its hole. The holes are only 3.5 mm
+// wider than the ball, so the sleeve's walls are thin: print them with a
+// 0.4 mm nozzle.
+frame_wall = 1;
 outer_width = hole_width - fit_clearance;
 outer_length = hole_length - fit_clearance;
 inner_width = outer_width - 2 * frame_wall;
 inner_length = outer_length - 2 * frame_wall;
-// The flange under the playfield, around all three sleeves.
+// The flange under the playfield, round the sleeve.
 flange_width = 10;
 flange_thickness = 4;
 
-// The flap sits flush in the top of the sleeve and pivots on the hinge pin
-// along its back (uphill) edge. Open, it hangs straight down, clearing the
-// hole for the ball.
-flap_thickness = 3;
+// The flap sits in the top of the sleeve, with a metal plate glued on top so
+// the plate is flush with the playfield, and pivots on the hinge pin along
+// its back (uphill) edge. Open, it hangs straight down, clearing the hole for
+// the ball.
+flap_thickness = 3;  // the printed part, under the plate
 knuckle_radius = 2.5;
 pin_y = inner_length / 2 - knuckle_radius - fit_clearance;
-pin_z = playfield_thickness - knuckle_radius;
+pin_z = playfield_thickness - plate_thickness - knuckle_radius;
+// The printed flap's top face, under the plate.
+flap_top = playfield_thickness - plate_thickness;
 flap_width = inner_width - 2 * fit_clearance;
 flap_front = -inner_length / 2 + fit_clearance;
 flap_reach = pin_y - flap_front;  // hinge to front edge
+// The size to cut each metal plate to: the flap's top, front edge to hinge,
+// less 1 mm each way, so a hand-cut plate clears the sleeve as the flap
+// swings. It's glued centred, 0.5 mm in from each edge.
+plate_size = [flap_width - 1, flap_reach - 1];
+// The length to cut each hinge pin to: through both sleeve walls, short of
+// the wood either side.
+pin_length = outer_width - 0.4;
 // Closed, the flap is held flush by the servo through the linkage: a fixed
 // ledge can't be used, because the flap's front edge swings down to open.
 // How far the flap opens: straight down.
@@ -62,19 +74,21 @@ flap_open_angle = 90;
 
 // --- Trapdoors: the drive linkage (trapdoor coordinates) --------------------
 //
-// A rib under the flap's right edge, near the front, joins a link to a crank
+// A rib under the middle of the flap, near the front, joins a link to a crank
 // on the servo, behind and below the frame. These positions were chosen so
 // that the servo turns about 80 degrees to swing the flap from closed to
 // hanging open, the link never gets close to locking up, and the link and
-// crank stay below the frame.
+// crank stay below the frame. With the flap closed the link runs through the
+// back of the catch box, above its low back wall; open, the rib and link are
+// behind the hanging flap, out of the ball's way.
 
 rib_hole = [-18.5, -18.5];        // from the hinge pin, [y, z], flap closed
 crank_centre = [32.1, -63.2];     // the servo's shaft, from the hinge pin
 crank_radius = 24;
 link_length = 52;
-// Across the table, the drive parts sit side by side, right of the flap's
-// edge: [left, right] x of each.
-rib_x = [flap_width / 2 - 3, flap_width / 2];
+// Across the table, the drive parts sit side by side from the flap's middle:
+// [left, right] x of each.
+rib_x = [-1.5, 1.5];
 link_x = [rib_x[1] + 1, rib_x[1] + 4];
 crank_x = [link_x[1] + 0.4, link_x[1] + 3.4];
 // The servo (an MG90S): its horn sits against the crank, then its top face.
@@ -114,8 +128,8 @@ function crank_angle(angle) =
 // --- Trapdoors: catch boxes and collector (trapdoor coordinates) ------------
 //
 // The flap sweeps a quarter-circle under its hole as it opens, so each
-// trapdoor's catch box stays outside it: its back wall is low, its right wall
-// steps aside for the rib, and its floor is below the swing. The ball lands,
+// trapdoor's catch box stays outside it: its back wall is low, its side walls
+// are wider than the flap, and its floor is below the swing. The ball lands,
 // runs forward past that trapdoor's microswitch and out through the front, into
 // a collector trough across the front of all three that feeds the return run.
 
@@ -127,14 +141,14 @@ doorway_height = ball_diameter + 4;
 // The flap's swing, with a margin.
 sweep_radius = flap_reach + 2;
 catch_left = -inner_width / 2 - wall;           // the left wall's inside face
-catch_right = rib_x[0] - 1.5 - wall;            // the right wall's inside face
+catch_right = inner_width / 2 + wall;           // the right wall's inside face
 catch_front = -inner_length / 2;                // the front wall's inside face
 catch_back = pin_y - knuckle_radius - 1 - wall; // in front of the hanging flap
 catch_floor_back = pin_z - sweep_radius - 3;
 catch_floor_front = catch_floor_back - 4;
 catch_opening = catch_right - catch_left;
-assert(catch_opening >= ball_diameter + 2,
-    "The trapdoor hole is too narrow for the ball to fall past the drive: check hole_width in measurements.scad.");
+assert(inner_width >= ball_diameter + 1,
+    "The trapdoor hole is too narrow for the ball to drop through the frame's sleeve: check hole_width in measurements.scad.");
 assert(catch_back - catch_front >= ball_diameter + 2,
     "The trapdoor hole is too short for the ball to fall past the open flap: check hole_length in measurements.scad.");
 // The collector trough, in front of the catch boxes.
@@ -151,8 +165,8 @@ trapdoor_offsets = [-trapdoor_spacing, 0, trapdoor_spacing];
 // The collector's top, just under the frame's flange (with a hair's gap, so
 // the collision checks can tell touching from overlapping).
 collector_top = -flange_thickness - 0.1;
-// Where the collector screws to the frame's front flange: one in front of each
-// catch box.
+// Where the collector screws to the frames' front flanges: one in front of
+// each catch box.
 collector_screws = [for (dx = trapdoor_offsets) [dx - 8, -outer_length / 2 - flange_width / 2]];
 
 // --- Channels and joints (any coordinates) -----------------------------------
