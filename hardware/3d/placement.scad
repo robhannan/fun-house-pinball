@@ -26,7 +26,7 @@ module in_drive_plane(x, from, to) {
 // One trapdoor's moving parts, in trapdoor coordinates, the flap open by
 // `angle` degrees.
 module trapdoor_moving(angle) {
-    translate([0, pin_y, pin_z]) rotate([angle, 0, 0]) translate([0, -pin_y, -pin_z]) flap();
+    translate([0, pin_y, pin_z]) rotate([angle, 0, 0]) translate([0, -pin_y, -pin_z]) { flap(); plate(); }
     in_drive_plane(link_x[0], rib_point(angle), crank_point(angle)) link();
     in_drive_plane(crank_x[0], servo_shaft, crank_point(angle)) crank();
 }

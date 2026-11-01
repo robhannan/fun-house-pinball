@@ -590,17 +590,21 @@ mod tests {
 
     /// A number attribute of the map's first tag containing `marker`.
     fn map_number(marker: &str, name: &str) -> f32 {
-        let tag = map_tag(marker);
+        tag_number(map_tag(marker), name)
+    }
+
+    /// A number attribute of a tag.
+    fn tag_number(tag: &str, name: &str) -> f32 {
         let start = tag
             .find(&format!(" {name}=\""))
-            .unwrap_or_else(|| panic!("{marker} has no {name}"))
+            .unwrap_or_else(|| panic!("{tag} has no {name}"))
             + name.len()
             + 3;
         tag[start..]
             .split('"')
             .next()
             .and_then(|value| value.parse().ok())
-            .unwrap_or_else(|| panic!("{marker}'s {name} isn't a number"))
+            .unwrap_or_else(|| panic!("{tag}'s {name} isn't a number"))
     }
 
     /// The corners of the path of the map's first tag containing `marker`.
@@ -1140,6 +1144,28 @@ mod tests {
             measurement("outhole_diameter"),
             2.0 * map_number(outhole, "r"),
             "outhole diameter",
+        );
+        // The shooter lane: its inner wall is the map's only rectangular wall,
+        // and the lane runs from that to the outline's right-hand edge.
+        let lane_wall = SVG
+            .split('<')
+            .find(|tag| tag.starts_with("rect ") && tag.contains("data-wall"))
+            .expect("the shooter lane's inner wall");
+        let x = tag_number(lane_wall, "x");
+        let thickness = tag_number(lane_wall, "width");
+        let outer = path_corners("data-wall=\"\"")
+            .iter()
+            .fold(0.0_f32, |m, p| m.max(p.x));
+        near(measurement("lane_wall_x"), x, "shooter lane wall");
+        near(
+            measurement("lane_wall_thickness"),
+            thickness,
+            "shooter lane wall thickness",
+        );
+        near(
+            measurement("lane_width"),
+            outer - x - thickness,
+            "shooter lane width",
         );
     }
 

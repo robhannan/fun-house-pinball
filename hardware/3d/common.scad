@@ -60,8 +60,13 @@ flap_top = playfield_thickness - plate_thickness;
 flap_width = inner_width - 2 * fit_clearance;
 flap_front = -inner_length / 2 + fit_clearance;
 flap_reach = pin_y - flap_front;  // hinge to front edge
-// The size to cut each metal plate to: the flap's top, front edge to hinge.
-plate_size = [flap_width, flap_reach];
+// The size to cut each metal plate to: the flap's top, front edge to hinge,
+// less 1 mm each way, so a hand-cut plate clears the sleeve as the flap
+// swings. It's glued centred, 0.5 mm in from each edge.
+plate_size = [flap_width - 1, flap_reach - 1];
+// The length to cut each hinge pin to: through both sleeve walls, short of
+// the wood either side.
+pin_length = outer_width - 0.4;
 // Closed, the flap is held flush by the servo through the linkage: a fixed
 // ledge can't be used, because the flap's front edge swings down to open.
 // How far the flap opens: straight down.
@@ -142,8 +147,8 @@ catch_back = pin_y - knuckle_radius - 1 - wall; // in front of the hanging flap
 catch_floor_back = pin_z - sweep_radius - 3;
 catch_floor_front = catch_floor_back - 4;
 catch_opening = catch_right - catch_left;
-assert(catch_opening >= ball_diameter + 2,
-    "The trapdoor hole is too narrow for the ball to fall past the drive: check hole_width in measurements.scad.");
+assert(inner_width >= ball_diameter + 1,
+    "The trapdoor hole is too narrow for the ball to drop through the frame's sleeve: check hole_width in measurements.scad.");
 assert(catch_back - catch_front >= ball_diameter + 2,
     "The trapdoor hole is too short for the ball to fall past the open flap: check hole_length in measurements.scad.");
 // The collector trough, in front of the catch boxes.

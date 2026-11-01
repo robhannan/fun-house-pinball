@@ -83,7 +83,7 @@ lift_coil_screw_spacing = 40;
 
 // Wood screws into the underside of the playfield. They must be SHORTER than
 // the playfield is thick, or they'll come out through the artwork. 3.5 mm x
-// 9.5 mm (No. 6 x 3/8") suits a 12.7 mm playfield.
+// 9.5 mm (No. 6 x 3/8") suits a 13.5 mm playfield.
 wood_screw_diameter = 3.5;
 
 // Steel rod used as each flap's hinge pin.

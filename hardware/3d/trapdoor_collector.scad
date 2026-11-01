@@ -6,7 +6,7 @@
 //
 // A lever microswitch (KW11 type) screws to the tab under each box's floor,
 // with its lever poking up through the slot. The collector screws to the
-// frame's front flange with M3 x 6 mm self-tapping screws.
+// frames' front flanges with M3 x 6 mm self-tapping screws.
 //
 // Print it upside down (the flat rim on the bed), with supports ("supports:
 // on" in the slicer, or ask the printing service).
@@ -15,7 +15,7 @@ include <common.scad>
 
 collector();
 
-// The front rim, under the frame's front flange.
+// The front rim, under the frames' front flanges.
 rim_y = [-outer_length / 2 - flange_width, catch_front - wall];
 
 module collector() {

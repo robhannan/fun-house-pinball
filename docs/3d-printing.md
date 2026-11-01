@@ -98,8 +98,8 @@ brew install --cask openscad@snapshot
 Most sizes in `hardware/3d/measurements.scad` are measured from this table
 (the playfield, trapdoors, outhole and shooter lane); the rest, such as the ball
 lift and the ball-serve coil, are placeholders, and the file says which. A test
-checks the measured ones agree with the playfield map, `docs/playfield.svg`, so
-change both together. With digital calipers and a tape measure (see the
+checks the playfield, trapdoors, outhole and shooter lane agree with the
+playfield map, `docs/playfield.svg`, so change both together. With digital calipers and a tape measure (see the
 [shopping list](shopping-list.md#9-tools)), measure, on the underside of the
 playfield:
 
@@ -192,7 +192,10 @@ Whichever you use, ask for:
 
 - **Material: PETG**, not PLA. It's tougher, and it won't soften in the warmth
   under a playfield; PLA starts to at about 55 °C.
-- **0.2 mm layers, 4 walls (perimeters), 30% infill.**
+- **0.2 mm layers, 4 walls (perimeters), 30% infill.** The trapdoor frames'
+  sleeves are only 1 mm thick, so they get 2 walls: printing at home, use a
+  0.4 mm nozzle; with a service, check its minimum wall thickness for FDM is
+  1 mm or less.
 - **Supports** for the collector, the outhole funnel and the ball lift. The
   other parts print without.
 
@@ -207,11 +210,15 @@ rest.
 ## 7. Fit it
 
 1. **Trapdoors.** Cut each metal plate to the size `trapdoor_flap.scad` prints
-   in OpenSCAD's console (27.3 × 59.3 mm on this table), file the edges smooth,
-   and glue it to the top of its flap with epoxy or contact adhesive, flush with
-   the edges. Push each flap's hinge pin (2 mm steel rod) through its frame, the
-   flap's knuckle and out the other side, and trim it flush with the sleeve. If
-   the frame's holes are too tight, open them with a 2 mm drill. Slide each
+   in OpenSCAD's console (26.3 × 58.3 mm on this table), and file the edges
+   smooth. Glue it to the top of its flap, centred with about 0.5 mm of flap
+   showing all round, with a thin layer of epoxy or contact adhesive, so it
+   ends up flush with the playfield. Cut each hinge pin (2 mm steel rod) to the
+   length the flap file prints (29.7 mm here) before fitting it: there's only
+   0.2 mm spare each side once the frame is in, so it can't be trimmed after.
+   Push it through its frame, the flap's knuckle and out the other side, with
+   an even amount showing each side. If the frame's holes are too tight, open
+   them with a 2 mm drill. Slide each
    frame up into its hole and screw it on with 3.5 × 9.5 mm wood screws: **no
    longer than 9.5 mm**, or they'll come through the playfield's artwork. The
    wood either side of the sleeve keeps the pin from sliding out.

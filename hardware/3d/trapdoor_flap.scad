@@ -1,15 +1,16 @@
 // Trapdoor flap: print three. It sits in the top of a frame's sleeve,
 // pivoting on the hinge pin along its back edge. A 1 mm metal plate glued on
-// top makes it flush with the playfield: cut each plate to the size this file
-// prints in OpenSCAD's console ("Cut the metal plate to ..."). The rib under
-// its middle joins the link to the servo, which holds it flush when closed;
-// open, it hangs straight down.
+// top makes it flush with the playfield: cut each plate, and each hinge pin, to
+// the sizes this file prints in OpenSCAD's console ("Cut the metal plate to
+// ..."). The rib under its middle joins the link to the servo, which holds it
+// flush when closed; open, it hangs straight down.
 //
 // Print it top face down on the bed, no supports.
 
 include <common.scad>
 
 echo(str("Cut the metal plate to ", plate_size[0], " x ", plate_size[1], " mm (across x along the table)."));
+echo(str("Cut the hinge pin to ", pin_length, " mm."));
 
 // Flipped so the top face is on the bed.
 translate([0, 0, flap_top]) rotate([180, 0, 0]) flap();
@@ -39,4 +40,11 @@ module flap() {
         translate([rib_x[0] - 1, pin_y + rib_hole[0], pin_z + rib_hole[1]])
             rotate([0, 90, 0]) cylinder(d = m2_tap, h = rib_x[1] - rib_x[0] + 2);
     }
+}
+
+// The metal plate glued on top, in place (not printed): placement.scad swings
+// it with the flap, so the checks cover it.
+module plate() {
+    translate([-plate_size[0] / 2, flap_front + 0.5, flap_top])
+        cube([plate_size[0], plate_size[1], plate_thickness]);
 }
